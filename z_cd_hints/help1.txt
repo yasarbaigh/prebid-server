@@ -1,0 +1,52 @@
+sudo systemctl restart prometheus
+
+=================
+
+./validate.sh
+
+go mod download
+
+go run .
+=================
+
+
+go build -o prebid-server .
+
+./prebid-server
+PBS_PORT=18000 ./prebid-server
+./prebid-server -port 18000
+
+make build
+=============
+
+
+go install github.com/air-verse/air@latest
+air -V
+/home/b/go/bin/air init
+/home/b/go/bin/air
+
+
+if any problem delete local ./tmp directory
+curl -v http://localhost:8000/status
+
+# To run with hot reload:
+/home/b/go/bin/air
+
+========
+if failed to start or taking long time, to start then, kill the process
+
+sudo fuser -k 18000/tcp
+
+
+
+==============
+
+
+
+
+==============
+
+check metrics
+
+
+curl http://localhost:8000/metrics | grep rtb_

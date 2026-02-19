@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -117,6 +119,24 @@ func newOccasionalSaver(timeout time.Duration) func(ctx context.Context, client 
 }
 
 func saveOne(ctx context.Context, client *http.Client, url string, saver saveVendors, me metrics.MetricsEngine) uint16 {
+	if strings.Contains(url, "vendor-list") {
+		// Read from local file
+		data, err := os.ReadFile("./static/vendor-list.json")
+		if err != nil {
+			logger.Errorf("Failed to read local vendor list: %v", err)
+			return 0
+		}
+
+		var newList api.VendorList
+		newList, err = vendorlist2.ParseEagerly(data)
+		if err != nil {
+			logger.Errorf("Local JSON malformed: %v", err)
+			return 0
+		}
+		saver(newList.SpecVersion(), newList.Version(), newList)
+		return newList.Version()
+	}
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		logger.Errorf("Failed to build GET %s request. Cookie syncs may be affected: %v", url, err)

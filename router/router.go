@@ -18,6 +18,7 @@ import (
 	"github.com/prebid/prebid-server/v3/endpoints"
 	"github.com/prebid/prebid-server/v3/endpoints/events"
 	infoEndpoints "github.com/prebid/prebid-server/v3/endpoints/info"
+	"github.com/prebid/prebid-server/v3/endpoints/open_rtb_2_5"
 	"github.com/prebid/prebid-server/v3/endpoints/openrtb2"
 	"github.com/prebid/prebid-server/v3/errortypes"
 	"github.com/prebid/prebid-server/v3/exchange"
@@ -33,6 +34,7 @@ import (
 	"github.com/prebid/prebid-server/v3/modules/moduledeps"
 	"github.com/prebid/prebid-server/v3/openrtb_ext"
 	"github.com/prebid/prebid-server/v3/ortb"
+	"github.com/prebid/prebid-server/v3/partners"
 	"github.com/prebid/prebid-server/v3/pbs"
 	pbc "github.com/prebid/prebid-server/v3/prebid_cache_client"
 	"github.com/prebid/prebid-server/v3/router/aspects"
@@ -117,15 +119,17 @@ type Router struct {
 	*httprouter.Router
 	MetricsEngine   *metricsConf.DetailedMetricsEngine
 	ParamsValidator openrtb_ext.BidderParamValidator
+	PartnersManager *partners.Manager
 
 	shutdowns []func()
 }
 
-func New(cfg *config.Configuration, rateConvertor *currency.RateConverter) (r *Router, err error) {
+func New(cfg *config.Configuration, rateConvertor *currency.RateConverter, pm *partners.Manager) (r *Router, err error) {
 	const schemaDirectory = "./static/bidder-params"
 
 	r = &Router{
-		Router: httprouter.New(),
+		Router:          httprouter.New(),
+		PartnersManager: pm,
 	}
 
 	certPool, certPoolCreateErr := ssl.CreateCertPool()
@@ -279,6 +283,7 @@ func New(cfg *config.Configuration, rateConvertor *currency.RateConverter) (r *R
 	}
 
 	r.POST("/openrtb2/auction", openrtbEndpoint)
+	r.POST("/open_rtb_2_5/auction_handler", open_rtb_2_5.NewAuctionHandler(pm).Handle)
 	r.POST("/openrtb2/video", videoEndpoint)
 	r.GET("/openrtb2/amp", ampEndpoint)
 	r.GET("/info/bidders", infoEndpoints.NewBiddersEndpoint(cfg.BidderInfos))

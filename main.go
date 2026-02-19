@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"net/http"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"github.com/prebid/prebid-server/v3/util/jsonutil"
 	"github.com/prebid/prebid-server/v3/util/task"
 
+	"github.com/prebid/prebid-server/v3/partners"
 	"github.com/spf13/viper"
 )
 
@@ -74,7 +76,13 @@ func serve(cfg *config.Configuration) error {
 	currencyConverterTickerTask := task.NewTickerTask(fetchingInterval, currencyConverter)
 	currencyConverterTickerTask.Start()
 
-	r, err := router.New(cfg, currencyConverter)
+	pm := partners.NewManager()
+	if err := pm.Load("./partners.json"); err != nil {
+		logger.Warnf("Failed to load partners.json: %v", err)
+	}
+	pm.StartReloading(context.Background(), "./partners.json")
+
+	r, err := router.New(cfg, currencyConverter, pm)
 	if err != nil {
 		return err
 	}
