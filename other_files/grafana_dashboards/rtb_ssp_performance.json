@@ -1,0 +1,310 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "Requests / Sec",
+                        "axisPlacement": "auto",
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "unit": "reqps"
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 2,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(job:ssp_requests:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", prometheus_identifier=~\"$prometheus\"}) by ($group_by)",
+                    "legendFormat": "{{$group_by}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "SSP Request Rate (QPS)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 80
+                            },
+                            {
+                                "color": "green",
+                                "value": 95
+                            }
+                        ]
+                    },
+                    "unit": "percent"
+                }
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 3,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "ssp:success_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", prometheus_identifier=~\"$prometheus\"} * 100",
+                    "legendFormat": "{{ssp_identifier}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "SSP Success Rate (%)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "percent"
+                }
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 0,
+                "y": 10
+            },
+            "id": 10,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "ssp:nobid_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", prometheus_identifier=~\"$prometheus\"} * 100",
+                    "legendFormat": "{{ssp_identifier}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "SSP No-Bid Rate (%)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 5
+                            },
+                            {
+                                "color": "red",
+                                "value": 10
+                            }
+                        ]
+                    },
+                    "unit": "percent"
+                }
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 12,
+                "y": 10
+            },
+            "id": 11,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "ssp:error_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", prometheus_identifier=~\"$prometheus\"} * 100",
+                    "legendFormat": "{{ssp_identifier}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "SSP Error Rate (%)",
+            "type": "timeseries"
+        }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 36,
+    "style": "dark",
+    "tags": [
+        "prebid",
+        "rtb",
+        "ssp"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": "Prometheus",
+                "definition": "label_values(prebid_rtb_ssp_requests_total, tenant_identifier)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Tenant",
+                "multi": true,
+                "name": "tenant",
+                "options": [],
+                "query": {
+                    "query": "label_values(prebid_rtb_ssp_requests_total, tenant_identifier)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": "Prometheus",
+                "definition": "label_values(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\"}, ssp_identifier)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "SSP",
+                "multi": true,
+                "name": "ssp",
+                "options": [],
+                "query": {
+                    "query": "label_values(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\"}, ssp_identifier)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": "Prometheus",
+                "definition": "label_values(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\"}, prometheus_identifier)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Prometheus Instance",
+                "multi": true,
+                "name": "prometheus",
+                "options": [],
+                "query": {
+                    "query": "label_values(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\"}, prometheus_identifier)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "hide": 0,
+                "label": "Group By",
+                "multi": false,
+                "name": "group_by",
+                "options": [
+                    {
+                        "selected": false,
+                        "text": "tenant_identifier",
+                        "value": "tenant_identifier"
+                    },
+                    {
+                        "selected": true,
+                        "text": "ssp_identifier",
+                        "value": "ssp_identifier"
+                    },
+                    {
+                        "selected": false,
+                        "text": "prometheus_identifier",
+                        "value": "prometheus_identifier"
+                    }
+                ],
+                "query": "tenant_identifier,ssp_identifier,prometheus_identifier",
+                "skipUrlSync": false,
+                "type": "custom"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "title": "RTB SSP Performance",
+    "uid": "rtb_ssp_perf",
+    "version": 1
+}

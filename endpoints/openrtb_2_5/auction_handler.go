@@ -1,4 +1,4 @@
-package open_rtb_2_5
+package openrtb_2_5
 
 import (
 	"bytes"
@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/prebid/openrtb/v20/openrtb2"
+	"github.com/prebid/prebid-server/v3/logging"
 	"github.com/prebid/prebid-server/v3/partners"
+	"github.com/prebid/prebid-server/v3/proto/generated"
 )
 
 // RtbAuctionRequest is the custom request structure for this use-case
@@ -66,7 +67,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// Mark request from SSP in Prometheus
-	partners.SSPRequestCounter.WithLabelValues(ssp.PrometheusIdentifier, strconv.Itoa(ssp.TenantID)).Inc()
+	partners.SSPRequestCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
 
 	// 4. Read and Parse BidRequest
 	body, err := io.ReadAll(r.Body)
@@ -85,6 +86,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	// 5. Check Tmax
 	if bidReq.TMax <= 120 {
 		partners.AuctionCounter.WithLabelValues("rejected_tmax").Inc()
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "error").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -94,6 +96,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	selectedDSPs := partners.ShortlistDSPs(&bidReq, candidates, 5)
 
 	if len(selectedDSPs) == 0 {
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -102,8 +105,13 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	auctionCtx, cancel := context.WithTimeout(context.Background(), time.Duration(bidReq.TMax)*time.Millisecond)
 	defer cancel()
 
+	// 8. Collect and Select Best Bid
+	type bidResult struct {
+		resp *openrtb2.BidResponse
+		dsp  partners.DSPInventory
+	}
+	bidChan := make(chan bidResult, len(selectedDSPs))
 	var wg sync.WaitGroup
-	bidChan := make(chan *openrtb2.BidResponse, len(selectedDSPs))
 
 	for _, dsp := range selectedDSPs {
 		wg.Add(1)
@@ -111,13 +119,38 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			defer wg.Done()
 
 			// Mark fan-out to DSP in Prometheus
-			partners.DSPRequestCounter.WithLabelValues(d.PrometheusIdentifier, strconv.Itoa(d.TenantID)).Inc()
+			partners.DSPRequestCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Inc()
 
+			start := time.Now()
 			resp, err := h.callDSP(auctionCtx, d, body)
+			latency := time.Since(start).Seconds()
+
+			// Record Latency
+			partners.DSPLatencyHistogram.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Observe(latency)
+
 			if err != nil {
+				partners.DSPResponseCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, "error").Inc()
 				return
 			}
-			bidChan <- resp
+
+			// Check if it's a "No Bid" (empty seatbid or zero bids)
+			hasBid := false
+			if resp != nil {
+				for _, sb := range resp.SeatBid {
+					if len(sb.Bid) > 0 {
+						hasBid = true
+						break
+					}
+				}
+			}
+
+			status := "nobid"
+			if hasBid {
+				status = "bid"
+			}
+			partners.DSPResponseCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, status).Inc()
+
+			bidChan <- bidResult{resp: resp, dsp: d}
 		}(dsp)
 	}
 
@@ -126,31 +159,77 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		close(bidChan)
 	}()
 
-	// 8. Collect and Select Best Bid
-	var bestResponse *openrtb2.BidResponse
+	var bestResult *bidResult
 	var maxPrice float64
 
-	for resp := range bidChan {
-		for _, sb := range resp.SeatBid {
+	for res := range bidChan {
+		for _, sb := range res.resp.SeatBid {
 			for _, bid := range sb.Bid {
 				if bid.Price > maxPrice {
 					maxPrice = bid.Price
-					bestResponse = resp
+					resCopy := res
+					bestResult = &resCopy
 				}
 			}
 		}
 	}
 
-	if bestResponse == nil {
+	if bestResult == nil {
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	// 9. Return Response
-	respBody, _ := json.Marshal(bestResponse)
+	// 9. Log Winning Event
+	if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+		event := &generated.AuctionEvent{
+			TenantId:            uint32(ssp.TenantID),
+			SspPartnerId:        uint32(ssp.SSPID),
+			SspInventoryId:      uint32(ssp.SSPInventoryID),
+			SspPartnerAuctionId: bidReq.ID,
+			DspPartnerId:        uint32(bestResult.dsp.DSPID),
+			DspInventoryId:      uint32(bestResult.dsp.DSPInventoryID),
+			DspPrice:            maxPrice,
+			RawBidRequest:       body,
+		}
+
+		// Set bid floor if available
+		if len(bidReq.Imp) > 0 {
+			event.BidRequestPrice = bidReq.Imp[0].BidFloor
+		}
+
+		// Set source (App vs Web)
+		if bidReq.App != nil {
+			event.Source = &generated.AuctionEvent_App{
+				App: &generated.App{
+					Id:     bidReq.App.ID,
+					Name:   bidReq.App.Name,
+					Bundle: bidReq.App.Bundle,
+					Domain: bidReq.App.Domain,
+				},
+			}
+		} else if bidReq.Site != nil {
+			event.Source = &generated.AuctionEvent_Web{
+				Web: &generated.Web{
+					Domain: bidReq.Site.Domain,
+					Page:   bidReq.Site.Page,
+				},
+			}
+		}
+
+		// Raw DSP Response
+		respBody, _ := json.Marshal(bestResult.resp)
+		event.RawDspResponse = respBody
+
+		bidLogger.Log(event)
+	}
+
+	// 10. Return Response
+	respBody, _ := json.Marshal(bestResult.resp)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(respBody)
 	partners.AuctionCounter.WithLabelValues("ok").Inc()
+	partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok").Inc()
 }
 
 func (h *AuctionHandler) callDSP(ctx context.Context, dsp partners.DSPInventory, body []byte) (*openrtb2.BidResponse, error) {

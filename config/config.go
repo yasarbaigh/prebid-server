@@ -1251,6 +1251,7 @@ func SetupViper(v *viper.Viper, filename string, bidderInfos BidderInfos) {
 	v.SetDefault("compression.response.enable_gzip", false)
 	v.SetDefault("compression.request.enable_gzip", false)
 
+	v.SetDefault("certificates_use_system", false)
 	v.SetDefault("certificates_file", "")
 
 	v.SetDefault("auto_gen_source_tid", true)

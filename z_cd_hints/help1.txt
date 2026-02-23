@@ -1,4 +1,8 @@
 sudo systemctl restart prometheus
+sudo systemctl restart grafana-server.service 
+
+
+
 
 =================
 

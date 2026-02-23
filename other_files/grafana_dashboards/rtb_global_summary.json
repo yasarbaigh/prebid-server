@@ -1,0 +1,209 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 16,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(rate(prebid_rtb_auctions_total[$__rate_interval])) by (status)",
+                    "legendFormat": "Status: {{status}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Global RTB Auctions Status",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            },
+            "id": 2,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(rate(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\", prometheus_identifier=~\"$prometheus\"}[$__rate_interval])) by ($group_by)",
+                    "legendFormat": "{{$group_by}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Aggregated SSP Request Rate",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 8
+            },
+            "id": 5,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(rate(prebid_rtb_dsp_requests_total{tenant_identifier=~\"$tenant\", prometheus_identifier=~\"$prometheus\"}[$__rate_interval])) by ($group_by)",
+                    "legendFormat": "{{$group_by}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Aggregated DSP Fan-out Rate",
+            "type": "timeseries"
+        }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 36,
+    "style": "dark",
+    "tags": [
+        "prebid",
+        "rtb",
+        "global"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": "Prometheus",
+                "definition": "label_values(prebid_rtb_ssp_requests_total, tenant_identifier)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Tenant",
+                "multi": true,
+                "name": "tenant",
+                "options": [],
+                "query": {
+                    "query": "label_values(prebid_rtb_ssp_requests_total, tenant_identifier)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": "Prometheus",
+                "definition": "label_values(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\"}, prometheus_identifier)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Prometheus Instance",
+                "multi": true,
+                "name": "prometheus",
+                "options": [],
+                "query": {
+                    "query": "label_values(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\"}, prometheus_identifier)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "hide": 0,
+                "label": "Group By",
+                "multi": false,
+                "name": "group_by",
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "tenant_identifier",
+                        "value": "tenant_identifier"
+                    },
+                    {
+                        "selected": false,
+                        "text": "prometheus_identifier",
+                        "value": "prometheus_identifier"
+                    }
+                ],
+                "query": "tenant_identifier,prometheus_identifier",
+                "skipUrlSync": false,
+                "type": "custom"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "title": "RTB Global Summary",
+    "uid": "rtb_global_sum",
+    "version": 1
+}

@@ -1,0 +1,46 @@
+syntax = "proto3";
+package log;
+
+option go_package = "github.com/prebid/prebid-server/v3/proto/generated";
+
+message App {
+    string id = 1;
+    string name = 2;
+    string bundle = 3;
+    string domain = 4;
+}
+
+message Web {
+    string domain = 1;
+    string page = 2;
+}
+
+message AuctionEvent {
+    // Identity & Context
+    uint32 tenant_id = 1;
+    uint32 ssp_partner_id = 2;
+    uint32 ssp_inventory_id = 3;
+    string ssp_partner_auction_id = 4; // bidrequest.id
+    
+    // Winner Details
+    uint32 dsp_partner_id = 5;
+    uint32 dsp_inventory_id = 6;
+    
+    // Financials
+    double bid_request_price = 7; // Floor/Req Price
+    double dsp_price = 8;         // Winning Bid Price
+    
+    // Source Environment
+    oneof source {
+        App app = 9;
+        Web web = 10;
+    }
+    
+    // System Metadata
+    int64 timestamp = 11;         // Unix timestamp in MS
+    string hostname = 12;         // Device/Server hostname
+    
+    // Raw Payloads
+    bytes raw_bid_request = 13;
+    bytes raw_dsp_response = 14;
+}

@@ -12,6 +12,7 @@ import (
 	"github.com/prebid/prebid-server/v3/config"
 	"github.com/prebid/prebid-server/v3/currency"
 	"github.com/prebid/prebid-server/v3/logger"
+	"github.com/prebid/prebid-server/v3/logging"
 	"github.com/prebid/prebid-server/v3/openrtb_ext"
 	"github.com/prebid/prebid-server/v3/router"
 	"github.com/prebid/prebid-server/v3/server"
@@ -82,9 +83,17 @@ func serve(cfg *config.Configuration) error {
 	}
 	pm.StartReloading(context.Background(), "./partners.json")
 
+	if err := logging.InitBidLogger("./bid_logging.properties"); err != nil {
+		logger.Warnf("Failed to initialize BidLogger: %v", err)
+	}
+
 	r, err := router.New(cfg, currencyConverter, pm)
 	if err != nil {
 		return err
+	}
+
+	if r.MetricsEngine.PrometheusMetrics != nil {
+		partners.InitMetrics(r.MetricsEngine.PrometheusMetrics.Registerer)
 	}
 
 	corsRouter := router.SupportCORS(r)

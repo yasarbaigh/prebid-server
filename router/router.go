@@ -18,8 +18,8 @@ import (
 	"github.com/prebid/prebid-server/v3/endpoints"
 	"github.com/prebid/prebid-server/v3/endpoints/events"
 	infoEndpoints "github.com/prebid/prebid-server/v3/endpoints/info"
-	"github.com/prebid/prebid-server/v3/endpoints/open_rtb_2_5"
 	"github.com/prebid/prebid-server/v3/endpoints/openrtb2"
+	"github.com/prebid/prebid-server/v3/endpoints/openrtb_2_5"
 	"github.com/prebid/prebid-server/v3/errortypes"
 	"github.com/prebid/prebid-server/v3/exchange"
 	"github.com/prebid/prebid-server/v3/experiment/adscert"
@@ -283,7 +283,8 @@ func New(cfg *config.Configuration, rateConvertor *currency.RateConverter, pm *p
 	}
 
 	r.POST("/openrtb2/auction", openrtbEndpoint)
-	r.POST("/open_rtb_2_5/auction_handler", open_rtb_2_5.NewAuctionHandler(pm).Handle)
+	r.POST("/openrtb_2_5/auction_handler", openrtb_2_5.NewAuctionHandler(pm).Handle)
+	r.POST("/openrtb_2/auction_handler", openrtb_2_5.NewAuctionHandler(pm).Handle)
 	r.POST("/openrtb2/video", videoEndpoint)
 	r.GET("/openrtb2/amp", ampEndpoint)
 	r.GET("/info/bidders", infoEndpoints.NewBiddersEndpoint(cfg.BidderInfos))

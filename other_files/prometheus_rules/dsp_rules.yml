@@ -1,0 +1,63 @@
+groups:
+  - name: dsp_metrics
+    rules:
+      # DSP Fan-out Request Rate (QPS)
+      - record: job:dsp_requests:rate5m
+        expr: sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier)
+
+      # DSP Response Rate by Status (bid, nobid, error)
+      - record: job:dsp_responses:rate5m
+        expr: sum(rate(prebid_rtb_dsp_responses_total[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier, status)
+
+      # DSP Bid Rate Percentage
+      - record: dsp:bid_rate:ratio5m
+        expr: >
+          sum(rate(prebid_rtb_dsp_responses_total{status="bid"}[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier)
+          /
+          sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier)
+
+      # DSP Error Rate Percentage
+      - record: dsp:error_rate:ratio5m
+        expr: >
+          sum(rate(prebid_rtb_dsp_responses_total{status="error"}[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier)
+          /
+          sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier)
+
+      # DSP P95 Latency (Seconds)
+      - record: dsp:latency_p95:seconds5m
+        expr: >
+          histogram_quantile(0.95, sum(rate(prebid_rtb_dsp_latency_seconds_bucket[5m])) by (le, tenant_identifier, dsp_identifier, prometheus_identifier))
+
+      # DSP P50 Latency (Median)
+      - record: dsp:latency_p50:seconds5m
+        expr: >
+          histogram_quantile(0.50, sum(rate(prebid_rtb_dsp_latency_seconds_bucket[5m])) by (le, tenant_identifier, dsp_identifier, prometheus_identifier))
+
+      # DSP Average Latency
+      - record: dsp:latency_avg:seconds5m
+        expr: >
+          sum(rate(prebid_rtb_dsp_latency_seconds_sum[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier)
+          /
+          sum(rate(prebid_rtb_dsp_latency_seconds_count[5m])) by (tenant_identifier, dsp_identifier, prometheus_identifier)
+
+  - name: dsp_alerts
+    rules:
+      # Alert if DSP Error Rate > 20%
+      - alert: DSPHighErrorRate
+        expr: dsp:error_rate:ratio5m > 0.2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate for DSP {{ $labels.dsp_identifier }}"
+          description: "DSP {{ $labels.dsp_identifier }} ({{ $labels.prometheus_identifier }}) has an error rate of {{ $value | printf \"%.2f\" }}%."
+
+      # Alert if DSP P95 Latency > 300ms
+      - alert: DSPHighLatency
+        expr: dsp:latency_p95:seconds5m > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow response from DSP {{ $labels.dsp_identifier }}"
+          description: "DSP {{ $labels.dsp_identifier }} P95 latency is {{ $value | printf \"%.3f\" }}s, which is above 300ms."
