@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/prebid/openrtb/v20/openrtb2"
+	"github.com/prebid/prebid-server/v3/endpoints"
 	"github.com/prebid/prebid-server/v3/logging"
 	"github.com/prebid/prebid-server/v3/partners"
 	"github.com/prebid/prebid-server/v3/proto/generated"
@@ -83,10 +85,22 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		return
 	}
 
+	// 5. Pre-Check Validator (Pre-Auction Validation)
+	if err := endpoints.ValidateBidRequest(&bidReq); err != nil {
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "error", "400").Inc()
+		http.Error(w, fmt.Sprintf("Invalid Bid Request: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Log SSP Request
+	if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+		bidLogger.LogSSP(uint32(ssp.SSPID), body, "REQ")
+	}
+
 	// 5. Check Tmax
 	if bidReq.TMax <= 120 {
 		partners.AuctionCounter.WithLabelValues("rejected_tmax").Inc()
-		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "error").Inc()
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "error", "204").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -118,11 +132,20 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		go func(d partners.DSPInventory) {
 			defer wg.Done()
 
+			// 7.1 Calculate per-DSP BidRequest (Uplift Floors by Margin + SChain)
+			dspBidReq := endpoints.GetDspBidRequest(&bidReq, *ssp, d)
+			dspBody, _ := json.Marshal(dspBidReq)
+
 			// Mark fan-out to DSP in Prometheus
 			partners.DSPRequestCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Inc()
 
+			// Log DSP Request (specific to this DSP's floor)
+			if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+				bidLogger.LogDSP(uint32(d.DSPID), dspBody, "REQ")
+			}
+
 			start := time.Now()
-			resp, err := h.callDSP(auctionCtx, d, body)
+			resp, err := h.callDSP(auctionCtx, d, dspBody)
 			latency := time.Since(start).Seconds()
 
 			// Record Latency
@@ -131,6 +154,12 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			if err != nil {
 				partners.DSPResponseCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, "error").Inc()
 				return
+			}
+
+			// Log DSP Response
+			if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+				respBody, _ := json.Marshal(resp)
+				bidLogger.LogDSP(uint32(d.DSPID), respBody, "RESP")
 			}
 
 			// Check if it's a "No Bid" (empty seatbid or zero bids)
@@ -144,11 +173,26 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 				}
 			}
 
-			status := "nobid"
-			if hasBid {
-				status = "bid"
+			status := "error"
+			httpCode := "500"
+			if err != nil {
+				if strings.Contains(err.Error(), "status") {
+					// Extract status code from error if possible, or just mark as error
+					httpCode = "5xx" // Generic for HTTP errors
+				}
+			} else {
+				status = "nobid"
+				httpCode = "204"
+				if hasBid {
+					status = "bid"
+					httpCode = "200"
+				}
 			}
-			partners.DSPResponseCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, status).Inc()
+			partners.DSPResponseCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, status, httpCode).Inc()
+
+			if err != nil {
+				return // Do not send to bidChan if there was an error
+			}
 
 			bidChan <- bidResult{resp: resp, dsp: d}
 		}(dsp)
@@ -175,9 +219,38 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	if bestResult == nil {
-		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid").Inc()
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid", "204").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
+	}
+
+	// 8.5 Apply Exchange Margin and Check SSP Bid Floor (Using price_handler.go helper)
+	if !endpoints.ApplyExchangeMargin(bestResult.resp, &bidReq, bestResult.dsp) {
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid", "204").Inc()
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// 8.6 Record Profit Metrics
+	// Extract final SSP Price (after margin) and original DSP Price for accounting
+	var sspPrice, dspPrice float64
+	marginMultiplier := endpoints.GetMarginMultiplier(bestResult.dsp)
+	if len(bestResult.resp.SeatBid) > 0 && len(bestResult.resp.SeatBid[0].Bid) > 0 {
+		// Calculate the original DSP price based on the current SSP price and margin
+		sspPrice = bestResult.resp.SeatBid[0].Bid[0].Price
+		dspPrice = sspPrice / marginMultiplier
+	}
+
+	partners.ExchangeRevenueCounter.WithLabelValues(ssp.SSPIdentifier, bestResult.dsp.DSPIdentifier, ssp.TenantIdentifier).Add(dspPrice)
+	partners.ExchangeSpentCounter.WithLabelValues(ssp.SSPIdentifier, bestResult.dsp.DSPIdentifier, ssp.TenantIdentifier).Add(sspPrice)
+	partners.ExchangeProfitCounter.WithLabelValues(ssp.SSPIdentifier, bestResult.dsp.DSPIdentifier, ssp.TenantIdentifier).Add(dspPrice - sspPrice)
+
+	// 8.7 Transform Winning Bid (Apply custom NURL with AES encryption and AdM tracking)
+	for i := range bestResult.resp.SeatBid {
+		for j := range bestResult.resp.SeatBid[i].Bid {
+			bid := &bestResult.resp.SeatBid[i].Bid[j]
+			endpoints.TransformWinningBid(bid, *ssp, bestResult.dsp)
+		}
 	}
 
 	// 9. Log Winning Event
@@ -226,10 +299,16 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	// 10. Return Response
 	respBody, _ := json.Marshal(bestResult.resp)
+
+	// Log SSP Response
+	if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+		bidLogger.LogSSP(uint32(ssp.SSPID), respBody, "RESP")
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(respBody)
 	partners.AuctionCounter.WithLabelValues("ok").Inc()
-	partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok").Inc()
+	partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
 }
 
 func (h *AuctionHandler) callDSP(ctx context.Context, dsp partners.DSPInventory, body []byte) (*openrtb2.BidResponse, error) {

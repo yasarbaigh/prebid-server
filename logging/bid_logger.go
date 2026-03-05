@@ -15,12 +15,26 @@ import (
 )
 
 type BidLogger struct {
-	logChan  chan *generated.AuctionEvent
-	filePath string
-	writer   *lumberjack.Logger
-	mu       sync.Mutex
-	once     sync.Once
-	hostname string
+	logChan           chan *generated.AuctionEvent
+	filePath          string
+	writer            *lumberjack.Logger
+	mu                sync.Mutex
+	once              sync.Once
+	hostname          string
+	verboseLogEnabled bool
+	verboseLogPath    string
+	verboseMaxMB      int
+	verboseBackups    int
+	verboseChan       chan *verboseEvent
+	verboseLoggers    map[string]*lumberjack.Logger
+	vMu               sync.Mutex
+}
+
+type verboseEvent struct {
+	id    uint32
+	data  []byte
+	isSSp bool
+	label string
 }
 
 var instance *BidLogger
@@ -54,13 +68,33 @@ func InitBidLogger(propsPath string) error {
 		Compress:   true,
 	}
 
+	verboseLogEnabled := p.GetBool("verbose_log", false)
+	verboseLogPath := p.GetString("verbose_log.path", "/opt/adserving/verbose")
+	vMaxMB := p.GetInt("verbose_log.max_file_size_mb", 10)
+	vMaxBackups := p.GetInt("verbose_log.max_backups", 5)
 	hostname, _ := os.Hostname()
 
+	// Ensure verbose directory exists if enabled
+	if verboseLogEnabled {
+		if err := os.MkdirAll(verboseLogPath, 0755); err != nil {
+			logger.Warnf("Failed to create verbose log directory %s: %v", verboseLogPath, err)
+		}
+	}
+
 	instance = &BidLogger{
-		logChan:  make(chan *generated.AuctionEvent, bufferSize),
-		filePath: path,
-		writer:   lumberjackLogger,
-		hostname: hostname,
+		logChan:           make(chan *generated.AuctionEvent, bufferSize),
+		filePath:          path,
+		writer:            lumberjackLogger,
+		hostname:          hostname,
+		verboseLogEnabled: verboseLogEnabled,
+		verboseLogPath:    verboseLogPath,
+		verboseMaxMB:      vMaxMB,
+		verboseBackups:    vMaxBackups,
+		verboseLoggers:    make(map[string]*lumberjack.Logger),
+	}
+
+	if verboseLogEnabled {
+		instance.verboseChan = make(chan *verboseEvent, bufferSize)
 	}
 
 	go instance.start()
@@ -68,9 +102,60 @@ func InitBidLogger(propsPath string) error {
 }
 
 func (l *BidLogger) start() {
+	if l.verboseLogEnabled {
+		go func() {
+			for event := range l.verboseChan {
+				var filename string
+				if event.isSSp {
+					filename = fmt.Sprintf("ssp_%d.log", event.id)
+				} else {
+					filename = fmt.Sprintf("dsp_%d.log", event.id)
+				}
+				l.appendToVerboseFile(filename, event.data, event.label)
+			}
+		}()
+	}
+
 	for event := range l.logChan {
 		l.writeEvent(event)
 	}
+}
+
+func (l *BidLogger) writeVerbose(event *generated.AuctionEvent) {
+	if !l.verboseLogEnabled {
+		return
+	}
+
+	if event.SspPartnerId != 0 && len(event.RawBidRequest) > 0 {
+		filename := fmt.Sprintf("ssp_%d.log", event.SspPartnerId)
+		l.appendToVerboseFile(filename, event.RawBidRequest, "REQ")
+	}
+
+	if event.DspPartnerId != 0 && len(event.RawDspResponse) > 0 {
+		filename := fmt.Sprintf("dsp_%d.log", event.DspPartnerId)
+		l.appendToVerboseFile(filename, event.RawDspResponse, "RESP")
+	}
+}
+
+func (l *BidLogger) appendToVerboseFile(filename string, data []byte, label string) {
+	l.vMu.Lock()
+	writer, ok := l.verboseLoggers[filename]
+	if !ok {
+		path := fmt.Sprintf("%s/%s", l.verboseLogPath, filename)
+		writer = &lumberjack.Logger{
+			Filename:   path,
+			MaxSize:    l.verboseMaxMB,
+			MaxBackups: l.verboseBackups,
+			LocalTime:  true,
+			Compress:   true,
+		}
+		l.verboseLoggers[filename] = writer
+	}
+	l.vMu.Unlock()
+
+	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
+	line := fmt.Sprintf("[%s] [%s] %s\n", timestamp, label, string(data))
+	writer.Write([]byte(line))
 }
 
 func (l *BidLogger) writeEvent(event *generated.AuctionEvent) {
@@ -101,8 +186,42 @@ func (l *BidLogger) Log(event *generated.AuctionEvent) {
 	}
 }
 
+func (l *BidLogger) LogSSP(sspID uint32, body []byte, label string) {
+	if !l.verboseLogEnabled || l.verboseChan == nil {
+		return
+	}
+
+	select {
+	case l.verboseChan <- &verboseEvent{id: sspID, data: body, isSSp: true, label: label}:
+	default:
+		// Drop silently for verbose checking
+	}
+}
+
+func (l *BidLogger) LogDSP(dspID uint32, body []byte, label string) {
+	if !l.verboseLogEnabled || l.verboseChan == nil {
+		return
+	}
+
+	select {
+	case l.verboseChan <- &verboseEvent{id: dspID, data: body, isSSp: false, label: label}:
+	default:
+		// Drop silently for verbose checking
+	}
+}
+
 func (l *BidLogger) Close() {
 	close(l.logChan)
+	if l.verboseChan != nil {
+		close(l.verboseChan)
+	}
+
+	l.vMu.Lock()
+	defer l.vMu.Unlock()
+	for _, v := range l.verboseLoggers {
+		v.Close()
+	}
+
 	if l.writer != nil {
 		l.writer.Close()
 	}

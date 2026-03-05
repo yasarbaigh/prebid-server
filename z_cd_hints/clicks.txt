@@ -1,0 +1,13 @@
+Click-Redirector: Simple Explanation
+Think of a click-redirector as a "Digital Toll Booth" for links.
+
+The Workflow:
+
+The Ad: When the ad shows up on the user's phone, the "Buy Now" button isn't linked to the advertiser's site directly. It's linked to your server with a special code.
+Example Link: https://win.my-exchange.com/event?type=click&url=ENCRYPTED_DSP_SITE
+The Click: The user clicks. For a split second, they hit your server.
+The Action: Your server:
+Logs that "User X on App Y clicked a Shoe Ad."
+Takes the ENCRYPTED_DSP_SITE parameter and decrypts it back to https://shoes.com.
+The Redirect: Your server tells the browser: "Actually, go to https://shoes.com instead." (This is an HTTP 302 Redirect).
+The Result: The user arrives at the shoe store. They don't notice anything, but you now have perfect data for billing and DSP optimization!

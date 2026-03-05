@@ -108,6 +108,113 @@
             ],
             "title": "Aggregated DSP Fan-out Rate",
             "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "unit": "currencyUSD",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 0
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 0,
+                "y": 16
+            },
+            "id": 20,
+            "targets": [
+                {
+                    "expr": "sum(rate(rtb_exchange_revenue_total{tenant_identifier=~\"$tenant\"}[$__rate_interval]))",
+                    "legendFormat": "Revenue",
+                    "refId": "A"
+                }
+            ],
+            "title": "Total Revenue (DSP Sales)",
+            "type": "stat"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "unit": "currencyUSD"
+                }
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 8,
+                "y": 16
+            },
+            "id": 21,
+            "targets": [
+                {
+                    "expr": "sum(rate(rtb_exchange_spent_total{tenant_identifier=~\"$tenant\"}[$__rate_interval]))",
+                    "legendFormat": "Spent",
+                    "refId": "A"
+                }
+            ],
+            "title": "Total Spent (SSP/Pub Payout)",
+            "type": "stat"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "unit": "currencyUSD",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "green",
+                                "value": 0.01
+                            }
+                        ]
+                    }
+                }
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 16,
+                "y": 16
+            },
+            "id": 22,
+            "targets": [
+                {
+                    "expr": "sum(rate(rtb_exchange_profit_total{tenant_identifier=~\"$tenant\"}[$__rate_interval]))",
+                    "legendFormat": "Profit",
+                    "refId": "A"
+                }
+            ],
+            "title": "Total Exchange Profit",
+            "type": "stat"
         }
     ],
     "refresh": "10s",

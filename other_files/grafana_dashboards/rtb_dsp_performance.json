@@ -209,6 +209,34 @@
             ],
             "title": "DSP Error Rate (%)",
             "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            },
+            "id": 18,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(rate(rtb_dsp_responses_total{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\"}[$__rate_interval])) by (http_code)",
+                    "legendFormat": "HTTP {{http_code}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "DSP Response Codes Breakdown",
+            "type": "timeseries"
         }
     ],
     "refresh": "10s",

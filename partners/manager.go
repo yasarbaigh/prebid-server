@@ -25,6 +25,10 @@ type SSPInventory struct {
 	PrometheusID         string   `json:"prometheus_id"`
 	PrometheusIdentifier string   `json:"prometheus_identifier"`
 	AdFormats            []string `json:"ad_formats"`
+	WinURL               string   `json:"win_url"`
+	ImpTrackURL          string   `json:"imp_track_url"`
+	ClickTrackURL        string   `json:"click_track_url"`
+	SChainNode           string   `json:"schain_node"` // Your exchange identity for this SSP
 }
 
 type DSPInventory struct {
@@ -56,6 +60,9 @@ type DSPInventory struct {
 	DSPInventoryID       int      `json:"dsp_inventory_id"`
 	PrometheusID         string   `json:"prometheus_id"`
 	PrometheusIdentifier string   `json:"prometheus_identifier"`
+	AdmPriceTransparency bool     `json:"adm_price_transparency"`
+	Margin               int      `json:"margin"`
+	BidAdjustment        float64  `json:"bid_adjustment"` // Multiplier (e.g. 0.9)
 }
 
 type PartnersConfig struct {

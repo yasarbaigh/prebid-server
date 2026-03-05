@@ -176,6 +176,34 @@
             ],
             "title": "SSP Error Rate (%)",
             "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 20
+            },
+            "id": 15,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(rate(rtb_ssp_responses_total{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\"}[$__rate_interval])) by (http_code)",
+                    "legendFormat": "HTTP {{http_code}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "SSP Response Codes Breakdown",
+            "type": "timeseries"
         }
     ],
     "refresh": "10s",
