@@ -1,29 +1,24 @@
 package endpoints
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
+	"net/url"
 	"strings"
 
 	"github.com/prebid/openrtb/v20/openrtb2"
 	"github.com/prebid/prebid-server/v3/partners"
+	"github.com/prebid/prebid-server/v3/util/cryptoutil"
 )
 
 // Win Transformer Logic
 
-// Hardcoded complex key (32 bytes for AES-256)
 const (
-	aesKey    = "a-very-complex-and-secret-key-32b" // 32 characters for AES-256
 	rtbMacros = "auction_id=${AUCTION_ID}&bid_id=${AUCTION_BID_ID}&imp_id=${AUCTION_IMP_ID}&price=${AUCTION_PRICE}&cur=${AUCTION_CURRENCY}&seat=${AUCTION_SEAT_ID}&ad_id=${AUCTION_AD_ID}"
 )
 
 // TransformWinningBid modifies the bid's NURL and AdM to include exchange-specific tracking and AES-encrypted DSP info.
-func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partners.DSPInventory) {
+func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partners.DSPInventory, dspPrice float64, requestPrice float64) {
 	if bid == nil {
 		return
 	}
@@ -31,35 +26,40 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	// 1. Prepare Encrypted DSP URL (if exists)
 	encryptedDspUrl := ""
 	if bid.NURL != "" {
-		encryptedDspUrl = encrypt(bid.NURL)
+		encryptedDspUrl, _ = cryptoutil.Encrypt(bid.NURL)
 	}
 
-	// 2. Update NURL with custom SSP win URL + RTB Macros + Encrypted DSP Info
+	// 2. Prepare Encrypted Internal Payload
+	payload := fmt.Sprintf("tid=%d&siid=%d&diid=%d&sid=%d&did=%d&dp=%.6f&sp=%.6f&bp=%.6f",
+		ssp.TenantID, ssp.SSPInventoryID, dsp.DSPInventoryID, ssp.SSPID, dsp.DSPID, dspPrice, bid.Price, requestPrice)
+	encryptedPayload, _ := cryptoutil.Encrypt(payload)
+
+	// 3. Update NURL with custom SSP win URL + RTB Macros + Encrypted DSP Info + Encrypted Payload
 	winHost := ssp.WinURL
 	if winHost == "" {
 		winHost = "https://win.my-exchange.com/event" // Fallback
 	}
-	bid.NURL = fmt.Sprintf("%s?type=win&dsp_id=%d&dsp_name=%s&url=%s&%s",
-		winHost, dsp.DSPID, dsp.Name, encryptedDspUrl, rtbMacros)
+	bid.NURL = fmt.Sprintf("%s?type=win&durl=%s&pd=%s&%s",
+		winHost, url.QueryEscape(encryptedDspUrl), url.QueryEscape(encryptedPayload), rtbMacros)
 
-	// 3. Modify AdM (Inject Tracking Pixels for both VAST and HTML)
+	// 4. Modify AdM (Inject Tracking Pixels for both VAST and HTML)
 	impHost := ssp.ImpTrackURL
 	if impHost == "" {
 		impHost = "https://win.my-exchange.com/event" // Fallback
 	}
-	pixelUrl := fmt.Sprintf("%s?type=pixel&dsp_id=%d&%s", impHost, dsp.DSPID, rtbMacros)
+	pixelUrl := fmt.Sprintf("%s?type=pixel&pd=%s&%s", impHost, url.QueryEscape(encryptedPayload), rtbMacros)
 	bid.AdM = modifyAdm(bid.AdM, pixelUrl)
 
-	// 3.5 Add Click Tracking (if available)
+	// 5. Add Click Tracking (if available)
 	if ssp.ClickTrackURL != "" {
-		clickUrl := fmt.Sprintf("%s?type=click&dsp_id=%d&%s", ssp.ClickTrackURL, dsp.DSPID, rtbMacros)
+		clickUrl := fmt.Sprintf("%s?type=click&pd=%s&%s", ssp.ClickTrackURL, url.QueryEscape(encryptedPayload), rtbMacros)
 		if !dsp.AdmPriceTransparency {
 			clickUrl = cleanseDspMacros(clickUrl)
 		}
 		bid.AdM = injectClickTracker(bid.AdM, clickUrl)
 	}
 
-	// 4. Handle Price Transparency (Masking/Cleansing)
+	// 6. Handle Price Transparency (Masking/Cleansing)
 	if !dsp.AdmPriceTransparency {
 		bid.AdM = cleanseDspMacros(bid.AdM)
 	}
@@ -138,53 +138,6 @@ func modifyAdm(adm string, pixelUrl string) string {
 	return adm + pixelHtml
 }
 
-func encrypt(plaintext string) string {
-	block, err := aes.NewCipher([]byte(aesKey))
-	if err != nil {
-		return ""
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return ""
-	}
-
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return ""
-	}
-
-	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-	return base64.URLEncoding.EncodeToString(ciphertext)
-}
-
-// Decrypt reverses the AES-GCM encryption and returns the original plaintext.
 func Decrypt(cryptoText string) (string, error) {
-	data, err := base64.URLEncoding.DecodeString(cryptoText)
-	if err != nil {
-		return "", err
-	}
-
-	block, err := aes.NewCipher([]byte(aesKey))
-	if err != nil {
-		return "", err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-
-	nonceSize := gcm.NonceSize()
-	if len(data) < nonceSize {
-		return "", fmt.Errorf("ciphertext too short")
-	}
-
-	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return "", err
-	}
-
-	return string(plaintext), nil
+	return cryptoutil.Decrypt(cryptoText)
 }

@@ -46,6 +46,22 @@ func NewAuctionHandler(pm *partners.Manager) *AuctionHandler {
 }
 
 func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	// Panic Recovery to ensure the server never crashes and always returns 204 on catastrophe
+	defer func() {
+		if r := recover(); r != nil {
+			// Log the panic details
+			if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+				// We don't have sspID yet if it panics very early, but we try to log what we can
+				errDetail := fmt.Sprintf("PANIC RECOVERED: %v", r)
+				bidLogger.LogSSP("SYSTEM_PANIC", []byte(errDetail), "CRITICAL_ERROR")
+			}
+			// Always return 204 No Content to the SSP
+			if w.Header().Get("Content-Type") == "" {
+				w.WriteHeader(http.StatusNoContent)
+			}
+		}
+	}()
+
 	// 1. Check AdServing flag
 	cfg := h.PartnersManager.GetConfig()
 	if cfg == nil || !cfg.AdServing {
@@ -81,12 +97,18 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	var bidReq openrtb2.BidRequest
 	if err := json.Unmarshal(body, &bidReq); err != nil {
+		if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+			bidLogger.LogSSP(ssp.PrometheusIdentifier, body, "REQ_INVALID_JSON")
+		}
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// 5. Pre-Check Validator (Pre-Auction Validation)
 	if err := endpoints.ValidateBidRequest(&bidReq); err != nil {
+		if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+			bidLogger.LogSSP(ssp.PrometheusIdentifier, body, "REQ_INVALID")
+		}
 		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "error", "400").Inc()
 		http.Error(w, fmt.Sprintf("Invalid Bid Request: %v", err), http.StatusBadRequest)
 		return
@@ -94,11 +116,14 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	// Log SSP Request
 	if bidLogger := logging.GetBidLogger(); bidLogger != nil {
-		bidLogger.LogSSP(uint32(ssp.SSPID), body, "REQ")
+		bidLogger.LogSSP(ssp.PrometheusIdentifier, body, "REQ")
 	}
 
 	// 5. Check Tmax
 	if bidReq.TMax <= 120 {
+		if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+			bidLogger.LogSSP(ssp.PrometheusIdentifier, body, "REQ_INVALID_TMAX")
+		}
 		partners.AuctionCounter.WithLabelValues("rejected_tmax").Inc()
 		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "error", "204").Inc()
 		w.WriteHeader(http.StatusNoContent)
@@ -110,7 +135,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	selectedDSPs := partners.ShortlistDSPs(&bidReq, candidates, 5)
 
 	if len(selectedDSPs) == 0 {
-		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid").Inc()
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid", "204").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -141,7 +166,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 			// Log DSP Request (specific to this DSP's floor)
 			if bidLogger := logging.GetBidLogger(); bidLogger != nil {
-				bidLogger.LogDSP(uint32(d.DSPID), dspBody, "REQ")
+				bidLogger.LogDSP(d.PrometheusIdentifier, dspBody, "REQ")
 			}
 
 			start := time.Now()
@@ -152,14 +177,14 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			partners.DSPLatencyHistogram.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Observe(latency)
 
 			if err != nil {
-				partners.DSPResponseCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, "error").Inc()
+				partners.DSPResponseCounter.WithLabelValues(d.PrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, "error", "5xx").Inc()
 				return
 			}
 
 			// Log DSP Response
 			if bidLogger := logging.GetBidLogger(); bidLogger != nil {
 				respBody, _ := json.Marshal(resp)
-				bidLogger.LogDSP(uint32(d.DSPID), respBody, "RESP")
+				bidLogger.LogDSP(d.PrometheusIdentifier, respBody, "RESP")
 			}
 
 			// Check if it's a "No Bid" (empty seatbid or zero bids)
@@ -249,7 +274,19 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	for i := range bestResult.resp.SeatBid {
 		for j := range bestResult.resp.SeatBid[i].Bid {
 			bid := &bestResult.resp.SeatBid[i].Bid[j]
-			endpoints.TransformWinningBid(bid, *ssp, bestResult.dsp)
+
+			// Find corresponding floor for this specific impression
+			var floor float64
+			for _, imp := range bidReq.Imp {
+				if imp.ID == bid.ImpID {
+					floor = imp.BidFloor
+					break
+				}
+			}
+
+			// Restore original DSP price for tracking purposes
+			dspPrice = bid.Price / marginMultiplier
+			endpoints.TransformWinningBid(bid, *ssp, bestResult.dsp, dspPrice, floor)
 		}
 	}
 
@@ -302,7 +339,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	// Log SSP Response
 	if bidLogger := logging.GetBidLogger(); bidLogger != nil {
-		bidLogger.LogSSP(uint32(ssp.SSPID), respBody, "RESP")
+		bidLogger.LogSSP(ssp.PrometheusIdentifier, respBody, "RESP")
 	}
 
 	w.Header().Set("Content-Type", "application/json")

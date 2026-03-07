@@ -1,6 +1,8 @@
 package endpoints
 
 import (
+	"math"
+
 	"github.com/prebid/openrtb/v20/adcom1"
 	"github.com/prebid/openrtb/v20/openrtb2"
 	"github.com/prebid/prebid-server/v3/partners"
@@ -34,6 +36,9 @@ func ApplyExchangeMargin(resp *openrtb2.BidResponse, bidReq *openrtb2.BidRequest
 
 			// Apply the Margin to the price
 			bid.Price = bid.Price * marginMultiplier
+
+			// Round to 6 decimal places
+			bid.Price = math.Round(bid.Price*1000000) / 1000000
 
 			// 3. Find corresponding floor for this specific impression
 			var floor float64

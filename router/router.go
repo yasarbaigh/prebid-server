@@ -27,6 +27,7 @@ import (
 	"github.com/prebid/prebid-server/v3/gdpr"
 	"github.com/prebid/prebid-server/v3/hooks"
 	"github.com/prebid/prebid-server/v3/logger"
+	"github.com/prebid/prebid-server/v3/logging"
 	"github.com/prebid/prebid-server/v3/macros"
 	"github.com/prebid/prebid-server/v3/metrics"
 	metricsConf "github.com/prebid/prebid-server/v3/metrics/config"
@@ -384,6 +385,22 @@ func SupportCORS(handler http.Handler) http.Handler {
 		},
 		AllowedHeaders: []string{"Origin", "X-Requested-With", "Content-Type", "Accept"}})
 	return c.Handler(handler)
+}
+
+func Recover(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Errorf("CRITICAL PANIC RECOVERED: %v", r)
+				if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+					bidLogger.LogSSP("GLOBAL_PANIC", []byte(fmt.Sprintf("Panic recovered: %v", r)), "PANIC")
+				}
+				// Return 204 No Content as requested for catastrophic failures
+				w.WriteHeader(http.StatusNoContent)
+			}
+		}()
+		handler.ServeHTTP(w, r)
+	})
 }
 
 func readDefaultRequest(defReqConfig config.DefReqConfig) []byte {

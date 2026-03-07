@@ -31,7 +31,7 @@ type BidLogger struct {
 }
 
 type verboseEvent struct {
-	id    uint32
+	id    string
 	data  []byte
 	isSSp bool
 	label string
@@ -107,9 +107,9 @@ func (l *BidLogger) start() {
 			for event := range l.verboseChan {
 				var filename string
 				if event.isSSp {
-					filename = fmt.Sprintf("ssp_%d.log", event.id)
+					filename = fmt.Sprintf("%s_ssp.log", event.id)
 				} else {
-					filename = fmt.Sprintf("dsp_%d.log", event.id)
+					filename = fmt.Sprintf("%s_dsp.log", event.id)
 				}
 				l.appendToVerboseFile(filename, event.data, event.label)
 			}
@@ -127,6 +127,9 @@ func (l *BidLogger) writeVerbose(event *generated.AuctionEvent) {
 	}
 
 	if event.SspPartnerId != 0 && len(event.RawBidRequest) > 0 {
+		// Note: AuctionEvent currently only has numeric IDs.
+		// For consistency, we'll continue using numeric IDs here or update AuctionEvent proto.
+		// However, LogSSP/LogDSP are the primary entry points for verbose logging.
 		filename := fmt.Sprintf("ssp_%d.log", event.SspPartnerId)
 		l.appendToVerboseFile(filename, event.RawBidRequest, "REQ")
 	}
@@ -186,25 +189,25 @@ func (l *BidLogger) Log(event *generated.AuctionEvent) {
 	}
 }
 
-func (l *BidLogger) LogSSP(sspID uint32, body []byte, label string) {
+func (l *BidLogger) LogSSP(sspIdentifier string, body []byte, label string) {
 	if !l.verboseLogEnabled || l.verboseChan == nil {
 		return
 	}
 
 	select {
-	case l.verboseChan <- &verboseEvent{id: sspID, data: body, isSSp: true, label: label}:
+	case l.verboseChan <- &verboseEvent{id: sspIdentifier, data: body, isSSp: true, label: label}:
 	default:
 		// Drop silently for verbose checking
 	}
 }
 
-func (l *BidLogger) LogDSP(dspID uint32, body []byte, label string) {
+func (l *BidLogger) LogDSP(dspIdentifier string, body []byte, label string) {
 	if !l.verboseLogEnabled || l.verboseChan == nil {
 		return
 	}
 
 	select {
-	case l.verboseChan <- &verboseEvent{id: dspID, data: body, isSSp: false, label: label}:
+	case l.verboseChan <- &verboseEvent{id: dspIdentifier, data: body, isSSp: false, label: label}:
 	default:
 		// Drop silently for verbose checking
 	}
