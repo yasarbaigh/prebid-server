@@ -185,7 +185,6 @@ type AuctionEvent struct {
 	CreativeId    string `protobuf:"bytes,28,opt,name=creative_id,json=creativeId,proto3" json:"creative_id,omitempty"`         // bid.crid
 	DealId        string `protobuf:"bytes,29,opt,name=deal_id,json=dealId,proto3" json:"deal_id,omitempty"`                     // bid.dealid
 	AdDomain      string `protobuf:"bytes,30,opt,name=ad_domain,json=adDomain,proto3" json:"ad_domain,omitempty"`               // bid.adomain
-	Schain        string `protobuf:"bytes,31,opt,name=schain,proto3" json:"schain,omitempty"`                                   // Serialized Supply Chain
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -441,13 +440,6 @@ func (x *AuctionEvent) GetAdDomain() string {
 	return ""
 }
 
-func (x *AuctionEvent) GetSchain() string {
-	if x != nil {
-		return x.Schain
-	}
-	return ""
-}
-
 type isAuctionEvent_Source interface {
 	isAuctionEvent_Source()
 }
@@ -476,7 +468,7 @@ const file_proto_auction_log_proto_rawDesc = "" +
 	"\x06domain\x18\x04 \x01(\tR\x06domain\"1\n" +
 	"\x03Web\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\tR\x04page\"\xeb\a\n" +
+	"\x04page\x18\x02 \x01(\tR\x04page\"\xd3\a\n" +
 	"\fAuctionEvent\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\rR\btenantId\x12$\n" +
 	"\x0essp_partner_id\x18\x02 \x01(\rR\fsspPartnerId\x12(\n" +
@@ -510,8 +502,7 @@ const file_proto_auction_log_proto_rawDesc = "" +
 	"\vcreative_id\x18\x1c \x01(\tR\n" +
 	"creativeId\x12\x17\n" +
 	"\adeal_id\x18\x1d \x01(\tR\x06dealId\x12\x1b\n" +
-	"\tad_domain\x18\x1e \x01(\tR\badDomain\x12\x16\n" +
-	"\x06schain\x18\x1f \x01(\tR\x06schainB\b\n" +
+	"\tad_domain\x18\x1e \x01(\tR\badDomainB\b\n" +
 	"\x06sourceB4Z2github.com/prebid/prebid-server/v3/proto/generatedb\x06proto3"
 
 var (

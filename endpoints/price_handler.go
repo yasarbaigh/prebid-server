@@ -78,7 +78,7 @@ func ApplyExchangeMargin(resp *openrtb2.BidResponse, bidReq *openrtb2.BidRequest
 // GetDspBidRequest clones the original BidRequest and calculates a new bid floor per impression
 // based on the DSP's margin. This ensures the DSP bids high enough to cover the exchange margin.
 // It also injects the SSP-specific SChain node.
-func GetDspBidRequest(orig *openrtb2.BidRequest, ssp partners.SSPInventory, dsp partners.DSPInventory) openrtb2.BidRequest {
+func GetDspBidRequest(orig *openrtb2.BidRequest, ssp partners.SSPInventory, dsp partners.DSPInventory, globalASI string) openrtb2.BidRequest {
 	req := *orig // shallow clone is enough as we are replacing the Imp slice
 
 	// Get validated multiplier
@@ -94,8 +94,8 @@ func GetDspBidRequest(orig *openrtb2.BidRequest, ssp partners.SSPInventory, dsp 
 	}
 	req.Imp = newImps
 
-	// 2. Inject SChain
-	injectSChain(&req, ssp)
+	// 2. Inject SChain via dedicated handler
+	AppendSChain(&req, ssp, globalASI)
 
 	return req
 }
@@ -154,33 +154,4 @@ func isCategoryBlocked(bidCats []string, req *openrtb2.BidRequest) bool {
 		}
 	}
 	return false
-}
-
-// injectSChain adds our exchange's node to the schain object in the request if provided.
-func injectSChain(req *openrtb2.BidRequest, ssp partners.SSPInventory) {
-	if ssp.SChainNode == "" {
-		return
-	}
-
-	if req.Source == nil {
-		req.Source = &openrtb2.Source{}
-	}
-
-	hpValue := int8(1)
-	newNode := openrtb2.SupplyChainNode{
-		ASI: ssp.SChainNode,
-		SID: ssp.SSPIdentifier,
-		RID: req.ID,
-		HP:  &hpValue,
-	}
-
-	if req.Source.SChain == nil {
-		req.Source.SChain = &openrtb2.SupplyChain{
-			Ver:      "1.0",
-			Complete: 1,
-			Nodes:    []openrtb2.SupplyChainNode{newNode},
-		}
-	} else {
-		req.Source.SChain.Nodes = append(req.Source.SChain.Nodes, newNode)
-	}
 }

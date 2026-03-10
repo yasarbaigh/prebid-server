@@ -28,7 +28,8 @@ message AuctionEvent {
     
     // Financials
     double bid_request_price = 7; // Floor/Req Price
-    double dsp_price = 8;         // Winning Bid Price
+    double dsp_price = 8;         // Winning Bid Price (Before Margin)
+    double ssp_price = 15;        // Final Bid Price (After Margin)
     
     // Source Environment
     oneof source {
@@ -43,4 +44,23 @@ message AuctionEvent {
     // Raw Payloads
     bytes raw_bid_request = 13;
     bytes raw_dsp_response = 14;
+
+    // Reporting & Analytics Dimensions
+    string device_type = 16;
+    string carrier = 17;
+    string os = 18;
+    string osv = 19;
+    string country = 20;
+    string ad_type = 21;
+    string site_app_domain = 22;
+    string bundle_id = 23;
+    string ad_size = 24;
+
+    // Audit & Identification
+    string winning_bid_id = 25;   // bid.id from DSP
+    string imp_id = 26;            // imp.id
+    string seat_id = 27;           // seat.id (agency/buyer)
+    string creative_id = 28;       // bid.crid
+    string deal_id = 29;           // bid.dealid
+    string ad_domain = 30;         // bid.adomain
 }

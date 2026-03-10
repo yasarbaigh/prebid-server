@@ -29,11 +29,21 @@ type RtbAuctionRequest struct {
 type AuctionHandler struct {
 	PartnersManager *partners.Manager
 	HttpClient      *http.Client
+	GlobalASI       string
 }
 
 func NewAuctionHandler(pm *partners.Manager) *AuctionHandler {
+	globalASI := "my-ad-exchange.com" // Final fallback
+	if pm != nil {
+		cfg := pm.GetConfig()
+		if cfg != nil && cfg.ASI != "" {
+			globalASI = cfg.ASI
+		}
+	}
+
 	return &AuctionHandler{
 		PartnersManager: pm,
+		GlobalASI:       globalASI,
 		HttpClient: &http.Client{
 			Timeout: 500 * time.Millisecond,
 			Transport: &http.Transport{
@@ -55,10 +65,8 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 				errDetail := fmt.Sprintf("PANIC RECOVERED: %v", r)
 				bidLogger.LogSSP("SYSTEM_PANIC", []byte(errDetail), "CRITICAL_ERROR")
 			}
-			// Always return 204 No Content to the SSP
-			if w.Header().Get("Content-Type") == "" {
-				w.WriteHeader(http.StatusNoContent)
-			}
+			// Always return 204 No Content to the SSP on any panic
+			w.WriteHeader(http.StatusNoContent)
 		}
 	}()
 
@@ -73,14 +81,16 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	// 2. Get account_code from query params
 	accountCode := r.URL.Query().Get("account_code")
 	if accountCode == "" {
-		http.Error(w, "Missing account_code", http.StatusUnauthorized)
+		partners.AuctionCounter.WithLabelValues("invalid_request_missing_account").Inc()
+		http.Error(w, "Missing account_code", http.StatusBadRequest)
 		return
 	}
 
 	// 3. Identify SSP
 	ssp, ok := h.PartnersManager.GetSSPByInventoryCode(accountCode)
 	if !ok {
-		http.Error(w, "Invalid account_code", http.StatusUnauthorized)
+		partners.AuctionCounter.WithLabelValues("invalid_request_bad_account").Inc()
+		http.Error(w, "Invalid account_code", http.StatusBadRequest)
 		return
 	}
 
@@ -158,7 +168,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			defer wg.Done()
 
 			// 7.1 Calculate per-DSP BidRequest (Uplift Floors by Margin + SChain)
-			dspBidReq := endpoints.GetDspBidRequest(&bidReq, *ssp, d)
+			dspBidReq := endpoints.GetDspBidRequest(&bidReq, *ssp, d, h.GlobalASI)
 			dspBody, _ := json.Marshal(dspBidReq)
 
 			// Mark fan-out to DSP in Prometheus
@@ -229,15 +239,20 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}()
 
 	var bestResult *bidResult
+	var winningBid *openrtb2.Bid
+	var winningSeat string
 	var maxPrice float64
 
 	for res := range bidChan {
 		for _, sb := range res.resp.SeatBid {
-			for _, bid := range sb.Bid {
+			for i := range sb.Bid {
+				bid := &sb.Bid[i]
 				if bid.Price > maxPrice {
 					maxPrice = bid.Price
 					resCopy := res
 					bestResult = &resCopy
+					winningBid = bid
+					winningSeat = sb.Seat
 				}
 			}
 		}
@@ -260,9 +275,9 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	// Extract final SSP Price (after margin) and original DSP Price for accounting
 	var sspPrice, dspPrice float64
 	marginMultiplier := endpoints.GetMarginMultiplier(bestResult.dsp)
-	if len(bestResult.resp.SeatBid) > 0 && len(bestResult.resp.SeatBid[0].Bid) > 0 {
+	if winningBid != nil {
 		// Calculate the original DSP price based on the current SSP price and margin
-		sspPrice = bestResult.resp.SeatBid[0].Bid[0].Price
+		sspPrice = winningBid.Price
 		dspPrice = sspPrice / marginMultiplier
 	}
 
@@ -299,8 +314,65 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			SspPartnerAuctionId: bidReq.ID,
 			DspPartnerId:        uint32(bestResult.dsp.DSPID),
 			DspInventoryId:      uint32(bestResult.dsp.DSPInventoryID),
-			DspPrice:            maxPrice,
+			DspPrice:            dspPrice,
+			SspPrice:            sspPrice,
 			RawBidRequest:       body,
+		}
+
+		// Extract Device/Geo Dimensions
+		if bidReq.Device != nil {
+			event.Os = bidReq.Device.OS
+			event.Osv = bidReq.Device.OSV
+			event.Carrier = bidReq.Device.Carrier
+			if bidReq.Device.DeviceType > 0 {
+				event.DeviceType = getDeviceTypeName(int(bidReq.Device.DeviceType))
+			}
+			if bidReq.Device.Geo != nil {
+				event.Country = bidReq.Device.Geo.Country
+			}
+		}
+
+		// Extract Site/App Dimensions
+		if bidReq.App != nil {
+			event.SiteAppDomain = bidReq.App.Domain
+			event.BundleId = bidReq.App.Bundle
+		} else if bidReq.Site != nil {
+			event.SiteAppDomain = bidReq.Site.Domain
+		}
+
+		// Extract Ad Dimensions from Impression
+		if winningBid != nil {
+			event.WinningBidId = winningBid.ID
+			event.ImpId = winningBid.ImpID
+			event.SeatId = winningSeat
+			event.CreativeId = winningBid.CrID
+			event.DealId = winningBid.DealID
+			if len(winningBid.ADomain) > 0 {
+				event.AdDomain = winningBid.ADomain[0]
+			}
+
+			for _, imp := range bidReq.Imp {
+				if imp.ID == winningBid.ImpID {
+					// Ad Type
+					if imp.Banner != nil {
+						event.AdType = "banner"
+					} else if imp.Video != nil {
+						event.AdType = "video"
+					} else if imp.Native != nil {
+						event.AdType = "native"
+					} else if imp.Audio != nil {
+						event.AdType = "audio"
+					}
+
+					// Ad Size
+					if winningBid.W > 0 && winningBid.H > 0 {
+						event.AdSize = fmt.Sprintf("%dx%d", winningBid.W, winningBid.H)
+					} else if imp.Banner != nil && imp.Banner.W != nil && imp.Banner.H != nil {
+						event.AdSize = fmt.Sprintf("%dx%d", *imp.Banner.W, *imp.Banner.H)
+					}
+					break
+				}
+			}
 		}
 
 		// Set bid floor if available
@@ -371,4 +443,25 @@ func (h *AuctionHandler) callDSP(ctx context.Context, dsp partners.DSPInventory,
 	}
 
 	return &bidResp, nil
+}
+
+func getDeviceTypeName(dt int) string {
+	switch dt {
+	case 1:
+		return "Mobile/Tablet"
+	case 2:
+		return "Personal Computer"
+	case 3:
+		return "Connected TV"
+	case 4:
+		return "Phone"
+	case 5:
+		return "Tablet"
+	case 6:
+		return "Connected Device"
+	case 7:
+		return "Set Top Box"
+	default:
+		return "Unknown"
+	}
 }

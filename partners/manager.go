@@ -69,6 +69,7 @@ type PartnersConfig struct {
 	SSPInventories []SSPInventory `json:"ssp_inventories"`
 	DSPInventories []DSPInventory `json:"dsp_inventories"`
 	AdServing      bool           `json:"ad_serving"`
+	ASI            string         `json:"asi"`
 	TS             string         `json:"ts"`
 }
 
