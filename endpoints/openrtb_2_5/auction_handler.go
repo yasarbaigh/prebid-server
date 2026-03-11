@@ -299,9 +299,19 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 				}
 			}
 
+			// 8.7 Transform Winning Bid (Apply custom NURL with AES encryption and AdM tracking)
+			tck := endpoints.TrackingConfig{
+				ExternalURL: "http://win.event.cdapp.com:11000",
+				AccountID:   fmt.Sprintf("%d", ssp.SSPInventoryID),
+				Timestamp:   time.Now().UnixMilli(),
+				Integration: "auction_2_5",
+				AuctionID:   bidReq.ID,
+				Seat:        bestResult.resp.SeatBid[i].Seat,
+			}
+
 			// Restore original DSP price for tracking purposes
 			dspPrice = bid.Price / marginMultiplier
-			endpoints.TransformWinningBid(bid, *ssp, bestResult.dsp, dspPrice, floor)
+			endpoints.TransformWinningBid(bid, *ssp, bestResult.dsp, dspPrice, floor, tck)
 		}
 	}
 

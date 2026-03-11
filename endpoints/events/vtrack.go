@@ -296,24 +296,56 @@ func getIntegrationType(httpRequest *http.Request) (string, error) {
 	return integrationType, nil
 }
 
+// GetVastUrlTrackingByType creates a vast url tracking for a specific event type
+func GetVastUrlTrackingByType(externalUrl string, bidid string, bidder string, accountId string, timestamp int64, integration string, evType analytics.EventType, vType analytics.VastType) string {
+	eventReq := &analytics.EventRequest{
+		Type:        evType,
+		BidID:       bidid,
+		AccountID:   accountId,
+		Bidder:      bidder,
+		Timestamp:   timestamp,
+		Format:      analytics.Blank,
+		Integration: integration,
+		VType:       vType,
+	}
+
+	return EventRequestToUrl(externalUrl, eventReq)
+}
+
 // ModifyVastXmlString rewrites and returns the string vastXML and a flag indicating if it was modified
 func ModifyVastXmlString(externalUrl, vast, bidid, bidder, accountID string, timestamp int64, integrationType string) (string, bool) {
+	modified := false
+
+	// 1. Inject Impression
 	ci := strings.Index(vast, ImpressionCloseTag)
+	if ci != -1 {
+		vastUrlTracking := GetVastUrlTracking(externalUrl, bidid, bidder, accountID, timestamp, integrationType)
+		impressionUrl := "<![CDATA[" + vastUrlTracking + "]]>"
+		oi := strings.Index(vast, ImpressionOpenTag)
 
-	// no impression tag - pass it as it is
-	if ci == -1 {
-		return vast, false
+		if ci-oi == len(ImpressionOpenTag) {
+			vast = strings.Replace(vast, ImpressionOpenTag, ImpressionOpenTag+impressionUrl, 1)
+		} else {
+			vast = strings.Replace(vast, ImpressionCloseTag, ImpressionCloseTag+ImpressionOpenTag+impressionUrl+ImpressionCloseTag, 1)
+		}
+		modified = true
 	}
 
-	vastUrlTracking := GetVastUrlTracking(externalUrl, bidid, bidder, accountID, timestamp, integrationType)
-	impressionUrl := "<![CDATA[" + vastUrlTracking + "]]>"
-	oi := strings.Index(vast, ImpressionOpenTag)
-
-	if ci-oi == len(ImpressionOpenTag) {
-		return strings.Replace(vast, ImpressionOpenTag, ImpressionOpenTag+impressionUrl, 1), true
+	// 2. Inject Quartile Trackers (Exchange Requirement)
+	teCloseTag := "</TrackingEvents>"
+	teCi := strings.Index(vast, teCloseTag)
+	if teCi != -1 {
+		events := []analytics.VastType{analytics.Start, analytics.FirstQuartile, analytics.MidPoint, analytics.ThirdQuartile, analytics.Complete}
+		var trackers strings.Builder
+		for _, ev := range events {
+			url := GetVastUrlTrackingByType(externalUrl, bidid, bidder, accountID, timestamp, integrationType, analytics.Vast, ev)
+			trackers.WriteString(fmt.Sprintf("<Tracking event=\"%s\"><![CDATA[%s]]></Tracking>", ev, url))
+		}
+		vast = strings.Replace(vast, teCloseTag, trackers.String()+teCloseTag, 1)
+		modified = true
 	}
 
-	return strings.Replace(vast, ImpressionCloseTag, ImpressionCloseTag+ImpressionOpenTag+impressionUrl+ImpressionCloseTag, 1), true
+	return vast, modified
 }
 
 // ModifyVastXmlJSON modifies BidCacheRequest element Vast XML data

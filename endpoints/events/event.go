@@ -287,6 +287,9 @@ func readType(er *analytics.EventRequest, httpRequest *http.Request) error {
 	case string(analytics.Win):
 		er.Type = analytics.Win
 		return nil
+	case string(analytics.View):
+		er.Type = analytics.View
+		return nil
 	case string(analytics.Vast):
 		er.Type = analytics.Vast
 		return nil

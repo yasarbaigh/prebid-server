@@ -7,6 +7,7 @@ type EventType string
 const (
 	Win  EventType = "win"
 	Imp  EventType = "imp"
+	View EventType = "view"
 	Vast EventType = "vast"
 )
 

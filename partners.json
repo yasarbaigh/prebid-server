@@ -30,9 +30,9 @@
             "prometheus_id": "3___8___6",
             "prometheus_identifier": "T3_App___T3_SSP_1___6",
             "adm_price_transparency": false,
-            "win_url": "http://event.t3.ssp1.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t3.ssp1.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t3.ssp1.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "0riggqujss",
@@ -64,9 +64,9 @@
             "prometheus_id": "3___8___7",
             "prometheus_identifier": "T3_App___T3_SSP_1___7",
             "adm_price_transparency": false,
-            "win_url": "http://event.t3.ssp1.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t3.ssp1.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t3.ssp1.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "1utrl85vlp",
@@ -98,9 +98,9 @@
             "prometheus_id": "3___9___8",
             "prometheus_identifier": "T3_App___T3_SSP_2___8",
             "adm_price_transparency": false,
-            "win_url": "http://event.t3.ssp2.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t3.ssp2.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t3.ssp2.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "2ctq1a8s98",
@@ -132,9 +132,9 @@
             "prometheus_id": "3___9___9",
             "prometheus_identifier": "T3_App___T3_SSP_2___9",
             "adm_price_transparency": false,
-            "win_url": "http://event.t3.ssp2.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t3.ssp2.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t3.ssp2.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "5cob5eqr3m",
@@ -166,9 +166,9 @@
             "prometheus_id": "1___1___1",
             "prometheus_identifier": "Cd_App___Pubmatic_MEA___1",
             "adm_price_transparency": false,
-            "win_url": "http://event.pubmatic.rtb.ssp.cd.com:11000/events/win",
-            "imp_track_url": "http://event.pubmatic.rtb.ssp.cd.com:11000/events/imp",
-            "click_track_url": "http://event.pubmatic.rtb.ssp.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "ggbrp2ritm",
@@ -200,9 +200,9 @@
             "prometheus_id": "2___4___2",
             "prometheus_identifier": "T2_App___T2_SSP_1___2",
             "adm_price_transparency": false,
-            "win_url": "http://event.t2.ssp1.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t2.ssp1.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t2.ssp1.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "h180pad4si",
@@ -234,9 +234,9 @@
             "prometheus_id": "2___4___3",
             "prometheus_identifier": "T2_App___T2_SSP_1___3",
             "adm_price_transparency": false,
-            "win_url": "http://event.t2.ssp1.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t2.ssp1.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t2.ssp1.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "hdocg57qrm",
@@ -268,9 +268,9 @@
             "prometheus_id": "2___5___4",
             "prometheus_identifier": "T2_App___T2_Ssp_2___4",
             "adm_price_transparency": false,
-            "win_url": "http://event.t2.ssp2.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t2.ssp2.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t2.ssp2.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "i3bdj0b0gm",
@@ -302,9 +302,9 @@
             "prometheus_id": "2___5___5",
             "prometheus_identifier": "T2_App___T2_Ssp_2___5",
             "adm_price_transparency": false,
-            "win_url": "http://event.t2.ssp2.cd.com:11000/events/win",
-            "imp_track_url": "http://event.t2.ssp2.cd.com:11000/events/imp",
-            "click_track_url": "http://event.t2.ssp2.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "l8f85m85bf",
@@ -336,9 +336,9 @@
             "prometheus_id": "1___1___10",
             "prometheus_identifier": "Cd_App___Pubmatic_MEA___10",
             "adm_price_transparency": false,
-            "win_url": "http://event.pubmatic.rtb.ssp.cd.com:11000/events/win",
-            "imp_track_url": "http://event.pubmatic.rtb.ssp.cd.com:11000/events/imp",
-            "click_track_url": "http://event.pubmatic.rtb.ssp.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "ng68srp12r",
@@ -368,9 +368,9 @@
             "prometheus_id": "1___2___11",
             "prometheus_identifier": "Cd_App___Inmobi_APAC___11",
             "adm_price_transparency": false,
-            "win_url": "http://event.inmobi.rtb.ssp.cd.com:11000/events/win",
-            "imp_track_url": "http://event.inmobi.rtb.ssp.cd.com:11000/events/imp",
-            "click_track_url": "http://event.inmobi.rtb.ssp.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "o329i0st22",
@@ -402,9 +402,9 @@
             "prometheus_id": "1___2___12",
             "prometheus_identifier": "Cd_App___Inmobi_APAC___12",
             "adm_price_transparency": false,
-            "win_url": "http://event.inmobi.rtb.ssp.cd.com:11000/events/win",
-            "imp_track_url": "http://event.inmobi.rtb.ssp.cd.com:11000/events/imp",
-            "click_track_url": "http://event.inmobi.rtb.ssp.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "oq6kbu4bst",
@@ -436,9 +436,9 @@
             "prometheus_id": "1___3___13",
             "prometheus_identifier": "Cd_App___Rhythmone_CALA___13",
             "adm_price_transparency": false,
-            "win_url": "http://event.rhytm.rtb.ssp.cd.com:11000/events/win",
-            "imp_track_url": "http://event.rhytm.rtb.ssp.cd.com:11000/events/imp",
-            "click_track_url": "http://event.rhytm.rtb.ssp.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         },
         {
             "name": "p4m12inh6p",
@@ -470,9 +470,9 @@
             "prometheus_id": "1___3___14",
             "prometheus_identifier": "Cd_App___Rhythmone_CALA___14",
             "adm_price_transparency": false,
-            "win_url": "http://event.rhytm.rtb.ssp.cd.com:11000/events/win",
-            "imp_track_url": "http://event.rhytm.rtb.ssp.cd.com:11000/events/imp",
-            "click_track_url": "http://event.rhytm.rtb.ssp.cd.com:11000/events/click"
+            "win_url": "http://win.event.cdapp.com:11000/events/win",
+            "imp_track_url": "http://win.event.cdapp.com:11000/events/imp",
+            "click_track_url": "http://win.event.cdapp.com:11000/events/click"
         }
     ],
     "dsp_inventories": [
@@ -1170,7 +1170,7 @@
             "adm_price_transparency": false
         }
     ],
-    "ts": "2026-03-07 10:04:13",
+    "ts": "2026-03-11 04:20:28",
     "ad_serving": true,
     "asi": "adexchange.cd.com"
 }
