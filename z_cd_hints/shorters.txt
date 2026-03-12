@@ -1,9 +1,5 @@
-go run z_cd_hints/pb_tool/pb_tool.go decode -hex 
+go run z_cd_hints/crypto_tool/crypto_tool.go e "tid=1&sid=1&siid=1&did=6&diid=10&aid=zz6c3e4&bid=2878e96&imid=imp-1-a8&seat=SEAT-D3AE&adid=ad-3c29"
+go run z_cd_hints/crypto_tool/crypto_tool.go d "ENCRYPTED_STRING_HERE"
 
-
-
-
-go run z_cd_hints/crypto_tool/crypto_tool.go encrypt -text "tid=1&siid=101&dp=5.50"
-go run z_cd_hints/crypto_tool/crypto_tool.go decrypt -text "PASTE_THE_ENCRYPTED_STRING_HERE"
-
-
+go run z_cd_hints/crypto_tool/crypto_tool.go ec "https://my-dsp.com/win?aid=MACROS"
+go run z_cd_hints/crypto_tool/crypto_tool.go dc "comprssd_ENCRYPTED_URL_STRING"
