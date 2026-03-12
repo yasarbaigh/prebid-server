@@ -311,6 +311,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 			// Restore original DSP price for tracking purposes
 			dspPrice = bid.Price / marginMultiplier
+
 			endpoints.TransformWinningBid(bid, *ssp, bestResult.dsp, dspPrice, floor, tck)
 		}
 	}

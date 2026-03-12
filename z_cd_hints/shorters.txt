@@ -1,0 +1,9 @@
+go run z_cd_hints/pb_tool/pb_tool.go decode -hex 
+
+
+
+
+go run z_cd_hints/crypto_tool/crypto_tool.go encrypt -text "tid=1&siid=101&dp=5.50"
+go run z_cd_hints/crypto_tool/crypto_tool.go decrypt -text "PASTE_THE_ENCRYPTED_STRING_HERE"
+
+

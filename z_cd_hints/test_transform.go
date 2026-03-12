@@ -28,7 +28,14 @@ func main() {
 		Name:           "My DSP",
 	}
 
-	endpoints.TransformWinningBid(bid, ssp, dsp, 1.2, 0.5)
+	endpoints.TransformWinningBid(bid, ssp, dsp, 1.2, 0.5, endpoints.TrackingConfig{
+		ExternalURL: "http://localhost:8080",
+		AccountID:   "123",
+		Timestamp:   123456789,
+		Integration: "test",
+		AuctionID:   "auc123",
+		Seat:        "seat1",
+	})
 
 	fmt.Printf("Final NURL: %s\n", bid.NURL)
 }

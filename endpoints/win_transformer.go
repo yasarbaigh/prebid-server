@@ -8,7 +8,6 @@ import (
 
 	"github.com/prebid/openrtb/v20/openrtb2"
 	"github.com/prebid/prebid-server/v3/analytics"
-	"github.com/prebid/prebid-server/v3/endpoints/events"
 	"github.com/prebid/prebid-server/v3/partners"
 	"github.com/prebid/prebid-server/v3/util/cryptoutil"
 )
@@ -16,7 +15,11 @@ import (
 // Win Transformer Logic
 
 const (
-	rtMacros = "auction_id=${AUCTION_ID}&bid_id=${AUCTION_BID_ID}&imp_id=${AUCTION_IMP_ID}&price=${AUCTION_PRICE}&cur=${AUCTION_CURRENCY}&seat=${AUCTION_SEAT_ID}&ad_id=${AUCTION_AD_ID}"
+	rtMacros    = "aid=${AUCTION_ID}&bid=${AUCTION_BID_ID}&imid=${AUCTION_IMP_ID}&price=${AUCTION_PRICE}&mbr=${AUCTION_MBR}&cur=${AUCTION_CURRENCY}&seat=${AUCTION_SEAT_ID}&adid=${AUCTION_AD_ID}"
+	trackMacros = "aid=${AUCTION_ID}&bid=${AUCTION_BID_ID}&imid=${AUCTION_IMP_ID}&seat=${AUCTION_SEAT_ID}&adid=${AUCTION_AD_ID}"
+
+	// Default Tracker Hosts
+	DefaultBaseDmn = "https://win.ssp.cd.com"
 )
 
 type TrackingConfig struct {
@@ -34,55 +37,81 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 		return
 	}
 
-	// 1. Prepare Encrypted DSP URL (if exists)
-	encryptedDspUrl := ""
-	if bid.NURL != "" {
-		encryptedDspUrl, _ = cryptoutil.Encrypt(bid.NURL)
-	}
-
-	// 2. Prepare Encrypted Internal Payload (Including all crucial IDs to bypass macro reliance)
-	payload := fmt.Sprintf("tid=%d&siid=%d&diid=%d&sid=%d&did=%d&dp=%.6f&sp=%.6f&bp=%.6f&aid=%s&bid=%s&imid=%s&seat=%s&adid=%s",
-		ssp.TenantID, ssp.SSPInventoryID, dsp.DSPInventoryID, ssp.SSPID, dsp.DSPID, dspPrice, bid.Price, requestPrice,
+	// 1. Prepare Encrypted Internal Payload (Including all crucial IDs to bypass macro reliance)
+	// dp: DSP Price, sp: Bid Price (Auction Price), bp: Request Price, mbr: Market Clearing Price
+	payload := fmt.Sprintf("tid=%d&siid=%d&diid=%d&sid=%d&did=%d&dp=%.6f&sp=%.6f&bp=%.6f&mbr=%.6f&aid=%s&bid=%s&imid=%s&seat=%s&adid=%s",
+		ssp.TenantID, ssp.SSPInventoryID, dsp.DSPInventoryID, ssp.SSPID, dsp.DSPID, dspPrice, bid.Price, requestPrice, bid.Price,
 		tck.AuctionID, bid.ID, bid.ImpID, tck.Seat, bid.AdID)
 	encryptedPayload, _ := cryptoutil.Encrypt(payload)
 
-	// 3. Update NURL with custom SSP win URL + RTB Macros + Encrypted DSP Info + Encrypted Payload
-	winHost := ssp.WinURL
-	if winHost == "" {
-		winHost = "https://win.my-exchange.com/event" // Fallback
+	// 2. NURL Specific Optimized Parameters (p and d)
+	// p contains only essential IDs in compact pipe-delimited format
+	pPayload := fmt.Sprintf("%d|%d|%d|%d|%d", ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID)
+	encryptedP, _ := cryptoutil.Encrypt(pPayload)
+
+	// d contains compressed + encrypted DSP NURL
+	encryptedD := ""
+	if bid.NURL != "" {
+		encryptedD, _ = cryptoutil.EncryptCompressed(bid.NURL)
 	}
-	bid.NURL = fmt.Sprintf("%s?type=win&durl=%s&pd=%s&%s",
-		winHost, url.QueryEscape(encryptedDspUrl), url.QueryEscape(encryptedPayload), rtMacros)
+
+	// 3. Determine Base Domain and Update NURL
+	baseDmn := ssp.WinBaseDmn
+	if baseDmn == "" {
+		baseDmn = DefaultBaseDmn
+	}
+	baseDmn = strings.TrimRight(baseDmn, "/")
+
+	winHost := baseDmn + "/e/win"
+	bid.NURL = fmt.Sprintf("%s?d=%s&p=%s&%s",
+		winHost, url.QueryEscape(encryptedD), url.QueryEscape(encryptedP), rtMacros)
 
 	// 4. Modify AdM (Inject Tracking Pixels for both VAST and HTML)
-	impHost := ssp.ImpTrackURL
-	if impHost == "" {
-		impHost = "https://win.my-exchange.com/event" // Fallback
-	}
-	pixelUrl := fmt.Sprintf("%s?type=pixel&pd=%s&%s", impHost, url.QueryEscape(encryptedPayload), rtMacros)
+	impHost := baseDmn + "/e/imp"
+	// Use trackMacros (No Price) for the impression pixel
+	pixelUrl := fmt.Sprintf("%s?pd=%s&%s", impHost, url.QueryEscape(encryptedPayload), trackMacros)
 
 	// Exchange-side Viewability URL
-	viewUrl := events.GetVastUrlTrackingByType(tck.ExternalURL, bid.ID, dsp.DSPIdentifier, tck.AccountID, tck.Timestamp, tck.Integration, analytics.View, "")
+	viewHost := baseDmn + "/e/view"
+	viewUrl := fmt.Sprintf("%s?pd=%s&%s", viewHost, url.QueryEscape(encryptedPayload), trackMacros)
 
-	bid.AdM = modifyAdmEnhanced(bid.AdM, pixelUrl, viewUrl, dsp.DSPIdentifier, tck)
+	bid.AdM = modifyAdmEnhanced(bid.AdM, pixelUrl, viewUrl, dsp.DSPIdentifier, tck, baseDmn, encryptedPayload)
 
-	// 5. Add Click Tracking (if available)
-	if ssp.ClickTrackURL != "" {
-		clickUrl := fmt.Sprintf("%s?type=click&pd=%s&%s", ssp.ClickTrackURL, url.QueryEscape(encryptedPayload), rtMacros)
-		if !dsp.AdmPriceTransparency {
-			clickUrl = cleanseDspMacros(clickUrl)
-		}
-		bid.AdM = injectClickTracker(bid.AdM, clickUrl)
+	// 5. Add Click Tracking
+	clickHost := baseDmn + "/e/clk"
+	// Use trackMacros (No Price) for the click tracker
+	clickUrl := fmt.Sprintf("%s?pd=%s&%s", clickHost, url.QueryEscape(encryptedPayload), trackMacros)
+
+	// Check transparency: both must be true to avoid masking
+	isTransparent := ssp.AdmPriceTransparency && dsp.AdmPriceTransparency
+
+	if !isTransparent {
+		clickUrl = cleanseDspMacros(clickUrl)
 	}
+	bid.AdM = injectClickTracker(bid.AdM, clickUrl)
 
 	// 6. Handle Price Transparency (Masking/Cleansing)
-	if !dsp.AdmPriceTransparency {
+	if !isTransparent {
 		bid.AdM = cleanseDspMacros(bid.AdM)
 	}
+
+	// 7. Transform LURL
+	if bid.LURL != "" {
+		// Encrypt original LURL into 'd'
+		encryptedLossD, _ := cryptoutil.EncryptCompressed(bid.LURL)
+
+		lossHost := baseDmn + "/e/loss"
+		// We keep ${AUCTION_LOSS} and other macros so the SSP can fill them
+		bid.LURL = fmt.Sprintf("%s?d=%s&p=%s&lr=${AUCTION_LOSS}&%s",
+			lossHost, url.QueryEscape(encryptedLossD), url.QueryEscape(encryptedP), rtMacros)
+	}
+
+	// 8. Ensure BURL is empty
+	bid.BURL = ""
 }
 
 // modifyAdmEnhanced handles the core injection logic for tracking inside the endpoint directory.
-func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig) string {
+func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig, baseDmn string, encryptedPayload string) string {
 	if adm == "" {
 		return adm
 	}
@@ -94,8 +123,8 @@ func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig
 			quartiles := []analytics.VastType{analytics.Start, analytics.FirstQuartile, analytics.MidPoint, analytics.ThirdQuartile, analytics.Complete}
 			var qTrackers strings.Builder
 			for _, q := range quartiles {
-				// Using the actual bid.ID from the auction logic instead of a macro
-				url := events.GetVastUrlTrackingByType(tck.ExternalURL, tck.AuctionID+"_"+bidder, bidder, tck.AccountID, tck.Timestamp, tck.Integration, analytics.Vast, q)
+				videoHost := baseDmn + "/e/video"
+				url := fmt.Sprintf("%s?event=%s&pd=%s&%s", videoHost, q, url.QueryEscape(encryptedPayload), trackMacros)
 				qTrackers.WriteString(fmt.Sprintf("<Tracking event=\"%s\"><![CDATA[%s]]></Tracking>", q, url))
 			}
 			adm = strings.Replace(adm, "</TrackingEvents>", qTrackers.String()+"</TrackingEvents>", 1)

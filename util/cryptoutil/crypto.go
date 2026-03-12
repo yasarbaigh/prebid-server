@@ -1,12 +1,15 @@
 package cryptoutil
 
 import (
+	"bytes"
+	"compress/zlib"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // Hardcoded complex key (32 bytes for AES-256)
@@ -62,4 +65,34 @@ func Decrypt(cryptoText string) (string, error) {
 	}
 
 	return string(plaintext), nil
+}
+
+// EncryptCompressed compresses the plaintext with zlib BestSpeed before encrypting.
+func EncryptCompressed(plaintext string) (string, error) {
+	var b bytes.Buffer
+	w, _ := zlib.NewWriterLevel(&b, zlib.BestSpeed)
+	w.Write([]byte(plaintext))
+	w.Close()
+
+	return Encrypt(b.String())
+}
+
+// DecryptCompressed decrypts and then decompresses the data.
+func DecryptCompressed(cryptoText string) (string, error) {
+	decrypted, err := Decrypt(cryptoText)
+	if err != nil {
+		return "", err
+	}
+
+	r, err := zlib.NewReader(strings.NewReader(decrypted))
+	if err != nil {
+		return "", err
+	}
+	defer r.Close()
+
+	var b bytes.Buffer
+	if _, err := io.Copy(&b, r); err != nil {
+		return "", err
+	}
+	return b.String(), nil
 }

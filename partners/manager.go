@@ -28,6 +28,8 @@ type SSPInventory struct {
 	WinURL               string   `json:"win_url"`
 	ImpTrackURL          string   `json:"imp_track_url"`
 	ClickTrackURL        string   `json:"click_track_url"`
+	WinBaseDmn           string   `json:"win_base_dmn"`
+	AdmPriceTransparency bool     `json:"adm_price_transparency"`
 	SChainNode           string   `json:"schain_node"` // Your exchange identity for this SSP
 }
 
