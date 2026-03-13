@@ -284,8 +284,7 @@ func New(cfg *config.Configuration, rateConvertor *currency.RateConverter, pm *p
 	}
 
 	r.POST("/openrtb2/auction", openrtbEndpoint)
-	r.POST("/openrtb_2_5/auction_handler", openrtb_2_5.NewAuctionHandler(pm).Handle)
-	r.POST("/openrtb_2/auction_handler", openrtb_2_5.NewAuctionHandler(pm).Handle)
+	r.POST("/o25/bid", openrtb_2_5.NewAuctionHandler(pm).Handle)
 	r.POST("/openrtb2/video", videoEndpoint)
 	r.GET("/openrtb2/amp", ampEndpoint)
 	r.GET("/info/bidders", infoEndpoints.NewBiddersEndpoint(cfg.BidderInfos))

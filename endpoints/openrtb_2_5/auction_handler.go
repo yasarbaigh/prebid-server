@@ -78,19 +78,20 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		return
 	}
 
-	// 2. Get account_code from query params
-	accountCode := r.URL.Query().Get("account_code")
+	// 2. Get identification code from query params (c)
+	accountCode := r.URL.Query().Get("c")
+
 	if accountCode == "" {
-		partners.AuctionCounter.WithLabelValues("invalid_request_missing_account").Inc()
-		http.Error(w, "Missing account_code", http.StatusBadRequest)
+		partners.AuctionCounter.WithLabelValues("invalid_request_missing_identification").Inc()
+		http.Error(w, "Missing identification code (c)", http.StatusBadRequest)
 		return
 	}
 
 	// 3. Identify SSP
 	ssp, ok := h.PartnersManager.GetSSPByInventoryCode(accountCode)
 	if !ok {
-		partners.AuctionCounter.WithLabelValues("invalid_request_bad_account").Inc()
-		http.Error(w, "Invalid account_code", http.StatusBadRequest)
+		partners.AuctionCounter.WithLabelValues("invalid_request_bad_identification").Inc()
+		http.Error(w, "Invalid identification code", http.StatusBadRequest)
 		return
 	}
 
@@ -299,14 +300,66 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 				}
 			}
 
+			// Extract Common RTB Dimensions for Tracking
+			var os, osv, country, carrier, deviceType, domain, bundle string
+			if bidReq.Device != nil {
+				os = bidReq.Device.OS
+				osv = bidReq.Device.OSV
+				carrier = bidReq.Device.Carrier
+				if bidReq.Device.DeviceType > 0 {
+					deviceType = getDeviceTypeName(int(bidReq.Device.DeviceType))
+				}
+				if bidReq.Device.Geo != nil {
+					country = bidReq.Device.Geo.Country
+				}
+			}
+			if bidReq.App != nil {
+				domain = bidReq.App.Domain
+				bundle = bidReq.App.Bundle
+			} else if bidReq.Site != nil {
+				domain = bidReq.Site.Domain
+			}
+
+			// Determine Ad Type and Size for this specific bid
+			var adType, adSize string
+			for _, imp := range bidReq.Imp {
+				if imp.ID == bid.ImpID {
+					if imp.Banner != nil {
+						adType = "banner"
+					} else if imp.Video != nil {
+						adType = "video"
+					} else if imp.Native != nil {
+						adType = "native"
+					} else if imp.Audio != nil {
+						adType = "audio"
+					}
+
+					if bid.W > 0 && bid.H > 0 {
+						adSize = fmt.Sprintf("%dx%d", bid.W, bid.H)
+					} else if imp.Banner != nil && imp.Banner.W != nil && imp.Banner.H != nil {
+						adSize = fmt.Sprintf("%dx%d", *imp.Banner.W, *imp.Banner.H)
+					}
+					break
+				}
+			}
+
 			// 8.7 Transform Winning Bid (Apply custom NURL with AES encryption and AdM tracking)
 			tck := endpoints.TrackingConfig{
-				ExternalURL: "http://win.event.cdapp.com:11000",
-				AccountID:   fmt.Sprintf("%d", ssp.SSPInventoryID),
-				Timestamp:   time.Now().UnixMilli(),
-				Integration: "auction_2_5",
-				AuctionID:   bidReq.ID,
-				Seat:        bestResult.resp.SeatBid[i].Seat,
+				ExternalURL:   "http://win.event.cdapp.com:11000",
+				AccountID:     fmt.Sprintf("%d", ssp.SSPInventoryID),
+				Timestamp:     time.Now().UnixMilli(),
+				Integration:   "auction_2_5",
+				AuctionID:     bidReq.ID,
+				Seat:          bestResult.resp.SeatBid[i].Seat,
+				OS:            os,
+				OSV:           osv,
+				Country:       country,
+				Carrier:       carrier,
+				DeviceType:    deviceType,
+				SiteAppDomain: domain,
+				BundleID:      bundle,
+				AdType:        adType,
+				AdSize:        adSize,
 			}
 
 			// Restore original DSP price for tracking purposes

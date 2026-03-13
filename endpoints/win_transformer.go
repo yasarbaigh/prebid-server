@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/prebid/openrtb/v20/openrtb2"
 	"github.com/prebid/prebid-server/v3/analytics"
@@ -22,12 +23,32 @@ const (
 )
 
 type TrackingConfig struct {
-	ExternalURL string
-	AccountID   string
-	Timestamp   int64
-	Integration string
-	AuctionID   string // The original SSP request ID
-	Seat        string // The bidder name/seat
+	ExternalURL   string
+	AccountID     string
+	Timestamp     int64
+	Integration   string
+	AuctionID     string // The original SSP request ID
+	Seat          string // The bidder name/seat
+	DeviceType    string
+	OS            string
+	OSV           string
+	Country       string
+	AdType        string
+	AdSize        string
+	SiteAppDomain string
+	BundleID      string
+	Carrier       string
+}
+
+// getPositionalPayload generates a compact pipe-delimited string for high-speed URL reduction.
+func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, tck TrackingConfig, bidID, impID, adID string) string {
+	ts := time.Now().Unix()
+	// Order: tid|sid|siid|did|diid|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid|ts
+	return fmt.Sprintf("%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d",
+		ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID,
+		tck.DeviceType, tck.OS, tck.OSV, tck.Country, tck.AdType, tck.AdSize,
+		tck.SiteAppDomain, tck.BundleID, tck.Carrier,
+		tck.AuctionID, bidID, impID, tck.Seat, adID, ts)
 }
 
 // TransformWinningBid modifies the bid's NURL and AdM to include exchange-specific tracking and AES-encrypted DSP info.
@@ -36,9 +57,9 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 		return
 	}
 
-	// 1. NURL Specific Optimized Parameters (p and d) - Keep as is for Win NURL
-	pPayload := fmt.Sprintf("%d|%d|%d|%d|%d", ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID)
-	encryptedP, _ := cryptoutil.Encrypt(pPayload)
+	// 1. NURL Specific Optimized Parameters (p and d)
+	pPayload := getPositionalPayload(ssp, dsp, tck, "", "", "")
+	encryptedP, _ := cryptoutil.EncryptCompressed(pPayload)
 
 	encryptedD := ""
 	if bid.NURL != "" {
@@ -57,9 +78,8 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 		winHost, url.QueryEscape(encryptedD), url.QueryEscape(encryptedP), rtMacros)
 
 	// 3. Prepare Tracker Payload (p) for imp, view, click, video, omid
-	trackPayload := fmt.Sprintf("tid=%d&sid=%d&siid=%d&did=%d&diid=%d&aid=%s&bid=%s&imid=%s&seat=%s&adid=%s",
-		ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID, tck.AuctionID, bid.ID, bid.ImpID, tck.Seat, bid.AdID)
-	encryptedTrackP, _ := cryptoutil.Encrypt(trackPayload)
+	trackPayload := getPositionalPayload(ssp, dsp, tck, bid.ID, bid.ImpID, bid.AdID)
+	encryptedTrackP, _ := cryptoutil.EncryptCompressed(trackPayload)
 
 	// Modify AdM (Inject Tracking Pixels for both VAST and HTML)
 	impHost := baseDmn + "/e/imp"
