@@ -43,12 +43,12 @@ type TrackingConfig struct {
 // getPositionalPayload generates a compact pipe-delimited string for high-speed URL reduction.
 func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, tck TrackingConfig, bidID, impID, adID string) string {
 	ts := time.Now().Unix()
-	// Order: tid|sid|siid|did|diid|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid|ts
-	return fmt.Sprintf("%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d",
-		ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID,
+	// Order: ts|tid|sid|siid|did|diid|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid
+	return fmt.Sprintf("%d|%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s",
+		ts, ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID,
 		tck.DeviceType, tck.OS, tck.OSV, tck.Country, tck.AdType, tck.AdSize,
 		tck.SiteAppDomain, tck.BundleID, tck.Carrier,
-		tck.AuctionID, bidID, impID, tck.Seat, adID, ts)
+		tck.AuctionID, bidID, impID, tck.Seat, adID)
 }
 
 // TransformWinningBid modifies the bid's NURL and AdM to include exchange-specific tracking and AES-encrypted DSP info.
@@ -82,16 +82,16 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	encryptedTrackP, _ := cryptoutil.EncryptCompressed(trackPayload)
 
 	// Modify AdM (Inject Tracking Pixels for both VAST and HTML)
-	impHost := baseDmn + "/e/imp"
+	impHost := baseDmn + "/t/imp"
 	pixelUrl := fmt.Sprintf("%s?p=%s", impHost, url.QueryEscape(encryptedTrackP))
 
-	viewHost := baseDmn + "/e/view"
+	viewHost := baseDmn + "/t/view"
 	viewUrl := fmt.Sprintf("%s?p=%s", viewHost, url.QueryEscape(encryptedTrackP))
 
 	bid.AdM = modifyAdmEnhanced(bid.AdM, pixelUrl, viewUrl, dsp.DSPIdentifier, tck, baseDmn, encryptedTrackP)
 
 	// 5. Add Click Tracking
-	clickHost := baseDmn + "/e/clk"
+	clickHost := baseDmn + "/t/clk"
 	clickUrl := fmt.Sprintf("%s?p=%s", clickHost, url.QueryEscape(encryptedTrackP))
 
 	// Check transparency: both must be true to avoid masking
@@ -138,7 +138,7 @@ func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig
 			quartiles := []analytics.VastType{analytics.Start, analytics.FirstQuartile, analytics.MidPoint, analytics.ThirdQuartile, analytics.Complete}
 			var qTrackers strings.Builder
 			for _, q := range quartiles {
-				videoHost := baseDmn + "/e/video"
+				videoHost := baseDmn + "/t/video"
 				url := fmt.Sprintf("%s?event=%s&p=%s", videoHost, q, url.QueryEscape(encryptedPayload))
 				qTrackers.WriteString(fmt.Sprintf("<Tracking event=\"%s\"><![CDATA[%s]]></Tracking>", q, url))
 			}
