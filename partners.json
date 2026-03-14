@@ -532,7 +532,8 @@
             "dsp_inventory_id": 11,
             "prometheus_id": "1___7___11",
             "prometheus_identifier": "Cd_App___YS_Traffic_Media___11",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "eci3c5i8dn",
@@ -592,7 +593,8 @@
             "dsp_inventory_id": 5,
             "prometheus_id": "3___3___5",
             "prometheus_identifier": "T3_App___T3_DSP_1___5",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "f2ot33pp7c",
@@ -692,7 +694,8 @@
             "dsp_inventory_id": 9,
             "prometheus_id": "1___5___9",
             "prometheus_identifier": "Cd_App___JS_Traffic_Media___9",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "fapnc3egeb",
@@ -760,7 +763,8 @@
             "dsp_inventory_id": 6,
             "prometheus_id": "3___3___6",
             "prometheus_identifier": "T3_App___T3_DSP_1___6",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "ga4e5g5up3",
@@ -832,7 +836,8 @@
             "dsp_inventory_id": 10,
             "prometheus_id": "1___6___10",
             "prometheus_identifier": "Cd_App___Smart_Ads___10",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "h1c4qcno83",
@@ -902,7 +907,8 @@
             "dsp_inventory_id": 7,
             "prometheus_id": "3___4___7",
             "prometheus_identifier": "T3_App___T3_DSP_2___7",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "hp7c78fl9q",
@@ -941,7 +947,8 @@
             "dsp_inventory_id": 8,
             "prometheus_id": "3___4___8",
             "prometheus_identifier": "T3_App___T3_DSP_2___8",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "mmj877dtlk",
@@ -999,7 +1006,8 @@
             "dsp_inventory_id": 1,
             "prometheus_id": "2___1___1",
             "prometheus_identifier": "T2_App___T2_DSP_1___1",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "p0s3sd0c2k",
@@ -1044,7 +1052,8 @@
             "dsp_inventory_id": 2,
             "prometheus_id": "2___1___2",
             "prometheus_identifier": "T2_App___T2_DSP_1___2",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "qo5sip6jf5",
@@ -1087,7 +1096,8 @@
             "dsp_inventory_id": 3,
             "prometheus_id": "2___2___3",
             "prometheus_identifier": "T2_App___T2_DSP_2___3",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         },
         {
             "name": "rnia1eg3e8",
@@ -1139,10 +1149,11 @@
             "dsp_inventory_id": 4,
             "prometheus_id": "2___2___4",
             "prometheus_identifier": "T2_App___T2_DSP_2___4",
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "pricing_at": 1
         }
     ],
-    "ts": "2026-03-12 06:04:55",
+    "ts": "2026-03-14 10:18:28",
     "ad_serving": true,
     "asi": "adexchange.cd.com"
 }

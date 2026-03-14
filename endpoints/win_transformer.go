@@ -41,11 +41,12 @@ type TrackingConfig struct {
 }
 
 // getPositionalPayload generates a compact pipe-delimited string for high-speed URL reduction.
-func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, tck TrackingConfig, bidID, impID, adID string) string {
+func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, dspPrice float64, tck TrackingConfig, bidID, impID, adID string) string {
 	ts := time.Now().Unix()
-	// Order: ts|tid|sid|siid|did|diid|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid
-	return fmt.Sprintf("%d|%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s",
+	// Order: ts|tid|sid|siid|did|diid|price|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid
+	return fmt.Sprintf("%d|%d|%d|%d|%d|%d|%.6f|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s",
 		ts, ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID,
+		dspPrice,
 		tck.DeviceType, tck.OS, tck.OSV, tck.Country, tck.AdType, tck.AdSize,
 		tck.SiteAppDomain, tck.BundleID, tck.Carrier,
 		tck.AuctionID, bidID, impID, tck.Seat, adID)
@@ -58,7 +59,7 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	}
 
 	// 1. NURL Specific Optimized Parameters (p and d)
-	pPayload := getPositionalPayload(ssp, dsp, tck, "", "", "")
+	pPayload := getPositionalPayload(ssp, dsp, dspPrice, tck, "", "", "")
 	encryptedP, _ := cryptoutil.EncryptCompressed(pPayload)
 
 	encryptedD := ""
@@ -78,17 +79,18 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 		winHost, url.QueryEscape(encryptedD), url.QueryEscape(encryptedP), rtMacros)
 
 	// 3. Prepare Tracker Payload (p) for imp, view, click, video, omid
-	trackPayload := getPositionalPayload(ssp, dsp, tck, bid.ID, bid.ImpID, bid.AdID)
+	trackPayload := getPositionalPayload(ssp, dsp, dspPrice, tck, bid.ID, bid.ImpID, bid.AdID)
 	encryptedTrackP, _ := cryptoutil.EncryptCompressed(trackPayload)
 
-	// Modify AdM (Inject Tracking Pixels for both VAST and HTML)
+	// 4. Prepare Tracker Hosts
 	impHost := baseDmn + "/t/imp"
 	pixelUrl := fmt.Sprintf("%s?p=%s", impHost, url.QueryEscape(encryptedTrackP))
 
+	admHost := baseDmn + "/t/adm"
+	admUrl := fmt.Sprintf("%s?p=%s", admHost, url.QueryEscape(encryptedTrackP))
+
 	viewHost := baseDmn + "/t/view"
 	viewUrl := fmt.Sprintf("%s?p=%s", viewHost, url.QueryEscape(encryptedTrackP))
-
-	bid.AdM = modifyAdmEnhanced(bid.AdM, pixelUrl, viewUrl, dsp.DSPIdentifier, tck, baseDmn, encryptedTrackP)
 
 	// 5. Add Click Tracking
 	clickHost := baseDmn + "/t/clk"
@@ -100,9 +102,11 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	if !isTransparent {
 		clickUrl = cleanseDspMacros(clickUrl)
 	}
-	bid.AdM = injectClickTracker(bid.AdM, clickUrl)
 
-	// 6. Handle Price Transparency (Masking/Cleansing)
+	// 6. Inject all trackers into AdM
+	bid.AdM = modifyAdmEnhanced(bid.AdM, pixelUrl, admUrl, viewUrl, clickUrl, dsp.DSPIdentifier, tck, baseDmn, encryptedTrackP)
+
+	// 7. Handle Price Transparency (Masking/Cleansing)
 	if !isTransparent {
 		bid.AdM = cleanseDspMacros(bid.AdM)
 	}
@@ -126,7 +130,7 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 }
 
 // modifyAdmEnhanced handles the core injection logic for tracking inside the endpoint directory.
-func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig, baseDmn string, encryptedPayload string) string {
+func modifyAdmEnhanced(adm, pixelUrl, admUrl, viewUrl, clickUrl, bidder string, tck TrackingConfig, baseDmn string, encryptedPayload string) string {
 	if adm == "" {
 		return adm
 	}
@@ -139,18 +143,28 @@ func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig
 			var qTrackers strings.Builder
 			for _, q := range quartiles {
 				videoHost := baseDmn + "/t/video"
-				url := fmt.Sprintf("%s?event=%s&p=%s", videoHost, q, url.QueryEscape(encryptedPayload))
-				qTrackers.WriteString(fmt.Sprintf("<Tracking event=\"%s\"><![CDATA[%s]]></Tracking>", q, url))
+				url := fmt.Sprintf("%s?vq=%s&p=%s", videoHost, q, url.QueryEscape(encryptedPayload))
+				qTrackers.WriteString(fmt.Sprintf("<Tracking vq=\"%s\"><![CDATA[%s]]></Tracking>", q, url))
 			}
 			adm = strings.Replace(adm, "</TrackingEvents>", qTrackers.String()+"</TrackingEvents>", 1)
 		}
 
-		// Impression Pixel
-		trackingTag := fmt.Sprintf("<Impression><![CDATA[%s]]></Impression>", pixelUrl)
+		// Impression and ADM Pixels
+		impTag := fmt.Sprintf("<Impression><![CDATA[%s]]></Impression>", pixelUrl)
+		admTag := fmt.Sprintf("<Impression><![CDATA[%s]]></Impression>", admUrl)
+
 		if strings.Contains(adm, "</Impression>") {
-			adm = strings.Replace(adm, "</Impression>", "</Impression>"+trackingTag, 1)
+			adm = strings.Replace(adm, "</Impression>", "</Impression>"+impTag+admTag, 1)
 		} else if strings.Contains(adm, "</InLine>") {
-			adm = strings.Replace(adm, "</InLine>", trackingTag+"</InLine>", 1)
+			adm = strings.Replace(adm, "</InLine>", impTag+admTag+"</InLine>", 1)
+		}
+
+		// Click Tracking
+		clickTag := fmt.Sprintf("<ClickTracking><![CDATA[%s]]></ClickTracking>", clickUrl)
+		if strings.Contains(adm, "</VideoClicks>") {
+			adm = strings.Replace(adm, "</VideoClicks>", clickTag+"</VideoClicks>", 1)
+		} else if strings.Contains(adm, "</Linear>") {
+			adm = strings.Replace(adm, "</Linear>", "<VideoClicks>"+clickTag+"</VideoClicks></Linear>", 1)
 		}
 		return adm
 	}
@@ -163,11 +177,17 @@ func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig
 			if n, ok := nativeMap["native"].(map[string]interface{}); ok {
 				target = n
 			}
-			// Add imptrackers
+			// Add imptrackers (Impression and ADM)
 			if imps, ok := target["imptrackers"].([]interface{}); ok {
-				target["imptrackers"] = append(imps, pixelUrl)
+				target["imptrackers"] = append(imps, pixelUrl, admUrl)
 			} else {
-				target["imptrackers"] = []interface{}{pixelUrl}
+				target["imptrackers"] = []interface{}{pixelUrl, admUrl}
+			}
+			// Add clicktrackers
+			if clicks, ok := target["clicktrackers"].([]interface{}); ok {
+				target["clicktrackers"] = append(clicks, clickUrl)
+			} else {
+				target["clicktrackers"] = []interface{}{clickUrl}
 			}
 			// Add OMID bridge for Native if possible via jstracker
 			target["jstracker"] = fmt.Sprintf("/* OMID Bridge */ var i=new Image();i.src='%s';", viewUrl)
@@ -180,18 +200,15 @@ func modifyAdmEnhanced(adm, pixelUrl, viewUrl, bidder string, tck TrackingConfig
 
 	// 3. HTML (Banner) Modification
 	pixelHtml := fmt.Sprintf("<img src=\"%s\" width=\"1\" height=\"1\" style=\"display:none;\" />", pixelUrl)
+	admHtml := fmt.Sprintf("<img src=\"%s\" width=\"1\" height=\"1\" style=\"display:none;\" />", admUrl)
 	omidHtml := fmt.Sprintf("<script>/* OMID Viewability Bridge */ setTimeout(function(){ new Image().src='%s'; }, 1000);</script>", viewUrl)
 
-	return adm + pixelHtml + omidHtml
+	return adm + pixelHtml + admHtml + omidHtml
 }
 
-// injectClickTracker wraps or appends click tracking depending on AdM content.
+// injectClickTracker is deprecated. Use modifyAdmEnhanced for format-specific tracking.
 func injectClickTracker(adm string, clickUrl string) string {
-	if adm == "" {
-		return adm
-	}
-	pixelHtml := fmt.Sprintf("<img src=\"%s\" width=\"1\" height=\"1\" style=\"display:none;\" />", clickUrl)
-	return adm + pixelHtml
+	return adm
 }
 
 // cleanseDspMacros replaces pricing macros in the DSP's AdM with a masked value.

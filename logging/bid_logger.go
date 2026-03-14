@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"sync"
@@ -134,9 +134,9 @@ func (l *BidLogger) writeVerbose(event *generated.AuctionEvent) {
 		l.appendToVerboseFile(filename, event.RawBidRequest, "REQ")
 	}
 
-	if event.DspPartnerId != 0 && len(event.RawDspResponse) > 0 {
+	if event.DspPartnerId != 0 && len(event.SspDspResponse) > 0 {
 		filename := fmt.Sprintf("dsp_%d.log", event.DspPartnerId)
-		l.appendToVerboseFile(filename, event.RawDspResponse, "RESP")
+		l.appendToVerboseFile(filename, event.SspDspResponse, "RESP")
 	}
 }
 
@@ -168,13 +168,16 @@ func (l *BidLogger) writeEvent(event *generated.AuctionEvent) {
 		return
 	}
 
+	encodedLen := base64.StdEncoding.EncodedLen(len(data))
+	out := make([]byte, encodedLen+1)
+	base64.StdEncoding.Encode(out, data)
+	out[encodedLen] = '\n'
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	// Hex-encode and add newline
-	hexData := hex.EncodeToString(data)
-	if _, err := l.writer.Write([]byte(hexData + "\n")); err != nil {
-		logger.Errorf("Failed to write hex data to log: %v", err)
+	if _, err := l.writer.Write(out); err != nil {
+		logger.Errorf("Failed to write base64 data to log: %v", err)
 	}
 }
 

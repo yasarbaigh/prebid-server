@@ -65,6 +65,7 @@ type DSPInventory struct {
 	AdmPriceTransparency bool     `json:"adm_price_transparency"`
 	Margin               int      `json:"margin"`
 	BidAdjustment        float64  `json:"bid_adjustment"` // Multiplier (e.g. 0.9)
+	PricingAt            int      `json:"pricing_at"`
 }
 
 type PartnersConfig struct {
@@ -92,6 +93,13 @@ func (m *Manager) Load(path string) error {
 	var cfg PartnersConfig
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return fmt.Errorf("failed to unmarshal partners config: %v", err)
+	}
+
+	// Default PricingAt to 1 if not available
+	for i := range cfg.DSPInventories {
+		if cfg.DSPInventories[i].PricingAt == 0 {
+			cfg.DSPInventories[i].PricingAt = 1
+		}
 	}
 
 	m.config.Store(&cfg)

@@ -286,18 +286,21 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	partners.ExchangeSpentCounter.WithLabelValues(ssp.SSPIdentifier, bestResult.dsp.DSPIdentifier, ssp.TenantIdentifier).Add(sspPrice)
 	partners.ExchangeProfitCounter.WithLabelValues(ssp.SSPIdentifier, bestResult.dsp.DSPIdentifier, ssp.TenantIdentifier).Add(dspPrice - sspPrice)
 
+	// Pre-compute Impression map to fix O(N^2) loop overhead
+	impMap := make(map[string]*openrtb2.Imp, len(bidReq.Imp))
+	for i := range bidReq.Imp {
+		impMap[bidReq.Imp[i].ID] = &bidReq.Imp[i]
+	}
+
 	// 8.7 Transform Winning Bid (Apply custom NURL with AES encryption and AdM tracking)
 	for i := range bestResult.resp.SeatBid {
 		for j := range bestResult.resp.SeatBid[i].Bid {
 			bid := &bestResult.resp.SeatBid[i].Bid[j]
 
-			// Find corresponding floor for this specific impression
 			var floor float64
-			for _, imp := range bidReq.Imp {
-				if imp.ID == bid.ImpID {
-					floor = imp.BidFloor
-					break
-				}
+			imp, ok := impMap[bid.ImpID]
+			if ok {
+				floor = imp.BidFloor
 			}
 
 			// Extract Common RTB Dimensions for Tracking
@@ -322,24 +325,21 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 			// Determine Ad Type and Size for this specific bid
 			var adType, adSize string
-			for _, imp := range bidReq.Imp {
-				if imp.ID == bid.ImpID {
-					if imp.Banner != nil {
-						adType = "banner"
-					} else if imp.Video != nil {
-						adType = "video"
-					} else if imp.Native != nil {
-						adType = "native"
-					} else if imp.Audio != nil {
-						adType = "audio"
-					}
+			if imp != nil {
+				if imp.Banner != nil {
+					adType = "banner"
+				} else if imp.Video != nil {
+					adType = "video"
+				} else if imp.Native != nil {
+					adType = "native"
+				} else if imp.Audio != nil {
+					adType = "audio"
+				}
 
-					if bid.W > 0 && bid.H > 0 {
-						adSize = fmt.Sprintf("%dx%d", bid.W, bid.H)
-					} else if imp.Banner != nil && imp.Banner.W != nil && imp.Banner.H != nil {
-						adSize = fmt.Sprintf("%dx%d", *imp.Banner.W, *imp.Banner.H)
-					}
-					break
+				if bid.W > 0 && bid.H > 0 {
+					adSize = fmt.Sprintf("%dx%d", bid.W, bid.H)
+				} else if imp.Banner != nil && imp.Banner.W != nil && imp.Banner.H != nil {
+					adSize = fmt.Sprintf("%dx%d", *imp.Banner.W, *imp.Banner.H)
 				}
 			}
 
@@ -415,26 +415,24 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 				event.AdDomain = winningBid.ADomain[0]
 			}
 
-			for _, imp := range bidReq.Imp {
-				if imp.ID == winningBid.ImpID {
-					// Ad Type
-					if imp.Banner != nil {
-						event.AdType = "banner"
-					} else if imp.Video != nil {
-						event.AdType = "video"
-					} else if imp.Native != nil {
-						event.AdType = "native"
-					} else if imp.Audio != nil {
-						event.AdType = "audio"
-					}
+			imp, ok := impMap[winningBid.ImpID]
+			if ok && imp != nil {
+				// Ad Type
+				if imp.Banner != nil {
+					event.AdType = "banner"
+				} else if imp.Video != nil {
+					event.AdType = "video"
+				} else if imp.Native != nil {
+					event.AdType = "native"
+				} else if imp.Audio != nil {
+					event.AdType = "audio"
+				}
 
-					// Ad Size
-					if winningBid.W > 0 && winningBid.H > 0 {
-						event.AdSize = fmt.Sprintf("%dx%d", winningBid.W, winningBid.H)
-					} else if imp.Banner != nil && imp.Banner.W != nil && imp.Banner.H != nil {
-						event.AdSize = fmt.Sprintf("%dx%d", *imp.Banner.W, *imp.Banner.H)
-					}
-					break
+				// Ad Size
+				if winningBid.W > 0 && winningBid.H > 0 {
+					event.AdSize = fmt.Sprintf("%dx%d", winningBid.W, winningBid.H)
+				} else if imp.Banner != nil && imp.Banner.W != nil && imp.Banner.H != nil {
+					event.AdSize = fmt.Sprintf("%dx%d", *imp.Banner.W, *imp.Banner.H)
 				}
 			}
 		}
@@ -463,25 +461,31 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			}
 		}
 
-		// Raw DSP Response
+		// Use the single marshal of the final response
 		respBody, _ := json.Marshal(bestResult.resp)
-		event.RawDspResponse = respBody
+		event.SspDspResponse = respBody
 
 		bidLogger.Log(event)
-	}
 
-	// 10. Return Response
-	respBody, _ := json.Marshal(bestResult.resp)
-
-	// Log SSP Response
-	if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+		// Log SSP Response with the same marshaled bytes
 		bidLogger.LogSSP(ssp.PrometheusIdentifier, respBody, "RESP")
-	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(respBody)
-	partners.AuctionCounter.WithLabelValues("ok").Inc()
-	partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(respBody)
+		partners.AuctionCounter.WithLabelValues("ok").Inc()
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
+	} else {
+		// Log SSP Response
+		respBody, _ := json.Marshal(bestResult.resp)
+		if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+			bidLogger.LogSSP(ssp.PrometheusIdentifier, respBody, "RESP")
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(respBody)
+		partners.AuctionCounter.WithLabelValues("ok").Inc()
+		partners.SSPResponseCounter.WithLabelValues(ssp.PrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
+	}
 }
 
 func (h *AuctionHandler) callDSP(ctx context.Context, dsp partners.DSPInventory, body []byte) (*openrtb2.BidResponse, error) {
@@ -498,6 +502,7 @@ func (h *AuctionHandler) callDSP(ctx context.Context, dsp partners.DSPInventory,
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		io.Copy(io.Discard, resp.Body)
 		return nil, fmt.Errorf("DSP returned status %d", resp.StatusCode)
 	}
 

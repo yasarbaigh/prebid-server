@@ -29,21 +29,21 @@ message AuctionEvent {
     // Financials
     double bid_request_price = 7; // Floor/Req Price
     double dsp_price = 8;         // Winning Bid Price (Before Margin)
-    double ssp_price = 15;        // Final Bid Price (After Margin)
+    double ssp_price = 9;         // Final Bid Price (After Margin)
     
     // Source Environment
     oneof source {
-        App app = 9;
-        Web web = 10;
+        App app = 10;
+        Web web = 11;
     }
     
     // System Metadata
-    int64 timestamp = 11;         // Unix timestamp in MS
-    string hostname = 12;         // Device/Server hostname
+    int64 timestamp = 12;         // Unix timestamp in MS
+    string hostname = 13;         // Device/Server hostname
     
     // Raw Payloads
-    bytes raw_bid_request = 13;
-    bytes raw_dsp_response = 14;
+    bytes raw_bid_request = 14;
+    bytes ssp_dsp_response = 15;
 
     // Reporting & Analytics Dimensions
     string device_type = 16;
