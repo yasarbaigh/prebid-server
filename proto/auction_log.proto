@@ -74,4 +74,8 @@ message AuctionEvent {
     // 11. Raw Payloads
     bytes raw_bid_request = 34;
     bytes ssp_dsp_response = 35;
+
+    // 12. Model & Metadata
+    uint32 pricing_at = 36;
+    string ad_id = 37;
 }
