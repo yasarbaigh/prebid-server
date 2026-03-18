@@ -146,3 +146,35 @@ net.ipv4.tcp_fin_timeout = 15
 ```
 
 Apply manually with `sysctl -p`.
+---
+
+## 8. High-Speed URL Reduction & Tracking
+
+To support 100k+ QPS on lean infrastructure, we use a custom **Binary-Packed AES-GCM** strategy for NURL and tracker URLs. This keeps URLs under browser/SSP limits (~400 chars) even with 20+ fields.
+
+### Tracking Payload (`p` parameter)
+
+The `p` parameter contains a binary buffer packed in the following **Positional Order** (Big-Endian):
+
+1.  **Block 1 (Fixed-Width 32 Bytes)**:
+    -   `Timestamp` (4B), `TenantID` (4B), `SSPID` (4B), `SSPInvID` (4B), `DSPID` (4B), `DSPInvID` (4B), `Price` (4B fixed-point), `DeviceType` (1B), `OS` (1B), `AdType` (1B)
+2.  **Block 2 (UUIDs 48 Bytes)**:
+    -   `AuctionID` (16B), `BidID` (16B), `ImpID` (16B)
+3.  **Block 3 (Variable Strings - Length Prefixed)**:
+    -   `OSV`, `Country`, `AdSize`, `Domain`, `BundleID`, `Carrier`, `Seat`, `AdID`
+
+### Crypto Tooling
+
+You can test or debug these parameters using the provided utility:
+
+```bash
+# Encrypt a raw string for tracking (e.g. for d parameter)
+go run z_cd_hints/crypto_tool/crypto_tool.go encrypt-c "https://dsp-endpoint.com"
+
+# Decrypt a tracking payload from a live URL
+go run z_cd_hints/crypto_tool/crypto_tool.go decrypt-b "AQIDBAU... (Your encrypted base64)"
+```
+
+### Critical Rules
+- **Do not change the field order** in `util/cryptoutil/packer.go` without updating the decoders, as it is positional.
+- **Website Domain** is currently empty in the trackers to save space.

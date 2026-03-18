@@ -40,16 +40,33 @@ type TrackingConfig struct {
 	Carrier       string
 }
 
-// getPositionalPayload generates a compact pipe-delimited string for high-speed URL reduction.
-func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, dspPrice float64, tck TrackingConfig, bidID, impID, adID string) string {
-	ts := time.Now().Unix()
-	// Order: ts|tid|sid|siid|did|diid|dsp_price|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid
-	return fmt.Sprintf("%d|%d|%d|%d|%d|%d|%.6f|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s",
-		ts, ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID,
-		dspPrice,
-		tck.DeviceType, tck.OS, tck.OSV, tck.Country, tck.AdType, tck.AdSize,
-		"", tck.BundleID, tck.Carrier,
-		tck.AuctionID, bidID, impID, tck.Seat, adID)
+// getPositionalPayload generates a tight binary buffer for high-speed URL reduction.
+func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, dspPrice float64, tck TrackingConfig, bidID, impID, adID string) []byte {
+	p := &cryptoutil.PositionalData{
+		Timestamp:      uint32(time.Now().Unix()),
+		TenantID:       uint32(ssp.TenantID),
+		SSPID:          uint32(ssp.SSPID),
+		SSPInventoryID: uint32(ssp.SSPInventoryID),
+		DSPID:          uint32(dsp.DSPID),
+		DSPInventoryID: uint32(dsp.DSPInventoryID),
+		Price:          dspPrice,
+		DeviceType:     cryptoutil.GetDeviceTypeEnum(tck.DeviceType),
+		OS:             cryptoutil.GetOsEnum(tck.OS),
+		OSV:            tck.OSV,
+		Country:        tck.Country,
+		AdType:         cryptoutil.GetAdTypeEnum(tck.AdType),
+		AdSize:         tck.AdSize,
+		Domain:         "", // User requested empty website domain
+		BundleID:       tck.BundleID,
+		Carrier:        tck.Carrier,
+		AuctionID:      tck.AuctionID,
+		BidID:          bidID,
+		ImpID:          impID,
+		Seat:           tck.Seat,
+		AdID:           adID,
+	}
+	bytes, _ := p.Pack()
+	return bytes
 }
 
 // TransformWinningBid modifies the bid's NURL and AdM to include exchange-specific tracking and AES-encrypted DSP info.
@@ -59,8 +76,8 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	}
 
 	// 1. NURL Specific Optimized Parameters (p and d)
-	pPayload := getPositionalPayload(ssp, dsp, dspPrice, tck, "", "", "")
-	encryptedP, _ := cryptoutil.EncryptCompressed(pPayload)
+	pBytes := getPositionalPayload(ssp, dsp, dspPrice, tck, "", "", "")
+	encryptedP, _ := cryptoutil.EncryptBinary(pBytes)
 
 	encryptedD := ""
 	if bid.NURL != "" {
@@ -79,8 +96,8 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 		winHost, url.QueryEscape(encryptedD), url.QueryEscape(encryptedP), rtMacros)
 
 	// 3. Prepare Tracker Payload (p) for imp, view, click, video, omid
-	trackPayload := getPositionalPayload(ssp, dsp, dspPrice, tck, bid.ID, bid.ImpID, bid.AdID)
-	encryptedTrackP, _ := cryptoutil.EncryptCompressed(trackPayload)
+	trackPBytes := getPositionalPayload(ssp, dsp, dspPrice, tck, bid.ID, bid.ImpID, bid.AdID)
+	encryptedTrackP, _ := cryptoutil.EncryptBinary(trackPBytes)
 
 	// 4. Prepare Tracker Hosts
 	impHost := baseDmn + "/t/imp"

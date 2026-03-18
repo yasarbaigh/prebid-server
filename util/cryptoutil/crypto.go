@@ -96,3 +96,55 @@ func DecryptCompressed(cryptoText string) (string, error) {
 	}
 	return b.String(), nil
 }
+
+// EncryptBinary encrypts raw bytes to a URL-safe base64 string
+func EncryptBinary(data []byte) (string, error) {
+	block, err := aes.NewCipher([]byte(AESKey))
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	ciphertext := gcm.Seal(nonce, nonce, data, nil)
+	return base64.RawURLEncoding.EncodeToString(ciphertext), nil
+}
+
+// DecryptBinary decrypts a URL-safe base64 string back to original bytes
+func DecryptBinary(cryptoText string) ([]byte, error) {
+	data, err := base64.RawURLEncoding.DecodeString(cryptoText)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher([]byte(AESKey))
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(data) < nonceSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
+}

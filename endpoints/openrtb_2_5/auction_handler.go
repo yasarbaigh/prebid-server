@@ -126,10 +126,20 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		return
 	}
 
-	// Ensure the bidReq struct also reflects the computed tmax
+	// 5. Versioning & Validation
 	bidReq.TMax = computedTMax
+	version := r.Header.Get("X-OpenRTB-Version")
+	if version == "" {
+		version = "2.5" // Default legacy
+	}
 
-	// 5. Shortlist DSPs
+	if err := ValidateBidRequest(&bidReq, version); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf("Invalid OpenRTB %s: %v", version, err)))
+		return
+	}
+
+	// 6. Shortlist DSPs
 	candidates := h.PartnersManager.GetDSPsByTenant(ssp.TenantID)
 	selectedDSPs := partners.ShortlistDSPs(&bidReq, candidates, ssp.SSPIdentifier, 5, bidReq.TMax)
 

@@ -51,6 +51,16 @@ func main() {
 	case "decrypt-c", "dc":
 		res, err := cryptoutil.DecryptCompressed(text)
 		run("Decrypted Decompression", res, err)
+	case "encrypt-b", "eb":
+		res, err := cryptoutil.EncryptBinary([]byte(text))
+		run("Binary Encryption", res, err)
+	case "decrypt-b", "db":
+		res, err := cryptoutil.DecryptBinary(text)
+		if err == nil {
+			run("Binary Decryption", string(res), nil)
+		} else {
+			run("Binary Decryption", "", err)
+		}
 	case "help", "-h", "--help":
 		printUsage()
 	default:
@@ -81,6 +91,8 @@ func printUsage() {
 	fmt.Println("  decrypt (d)    - Standard AES-GCM decryption")
 	fmt.Println("  encrypt-c (ec) - Compressed + AES-GCM encryption (for 'd' param)")
 	fmt.Println("  decrypt-c (dc) - Decrypt + Decompression")
+	fmt.Println("  encrypt-b (eb) - Binary AES-GCM encryption (for 'p' param)")
+	fmt.Println("  decrypt-b (db) - Binary AES-GCM decryption")
 	fmt.Println("\nExamples:")
 	fmt.Println("  go run z_cd_hints/crypto_tool/crypto_tool.go encrypt \"tid=1&sid=2\"")
 	fmt.Println("  go run z_cd_hints/crypto_tool/crypto_tool.go decrypt \"AQIDBAU...\"")
