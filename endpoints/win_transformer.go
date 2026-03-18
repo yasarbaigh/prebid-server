@@ -16,7 +16,7 @@ import (
 // Win Transformer Logic
 
 const (
-	rtMacros = "aid=${AUCTION_ID}&bid=${AUCTION_BID_ID}&imid=${AUCTION_IMP_ID}&price=${AUCTION_PRICE}&mbr=${AUCTION_MBR}&cur=${AUCTION_CURRENCY}&seat=${AUCTION_SEAT_ID}&adid=${AUCTION_AD_ID}"
+	rtMacros = "u=${AUCTION_ID}&b=${AUCTION_BID_ID}&i=${AUCTION_IMP_ID}&p=${AUCTION_PRICE}&c=${AUCTION_CURRENCY}&s=${AUCTION_SEAT_ID}&a=${AUCTION_AD_ID}"
 
 	// Default Tracker Hosts
 	DefaultBaseDmn = "https://win.ssp.cd.com"
@@ -92,26 +92,26 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	baseDmn = strings.TrimRight(baseDmn, "/")
 
 	winHost := baseDmn + "/e/win"
-	bid.NURL = fmt.Sprintf("%s?d=%s&p=%s&%s",
+	bid.NURL = fmt.Sprintf("%s?d=%s&x=%s&%s",
 		winHost, url.QueryEscape(encryptedD), url.QueryEscape(encryptedP), rtMacros)
 
-	// 3. Prepare Tracker Payload (p) for imp, view, click, video, omid
+	// 3. Prepare Tracker Payload (x) for imp, view, click, video, omid
 	trackPBytes := getPositionalPayload(ssp, dsp, dspPrice, tck, bid.ID, bid.ImpID, bid.AdID)
 	encryptedTrackP, _ := cryptoutil.EncryptBinary(trackPBytes)
 
 	// 4. Prepare Tracker Hosts
 	impHost := baseDmn + "/t/imp"
-	pixelUrl := fmt.Sprintf("%s?p=%s", impHost, url.QueryEscape(encryptedTrackP))
+	pixelUrl := fmt.Sprintf("%s?x=%s", impHost, url.QueryEscape(encryptedTrackP))
 
 	admHost := baseDmn + "/t/adm"
-	admUrl := fmt.Sprintf("%s?p=%s", admHost, url.QueryEscape(encryptedTrackP))
+	admUrl := fmt.Sprintf("%s?x=%s", admHost, url.QueryEscape(encryptedTrackP))
 
 	viewHost := baseDmn + "/t/view"
-	viewUrl := fmt.Sprintf("%s?p=%s", viewHost, url.QueryEscape(encryptedTrackP))
+	viewUrl := fmt.Sprintf("%s?x=%s", viewHost, url.QueryEscape(encryptedTrackP))
 
 	// 5. Add Click Tracking
 	clickHost := baseDmn + "/t/clk"
-	clickUrl := fmt.Sprintf("%s?p=%s", clickHost, url.QueryEscape(encryptedTrackP))
+	clickUrl := fmt.Sprintf("%s?x=%s", clickHost, url.QueryEscape(encryptedTrackP))
 
 	// Check transparency: both must be true to avoid masking
 	isTransparent := ssp.AdmPriceTransparency && dsp.AdmPriceTransparency
@@ -135,7 +135,7 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 
 		lossHost := baseDmn + "/e/loss"
 		// p query param with all signed values, and 3 specific macros
-		bid.LURL = fmt.Sprintf("%s?d=%s&p=%s&aid={AUCTION_ID}&price={AUCTION_PRICE}&loss={AUCTION_LOSS}",
+		bid.LURL = fmt.Sprintf("%s?d=%s&p=%s&aid={AUCTION_ID}&mbr={AUCTION_MBR}&loss={AUCTION_LOSS}",
 			lossHost, url.QueryEscape(encryptedLossD), url.QueryEscape(encryptedTrackP))
 	} else {
 		// If DSP didn't provide LURL, ensure it stays empty
@@ -160,7 +160,7 @@ func modifyAdmEnhanced(adm, pixelUrl, admUrl, viewUrl, clickUrl, bidder string, 
 			var qTrackers strings.Builder
 			for _, q := range quartiles {
 				videoHost := baseDmn + "/t/video"
-				url := fmt.Sprintf("%s?vq=%s&p=%s", videoHost, q, url.QueryEscape(encryptedPayload))
+				url := fmt.Sprintf("%s?vq=%s&x=%s", videoHost, q, url.QueryEscape(encryptedPayload))
 				qTrackers.WriteString(fmt.Sprintf("<Tracking vq=\"%s\"><![CDATA[%s]]></Tracking>", q, url))
 			}
 			adm = strings.Replace(adm, "</TrackingEvents>", qTrackers.String()+"</TrackingEvents>", 1)

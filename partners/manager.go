@@ -73,7 +73,7 @@ type PartnersConfig struct {
 	DSPInventories []DSPInventory `json:"dsp_inventories"`
 	AdServing      bool           `json:"ad_serving"`
 	ASI            string         `json:"asi"`
-	TS             int64          `json:"ts"` // Unix timestamp in seconds
+	TS             int64          `json:"-"` // Internal Unix timestamp
 
 	// Fast lookup maps (calculated during load)
 	sspMap map[string]*SSPInventory
@@ -95,17 +95,41 @@ func (m *Manager) Load(path string) error {
 		return fmt.Errorf("failed to read partners file: %v", err)
 	}
 
-	var cfg PartnersConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	// Helper struct to handle string TS from JSON
+	var raw struct {
+		SSPInventories []SSPInventory `json:"ssp_inventories"`
+		DSPInventories []DSPInventory `json:"dsp_inventories"`
+		AdServing      bool           `json:"ad_serving"`
+		ASI            string         `json:"asi"`
+		TS             string         `json:"ts"`
+	}
+
+	if err := json.Unmarshal(data, &raw); err != nil {
 		m.config.Store(nil)
 		return fmt.Errorf("failed to unmarshal partners config: %v", err)
+	}
+
+	// Parse Datetime String: 2026-03-18 11:11:11
+	parsedTime, err := time.Parse("2006-01-02 15:04:05", raw.TS)
+	if err != nil {
+		// Fallback for debugging if it's still a number
+		m.config.Store(nil)
+		return fmt.Errorf("invalid TS format in partners.json: %s (expected YYYY-MM-DD HH:MM:SS)", raw.TS)
+	}
+
+	cfg := PartnersConfig{
+		SSPInventories: raw.SSPInventories,
+		DSPInventories: raw.DSPInventories,
+		AdServing:      raw.AdServing,
+		ASI:            raw.ASI,
+		TS:             parsedTime.Unix(),
 	}
 
 	// Strict TS Check: Stop serving if TS is older than 10 minutes
 	now := time.Now().Unix()
 	if cfg.TS == 0 || (now-cfg.TS) > 600 {
 		m.config.Store(nil)
-		return fmt.Errorf("partners config TS is stale or missing (TS: %d, Now: %d)", cfg.TS, now)
+		return fmt.Errorf("partners config TS is stale or missing (TS: %d, Now: %d, Raw: %s)", cfg.TS, now, raw.TS)
 	}
 
 	// Default PricingAt to 1 if not available
