@@ -22,7 +22,9 @@ for (let i = 1; i <= numInstances; i++) {
       PBS_PORTS: rtbPorts.join(","),
       PBS_METRICS_PROMETHEUS_PORT: prometheusPort,
       // Default to 8000 for standard pbs.port if not using multiple ports
-      PBS_PORT: rtbPorts[0]
+      PBS_PORT: rtbPorts[0],
+      GOMEMLIMIT: "2GiB", // Explicit memory protection
+      GOGC: "200"       // Optimized GC cycle for RTB
     },
     // Log files per instance
     error_file: `/opt/service_logs/ssp_module/ssp_bids/pbs_${i}_err.log`,

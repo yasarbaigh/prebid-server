@@ -6,24 +6,17 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/prebid/prebid-server/v3/partners"
 )
 
 // NewStatusEndpoint returns a handler which writes the given response when the app is ready to serve requests.
-func NewStatusEndpoint(response string) httprouter.Handle {
-	/*
-	// Today, the app always considers itself ready to serve requests.
-	if response == "" {
-		return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+func NewStatusEndpoint(response string, pm *partners.Manager) httprouter.Handle {
+	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		if !pm.IsHealthy() {
 			w.WriteHeader(http.StatusNoContent)
+			return
 		}
-	}
 
-	responseBytes := []byte(response)
-	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-		w.Write(responseBytes)
-	}
-	*/
-	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 		currentTime := time.Now().Format(time.RFC3339)
 		fullResponse := fmt.Sprintf("%s. T35 Prebid Server is running, Current Request Time: %s\n", response, currentTime)
 

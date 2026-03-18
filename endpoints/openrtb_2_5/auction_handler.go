@@ -78,7 +78,8 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}()
 
 	// 1. Check AdServing and Config Health (Strict 10m TS check)
-	if !h.PartnersManager.IsHealthy() || !h.PartnersManager.GetConfig().AdServing {
+	cfg := h.PartnersManager.GetConfig()
+	if cfg == nil || !h.PartnersManager.IsHealthy() || !cfg.AdServing {
 		partners.AuctionCounter.WithLabelValues("rejected_unhealthy_config").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return

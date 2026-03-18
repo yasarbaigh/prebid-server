@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"bufio"
 
 	"github.com/magiconair/properties"
 	"github.com/prebid/prebid-server/v3/logger"
@@ -38,6 +39,7 @@ type BidLogger struct {
 	logChan           chan *generated.AuctionEvent
 	filePath          string
 	writer            *lumberjack.Logger
+	bufWriter         *bufio.Writer
 	mu                sync.Mutex
 	once              sync.Once
 	hostname          string
@@ -165,6 +167,7 @@ func InitBidLogger(propsPath string) error {
 		verboseMaxMB:      vMaxMB,
 		verboseBackups:    vMaxBackups,
 		verboseLoggers:    make(map[string]*lumberjack.Logger),
+		bufWriter:         bufio.NewWriterSize(lumberjackLogger, 256*1024),
 	}
 
 	if verboseLogEnabled {
@@ -193,11 +196,25 @@ func (l *BidLogger) start() {
 		}()
 	}
 
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
 	defer l.wg.Done()
-	for event := range l.logChan {
-		l.writeEvent(event)
-		// Release the event back to pool after write is finished
-		ReleaseEventToPool(event)
+	for {
+		select {
+		case event, ok := <-l.logChan:
+			if !ok {
+				// Channel closed, final flush before exiting
+				l.bufWriter.Flush()
+				return
+			}
+			l.writeEvent(event)
+			// Release the event back to pool after write is finished
+			ReleaseEventToPool(event)
+		case <-ticker.C:
+			// Periodic flush for long-tail RTB instances
+			l.bufWriter.Flush()
+		}
 	}
 }
 
@@ -261,7 +278,7 @@ func (l *BidLogger) writeEvent(event *generated.AuctionEvent) {
 	buf[encodedLen] = '\n'
 
 	// No Lock needed here as only the 'start()' goroutine calls this
-	if _, err := l.writer.Write(buf[:encodedLen+1]); err != nil {
+	if _, err := l.bufWriter.Write(buf[:encodedLen+1]); err != nil {
 		logger.Errorf("Failed to write base64 data to log: %v", err)
 	}
 	
@@ -317,6 +334,10 @@ func (l *BidLogger) Close() {
 
 	// Wait for workers to finish draining
 	l.wg.Wait()
+
+	if l.bufWriter != nil {
+		l.bufWriter.Flush()
+	}
 
 	l.vMu.Lock()
 	defer l.vMu.Unlock()

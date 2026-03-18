@@ -291,7 +291,7 @@ func New(cfg *config.Configuration, rateConvertor *currency.RateConverter, pm *p
 	r.GET("/info/bidders/:bidderName", infoEndpoints.NewBiddersDetailEndpoint(cfg.BidderInfos))
 	r.GET("/bidders/params", NewJsonDirectoryServer(schemaDirectory, paramsValidator))
 	r.POST("/cookie_sync", endpoints.NewCookieSyncEndpoint(syncersByBidder, cfg, gdprPermsBuilder, tcf2CfgBuilder, r.MetricsEngine, analyticsRunner, accounts, activeBidders).Handle)
-	r.GET("/status", endpoints.NewStatusEndpoint(cfg.StatusResponse))
+	r.GET("/status", endpoints.NewStatusEndpoint(cfg.StatusResponse, r.PartnersManager))
 	r.GET("/", serveIndex)
 	r.Handler("GET", "/version", endpoints.NewVersionEndpoint(version.Ver, version.Rev))
 	r.ServeFiles("/static/*filepath", http.Dir("static"))

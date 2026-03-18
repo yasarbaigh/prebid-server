@@ -20,6 +20,8 @@ ExecStart=/bin/bash -c '\
   PBS_METRICS_PROMETHEUS_PORT=$PROMETHEUS \
   PBS_PORTS=$PORTS \
   PBS_PORT=$((BASE + 1)) \
+  GOMEMLIMIT=2GiB \
+  GOGC=200 \
   exec ./prebid-server'
 Restart=always
 LimitNOFILE=65536

@@ -115,3 +115,34 @@ Import the provided JSON files in `startup/grafana/` into your Grafana instance:
 - **rtb_global_summary.json**: Detailed breakdown of global traffic.
 - **rtb_ssp_performance.json**: Latency and success rates per SSP.
 - **rtb_dsp_performance.json**: Timeouts and bid rates per DSP.
+
+---
+
+## 7. Production Kernel Tuning (Sysctl)
+
+To handle 100k+ QPS and avoid port exhaustion, you must optimize the host's TCP stack. We have provided a helper script for this.
+
+### Auto-Tuning (Recommended)
+
+Run the following inside the `startup/` directory of the new machine:
+
+```bash
+sudo ./startup/tune_kernel.sh
+```
+
+This script will apply the settings immediately and persist them to `/etc/sysctl.d/99-prebid-server.conf` so they survive system reboots.
+
+### Manual Tuning
+
+If you prefer to manually edit your configuration:
+
+```bash
+# Add to /etc/sysctl.conf or sysctl.d/
+net.core.somaxconn = 10000
+net.ipv4.tcp_max_syn_backlog = 10000
+net.ipv4.ip_local_port_range = 10000 65535
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 15
+```
+
+Apply manually with `sysctl -p`.
