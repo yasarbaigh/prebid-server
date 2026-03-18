@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -14,6 +15,25 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+func getInstanceID() string {
+	if val := os.Getenv("NODE_APP_INSTANCE"); val != "" {
+		return val
+	}
+	if val := os.Getenv("INSTANCE_ID"); val != "" {
+		return val
+	}
+	return "1"
+}
+
+func formatLogPath(path, hostname, instanceID string) string {
+	if path == "" {
+		return path
+	}
+	ext := filepath.Ext(path)
+	base := path[:len(path)-len(ext)]
+	return fmt.Sprintf("%s_%s_%s%s", base, hostname, instanceID, ext)
+}
+
 type BidLogger struct {
 	logChan           chan *generated.AuctionEvent
 	filePath          string
@@ -21,6 +41,7 @@ type BidLogger struct {
 	mu                sync.Mutex
 	once              sync.Once
 	hostname          string
+	instanceID        string
 	verboseLogEnabled bool
 	verboseLogPath    string
 	verboseMaxMB      int
@@ -28,6 +49,34 @@ type BidLogger struct {
 	verboseChan       chan *verboseEvent
 	verboseLoggers    map[string]*lumberjack.Logger
 	vMu               sync.Mutex
+	wg                sync.WaitGroup
+}
+
+var (
+	eventPool = sync.Pool{
+		New: func() interface{} {
+			return &generated.AuctionEvent{}
+		},
+	}
+	// Pool for base64 encoded lines to avoid allocations
+	linePool = sync.Pool{
+		New: func() interface{} {
+			// Pre-allocate a reasonable buffer for RTB logs
+			return make([]byte, 8192)
+		},
+	}
+)
+
+func GetEventFromPool() *generated.AuctionEvent {
+	e := eventPool.Get().(*generated.AuctionEvent)
+	e.Reset()
+	return e
+}
+
+func ReleaseEventToPool(e *generated.AuctionEvent) {
+	if e != nil {
+		eventPool.Put(e)
+	}
 }
 
 type verboseEvent struct {
@@ -49,13 +98,38 @@ func InitBidLogger(propsPath string) error {
 		return fmt.Errorf("failed to load %s: %v", propsPath, err)
 	}
 
-	path := p.GetString("logging.bid_combo.path", "/opt/adserving/logs/auction_events.pb.log")
-	bufferSize := p.GetInt("logging.bid_combo.channel_buffer", 10000)
-	maxSize := p.GetInt("logging.bid_combo.max_file_size_mb", 100)
-	maxBackups := p.GetInt("logging.bid_combo.max_backups", 5)
+	hostname, _ := os.Hostname()
+	instanceID := getInstanceID()
 
-	// Ensure directory exists
-	dir := "/opt/adserving/logs"
+	path := p.GetString("logging.auction_log.path", "/opt/adserving/logs/auction_events.pb.log")
+	path = formatLogPath(path, hostname, instanceID)
+
+	bufferSize := p.GetInt("logging.auction_log.channel_buffer", 10000)
+	maxSize := p.GetInt("logging.auction_log.max_file_size_mb", 100)
+	maxBackups := p.GetInt("logging.auction_log.max_backups", 5)
+
+	// Service Log initialization
+	serviceLogPath := p.GetString("service_log", "/opt/adserving/logs/pbs_service.log")
+	serviceLogPath = formatLogPath(serviceLogPath, hostname, instanceID)
+
+	serviceLogLevel := p.GetString("service_log_level", "INFO")
+	serviceLogMaxSize := p.GetInt("service_log_max_size", 100)
+	serviceLogMaxBackups := p.GetInt("service_log_max_backups", 5)
+	serviceLogMaxAge := p.GetInt("service_log_max_age", 30)
+	serviceLogCompress := p.GetBool("service_log_compress", true)
+
+	// Ensure directory exists for service log
+	serviceDir := filepath.Dir(serviceLogPath)
+	if err := os.MkdirAll(serviceDir, 0755); err != nil {
+		logger.Warnf("Failed to create service log directory %s: %v", serviceDir, err)
+	}
+
+	// Initialize global service logger
+	serviceLogger := logger.NewServiceLogger(serviceLogPath, serviceLogMaxSize, serviceLogMaxBackups, serviceLogMaxAge, serviceLogCompress, serviceLogLevel)
+	logger.SetLogger(serviceLogger)
+
+	// Ensure auction log directory exists
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		logger.Warnf("Failed to create log directory %s: %v", dir, err)
 	}
@@ -72,7 +146,6 @@ func InitBidLogger(propsPath string) error {
 	verboseLogPath := p.GetString("verbose_log.path", "/opt/adserving/verbose")
 	vMaxMB := p.GetInt("verbose_log.max_file_size_mb", 10)
 	vMaxBackups := p.GetInt("verbose_log.max_backups", 5)
-	hostname, _ := os.Hostname()
 
 	// Ensure verbose directory exists if enabled
 	if verboseLogEnabled {
@@ -86,6 +159,7 @@ func InitBidLogger(propsPath string) error {
 		filePath:          path,
 		writer:            lumberjackLogger,
 		hostname:          hostname,
+		instanceID:        instanceID,
 		verboseLogEnabled: verboseLogEnabled,
 		verboseLogPath:    verboseLogPath,
 		verboseMaxMB:      vMaxMB,
@@ -97,13 +171,16 @@ func InitBidLogger(propsPath string) error {
 		instance.verboseChan = make(chan *verboseEvent, bufferSize)
 	}
 
+	instance.wg.Add(1)
 	go instance.start()
 	return nil
 }
 
 func (l *BidLogger) start() {
 	if l.verboseLogEnabled {
+		l.wg.Add(1)
 		go func() {
+			defer l.wg.Done()
 			for event := range l.verboseChan {
 				var filename string
 				if event.isSSp {
@@ -116,8 +193,11 @@ func (l *BidLogger) start() {
 		}()
 	}
 
+	defer l.wg.Done()
 	for event := range l.logChan {
 		l.writeEvent(event)
+		// Release the event back to pool after write is finished
+		ReleaseEventToPool(event)
 	}
 }
 
@@ -144,7 +224,8 @@ func (l *BidLogger) appendToVerboseFile(filename string, data []byte, label stri
 	l.vMu.Lock()
 	writer, ok := l.verboseLoggers[filename]
 	if !ok {
-		path := fmt.Sprintf("%s/%s", l.verboseLogPath, filename)
+		suffixedFilename := formatLogPath(filename, l.hostname, l.instanceID)
+		path := fmt.Sprintf("%s/%s", l.verboseLogPath, suffixedFilename)
 		writer = &lumberjack.Logger{
 			Filename:   path,
 			MaxSize:    l.verboseMaxMB,
@@ -169,16 +250,23 @@ func (l *BidLogger) writeEvent(event *generated.AuctionEvent) {
 	}
 
 	encodedLen := base64.StdEncoding.EncodedLen(len(data))
-	out := make([]byte, encodedLen+1)
-	base64.StdEncoding.Encode(out, data)
-	out[encodedLen] = '\n'
+	
+	// Get a buffer from the line pool
+	buf := linePool.Get().([]byte)
+	if len(buf) < encodedLen+1 {
+		buf = make([]byte, encodedLen+1)
+	}
+	
+	base64.StdEncoding.Encode(buf, data)
+	buf[encodedLen] = '\n'
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	if _, err := l.writer.Write(out); err != nil {
+	// No Lock needed here as only the 'start()' goroutine calls this
+	if _, err := l.writer.Write(buf[:encodedLen+1]); err != nil {
 		logger.Errorf("Failed to write base64 data to log: %v", err)
 	}
+	
+	// Return the buffer to the line pool
+	linePool.Put(buf)
 }
 
 func (l *BidLogger) Log(event *generated.AuctionEvent) {
@@ -217,10 +305,18 @@ func (l *BidLogger) LogDSP(dspIdentifier string, body []byte, label string) {
 }
 
 func (l *BidLogger) Close() {
+	if l == nil {
+		return
+	}
+	
+	// First close channels to signal workers to stop AFTER they drain the buffer
 	close(l.logChan)
 	if l.verboseChan != nil {
 		close(l.verboseChan)
 	}
+
+	// Wait for workers to finish draining
+	l.wg.Wait()
 
 	l.vMu.Lock()
 	defer l.vMu.Unlock()

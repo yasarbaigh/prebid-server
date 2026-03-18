@@ -56,7 +56,7 @@ func main() {
 			"timestamp":              event.Timestamp,
 			"hostname":               event.Hostname,
 			"raw_bid_request_json":   json.RawMessage(event.RawBidRequest),
-			"raw_dsp_response_json":  json.RawMessage(event.RawDspResponse),
+			"ssp_dsp_response_json":  json.RawMessage(event.SspDspResponse),
 		}
 
 		// Handle OneOf Source field (App/Web)

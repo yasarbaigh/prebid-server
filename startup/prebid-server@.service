@@ -1,0 +1,28 @@
+[Unit]
+Description=Prebid Server - Instance %i
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/adserving/prebid-server
+# Instance ID %i is used to calculate ports starting from 24000 with a 30-port interval
+# Instance 1: Admin: 24000, Ports: 24001..24020, Prometheus: 24029
+# Instance 2: Admin: 24030, Ports: 24031..24050, Prometheus: 24059
+ExecStart=/bin/bash -c '\
+  BASE=$((24000 + (%i - 1) * 30)); \
+  HEALTH=$BASE; \
+  PROMETHEUS=$((BASE + 29)); \
+  PORTS=""; \
+  for j in $(seq 1 20); do PORTS="${PORTS}$((BASE + j)),"; done; \
+  PORTS=${PORTS%,}; \
+  PBS_ADMIN_PORT=$HEALTH \
+  PBS_METRICS_PROMETHEUS_PORT=$PROMETHEUS \
+  PBS_PORTS=$PORTS \
+  PBS_PORT=$((BASE + 1)) \
+  exec ./prebid-server'
+Restart=always
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

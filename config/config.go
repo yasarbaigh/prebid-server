@@ -23,6 +23,7 @@ type Configuration struct {
 	ExternalURL      string      `mapstructure:"external_url"`
 	Host             string      `mapstructure:"host"`
 	Port             int         `mapstructure:"port"`
+	Ports            []int       `mapstructure:"ports"`
 	UnixSocketEnable bool        `mapstructure:"unix_socket_enable"`
 	UnixSocketName   string      `mapstructure:"unix_socket_name"`
 	Client           HTTPClient  `mapstructure:"http_client"`
@@ -936,6 +937,7 @@ func SetupViper(v *viper.Viper, filename string, bidderInfos BidderInfos) {
 	v.SetDefault("external_url", "http://localhost:8000")
 	v.SetDefault("host", "")
 	v.SetDefault("port", 8000)
+	v.SetDefault("ports", []int{})
 	v.SetDefault("unix_socket_enable", false)              // boolean which decide if the socket-server will be started.
 	v.SetDefault("unix_socket_name", "prebid-server.sock") // path of the socket's file which must be listened.
 	v.SetDefault("admin_port", 6060)

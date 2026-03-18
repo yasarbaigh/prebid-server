@@ -73,7 +73,11 @@ type PartnersConfig struct {
 	DSPInventories []DSPInventory `json:"dsp_inventories"`
 	AdServing      bool           `json:"ad_serving"`
 	ASI            string         `json:"asi"`
-	TS             string         `json:"ts"`
+	TS             int64          `json:"ts"` // Unix timestamp in seconds
+
+	// Fast lookup maps (calculated during load)
+	sspMap map[string]*SSPInventory
+	dspMap map[int][]DSPInventory
 }
 
 type Manager struct {
@@ -87,12 +91,21 @@ func NewManager() *Manager {
 func (m *Manager) Load(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
+		m.config.Store(nil) // Clear config on failure to stop serving
 		return fmt.Errorf("failed to read partners file: %v", err)
 	}
 
 	var cfg PartnersConfig
 	if err := json.Unmarshal(data, &cfg); err != nil {
+		m.config.Store(nil)
 		return fmt.Errorf("failed to unmarshal partners config: %v", err)
+	}
+
+	// Strict TS Check: Stop serving if TS is older than 10 minutes
+	now := time.Now().Unix()
+	if cfg.TS == 0 || (now-cfg.TS) > 600 {
+		m.config.Store(nil)
+		return fmt.Errorf("partners config TS is stale or missing (TS: %d, Now: %d)", cfg.TS, now)
 	}
 
 	// Default PricingAt to 1 if not available
@@ -102,8 +115,31 @@ func (m *Manager) Load(path string) error {
 		}
 	}
 
+	// Build Lookup Maps for O(1) performance
+	cfg.sspMap = make(map[string]*SSPInventory)
+	for i := range cfg.SSPInventories {
+		cfg.sspMap[cfg.SSPInventories[i].InventoryCode] = &cfg.SSPInventories[i]
+	}
+
+	cfg.dspMap = make(map[int][]DSPInventory)
+	for i := range cfg.DSPInventories {
+		// Only index Active DSPs
+		if cfg.DSPInventories[i].Status == "Active" {
+			cfg.dspMap[cfg.DSPInventories[i].TenantID] = append(cfg.dspMap[cfg.DSPInventories[i].TenantID], cfg.DSPInventories[i])
+		}
+	}
+
 	m.config.Store(&cfg)
 	return nil
+}
+
+func (m *Manager) IsHealthy() bool {
+	cfg := m.config.Load()
+	if cfg == nil {
+		return false
+	}
+	// Double check freshness just in case reloader failed but old config was kept
+	return (time.Now().Unix() - cfg.TS) <= 600
 }
 
 func (m *Manager) StartReloading(ctx context.Context, path string) {
@@ -131,27 +167,17 @@ func (m *Manager) GetConfig() *PartnersConfig {
 
 func (m *Manager) GetSSPByInventoryCode(code string) (*SSPInventory, bool) {
 	cfg := m.GetConfig()
-	if cfg == nil {
+	if cfg == nil || cfg.sspMap == nil {
 		return nil, false
 	}
-	for i := range cfg.SSPInventories {
-		if cfg.SSPInventories[i].InventoryCode == code {
-			return &cfg.SSPInventories[i], true
-		}
-	}
-	return nil, false
+	ssp, ok := cfg.sspMap[code]
+	return ssp, ok
 }
 
 func (m *Manager) GetDSPsByTenant(tenantID int) []DSPInventory {
 	cfg := m.GetConfig()
-	if cfg == nil {
+	if cfg == nil || cfg.dspMap == nil {
 		return nil
 	}
-	var dsps []DSPInventory
-	for i := range cfg.DSPInventories {
-		if cfg.DSPInventories[i].TenantID == tenantID && cfg.DSPInventories[i].Status == "Active" {
-			dsps = append(dsps, cfg.DSPInventories[i])
-		}
-	}
-	return dsps
+	return cfg.dspMap[tenantID]
 }

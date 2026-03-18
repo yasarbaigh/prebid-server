@@ -1,0 +1,25 @@
+{
+  "annotations": { "list": [ { "builtIn": 1, "datasource": "-- Grafana --", "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" } ] },
+  "editable": true, "fiscalYearStartMonth": 0, "graphTooltip": 0, "id": null, "links": [], "liveNow": false,
+  "panels": [
+    {
+      "title": "Prebid Cluster: Total RTB Requests (SSP)", "type": "stat", "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [{ "expr": "sum(rate(rtb_ssp_requests_total[1m]))", "refId": "A" }],
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "title": "Median Latency (P50) per Instance", "type": "timeseries", "gridPos": { "h": 6, "w": 16, "x": 8, "y": 0 },
+      "targets": [{ "expr": "histogram_quantile(0.5, sum by (le, instance_id) (rate(rtb_dsp_latency_seconds_bucket[5m])))", "legendFormat": "{{instance_id}}" }]
+    },
+    {
+      "title": "SSP Response Status (200 vs Errors)", "type": "piechart", "gridPos": { "h": 8, "w": 8, "x": 0, "y": 6 },
+      "targets": [{ "expr": "sum by (status) (rate(rtb_ssp_responses_total[5m]))", "legendFormat": "{{status}}" }]
+    },
+    {
+      "title": "Exchange Revenue (DSP Spending)", "type": "timeseries", "gridPos": { "h": 8, "w": 16, "x": 8, "y": 6 },
+      "targets": [{ "expr": "rate(rtb_exchange_spent_total[5m])", "legendFormat": "Revenue" }]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 36, "style": "dark", "tags": [ "prebid", "rtb" ], "templating": { "list": [] }, "time": { "from": "now-1h", "to": "now" }, "timepicker": {}, "timezone": "", "title": "Prebid Server Cluster Overview", "uid": "pbs_cluster"
+}

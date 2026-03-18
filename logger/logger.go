@@ -1,6 +1,14 @@
 package logger
 
-var logger Logger = NewGlogLogger()
+var logger Instance = NewGlogLogger()
+
+// Instance is an alias for Logger interface
+type Instance = Logger
+
+// SetLogger sets the global logger instance.
+func SetLogger(l Logger) {
+	logger = l
+}
 
 // Debugf level logging
 func Debugf(msg string, args ...any) {

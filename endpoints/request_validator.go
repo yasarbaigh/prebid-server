@@ -3,12 +3,43 @@ package endpoints
 import (
 	"errors"
 	"strings"
-
+	"github.com/buger/jsonparser"
 	"github.com/prebid/openrtb/v20/openrtb2"
 )
 
-// ValidateBidRequest performs pre-check validations on an incoming SSP bid request.
-// It returns an error if the request is invalid according to OpenRTB specs or custom policies.
+// FastValidateBidRequest performs ultra-fast validation on raw JSON bytes using jsonparser.
+// It checks for the bare minimum fields required to even consider the request valid,
+// avoiding the high CPU cost of full JSON Unmarshaling for invalid traffic.
+func FastValidateBidRequest(body []byte) error {
+	// 1. Check Auction ID
+	if id, _, _, _ := jsonparser.Get(body, "id"); len(id) == 0 {
+		return errors.New("missing mandatory field: id")
+	}
+
+	// 2. Check Impressions (must be a non-empty array)
+	var count int
+	jsonparser.ArrayEach(body, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		count++
+	}, "imp")
+	if count == 0 {
+		return errors.New("missing mandatory field: imp")
+	}
+
+	// 3. Check Device Object (usually required for geo/fraud/price check)
+	if _, dataType, _, _ := jsonparser.Get(body, "device"); dataType != jsonparser.Object {
+		return errors.New("missing mandatory object: device")
+	}
+
+	// 4. Check Device Identity
+	ip, _, _, _ := jsonparser.Get(body, "device", "ip")
+	ipv6, _, _, _ := jsonparser.Get(body, "device", "ipv6")
+	if len(ip) == 0 && len(ipv6) == 0 {
+		return errors.New("missing mandatory field: device.ip or device.ipv6")
+	}
+
+	return nil
+}
+
 // ValidateBidRequest performs pre-check validations on an incoming SSP bid request.
 // It returns an error if the request is invalid according to OpenRTB specs or custom policies.
 func ValidateBidRequest(req *openrtb2.BidRequest) error {

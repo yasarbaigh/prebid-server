@@ -25,33 +25,50 @@ func Listen(cfg *config.Configuration, handler http.Handler, adminHandler http.H
 
 	// Run the servers. Fan any process-stopper signals out to each server for graceful shutdowns.
 	stopAdmin := make(chan os.Signal)
-	stopMain := make(chan os.Signal)
 	stopPrometheus := make(chan os.Signal)
-	stopChannels := []chan<- os.Signal{stopMain}
+	
+	// Collect all main ports
+	mainPorts := []int{cfg.Port}
+	if len(cfg.Ports) > 0 {
+		mainPorts = cfg.Ports
+	}
+	
+	stopMainChannels := make([]chan os.Signal, len(mainPorts))
+	stopChannels := []chan<- os.Signal{}
+	
 	done := make(chan struct{})
 
 	if cfg.UnixSocketEnable && len(cfg.UnixSocketName) > 0 { // start the unix_socket server if config enable-it.
-		var (
-			socketListener net.Listener
-			mainServer     = newSocketServer(cfg, handler)
-		)
-		go shutdownAfterSignals(mainServer, stopMain, done)
-		if socketListener, err = newUnixListener(mainServer.Addr, metrics); err != nil {
+		stopMainChannels[0] = make(chan os.Signal)
+		stopChannels = append(stopChannels, stopMainChannels[0])
+
+		mainServer := newSocketServer(cfg, handler)
+		go shutdownAfterSignals(mainServer, stopMainChannels[0], done)
+		socketListener, err := newUnixListener(mainServer.Addr, metrics)
+		if err != nil {
 			logger.Errorf("Error listening for Unix-Socket connections on path %s: %v for socket server", mainServer.Addr, err)
-			return
+			return err
 		}
 		go runServer(mainServer, "UnixSocket", socketListener)
-	} else { // start the TCP server
-		var (
-			mainListener net.Listener
-			mainServer   = newMainServer(cfg, handler)
-		)
-		go shutdownAfterSignals(mainServer, stopMain, done)
-		if mainListener, err = newTCPListener(mainServer.Addr, metrics); err != nil {
-			logger.Errorf("Error listening for TCP connections on %s: %v for main server", mainServer.Addr, err)
-			return
+	} else { // start the TCP servers for all main ports
+		for i, port := range mainPorts {
+			stopMainChannels[i] = make(chan os.Signal)
+			stopChannels = append(stopChannels, stopMainChannels[i])
+			
+			// Create a copy of the config with the specific port for the server
+			portCfg := *cfg
+			portCfg.Port = port
+			
+			mainServer := newMainServer(&portCfg, handler)
+			go shutdownAfterSignals(mainServer, stopMainChannels[i], done)
+			
+			mainListener, err := newTCPListener(mainServer.Addr, metrics)
+			if err != nil {
+				logger.Errorf("Error listening for TCP connections on %s: %v for main server", mainServer.Addr, err)
+				return err
+			}
+			go runServer(mainServer, fmt.Sprintf("Main:%d", port), mainListener)
 		}
-		go runServer(mainServer, "Main", mainListener)
 	}
 
 	if cfg.Admin.Enabled {

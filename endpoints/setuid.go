@@ -17,6 +17,7 @@ import (
 	"github.com/prebid/prebid-server/v3/config"
 	"github.com/prebid/prebid-server/v3/errortypes"
 	"github.com/prebid/prebid-server/v3/gdpr"
+	"github.com/prebid/prebid-server/v3/logger"
 	"github.com/prebid/prebid-server/v3/metrics"
 	"github.com/prebid/prebid-server/v3/openrtb_ext"
 	"github.com/prebid/prebid-server/v3/privacy"
@@ -427,12 +428,12 @@ func preventSyncsGDPR(gdprRequestInfo gdpr.RequestInfo, permsBuilder gdpr.Permis
 }
 
 func handleBadStatus(w http.ResponseWriter, status int, metricValue metrics.SetUidStatus, err error, me metrics.MetricsEngine, so *analytics.SetUIDObject) {
-	w.WriteHeader(status)
-	me.RecordSetUid(metricValue)
-	so.Status = status
-
 	if err != nil {
+		logger.Errorf("/setuid error: %v", err)
 		so.Errors = []error{err}
 		w.Write([]byte(err.Error()))
 	}
+	w.WriteHeader(status)
+	me.RecordSetUid(metricValue)
+	so.Status = status
 }

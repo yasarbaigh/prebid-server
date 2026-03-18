@@ -78,10 +78,11 @@ func serve(cfg *config.Configuration) error {
 	currencyConverterTickerTask.Start()
 
 	pm := partners.NewManager()
-	if err := pm.Load("./partners.json"); err != nil {
-		logger.Warnf("Failed to load partners.json: %v", err)
+	partnersPath := "/opt/app_adserving/fixed/partners.json"
+	if err := pm.Load(partnersPath); err != nil {
+		logger.Errorf("CRITICAL: Failed to load partners configuration: %v", err)
 	}
-	pm.StartReloading(context.Background(), "./partners.json")
+	pm.StartReloading(context.Background(), partnersPath)
 
 	if err := logging.InitBidLogger("./bid_logging.properties"); err != nil {
 		logger.Warnf("Failed to initialize BidLogger: %v", err)
@@ -103,5 +104,8 @@ func serve(cfg *config.Configuration) error {
 	}
 
 	r.Shutdown()
+	if bidLogger := logging.GetBidLogger(); bidLogger != nil {
+		bidLogger.Close()
+	}
 	return nil
 }

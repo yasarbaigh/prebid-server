@@ -54,3 +54,5 @@ prebid-server.iml
 *~
 *.swp
 *.swo
+tmp/
+prebid-server

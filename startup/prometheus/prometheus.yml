@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prebid_cluster'
+    static_configs:
+      - targets:
+          - 'localhost:24029' # Instance 1 (Base 24000 + 29)
+          - 'localhost:24059' # Instance 2 (Base 24030 + 29)
+          - 'localhost:24089' # Instance 3 (Base 24060 + 29)
+          - 'localhost:24119' # Instance 4 (Base 24090 + 29)
+          - 'localhost:24149' # Instance 5 (Base 24120 + 29)
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '.*:(24029|24059|24089|24119|24149)'
+        target_label: 'instance_id'
+        replacement: 'pbs_${1}'

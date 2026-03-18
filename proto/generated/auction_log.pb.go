@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v3.21.12
-// source: auction_log.proto
+// source: proto/auction_log.proto
 
 package generated
 
@@ -33,7 +33,7 @@ type App struct {
 
 func (x *App) Reset() {
 	*x = App{}
-	mi := &file_auction_log_proto_msgTypes[0]
+	mi := &file_proto_auction_log_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +45,7 @@ func (x *App) String() string {
 func (*App) ProtoMessage() {}
 
 func (x *App) ProtoReflect() protoreflect.Message {
-	mi := &file_auction_log_proto_msgTypes[0]
+	mi := &file_proto_auction_log_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +58,7 @@ func (x *App) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App.ProtoReflect.Descriptor instead.
 func (*App) Descriptor() ([]byte, []int) {
-	return file_auction_log_proto_rawDescGZIP(), []int{0}
+	return file_proto_auction_log_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *App) GetId() string {
@@ -99,7 +99,7 @@ type Web struct {
 
 func (x *Web) Reset() {
 	*x = Web{}
-	mi := &file_auction_log_proto_msgTypes[1]
+	mi := &file_proto_auction_log_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -111,7 +111,7 @@ func (x *Web) String() string {
 func (*Web) ProtoMessage() {}
 
 func (x *Web) ProtoReflect() protoreflect.Message {
-	mi := &file_auction_log_proto_msgTypes[1]
+	mi := &file_proto_auction_log_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -124,7 +124,7 @@ func (x *Web) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Web.ProtoReflect.Descriptor instead.
 func (*Web) Descriptor() ([]byte, []int) {
-	return file_auction_log_proto_rawDescGZIP(), []int{1}
+	return file_proto_auction_log_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Web) GetDomain() string {
@@ -143,55 +143,63 @@ func (x *Web) GetPage() string {
 
 type AuctionEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Identity & Context
+	// 1. Identity & Context
 	TenantId            uint32 `protobuf:"varint,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	SspPartnerId        uint32 `protobuf:"varint,2,opt,name=ssp_partner_id,json=sspPartnerId,proto3" json:"ssp_partner_id,omitempty"`
 	SspInventoryId      uint32 `protobuf:"varint,3,opt,name=ssp_inventory_id,json=sspInventoryId,proto3" json:"ssp_inventory_id,omitempty"`
 	SspPartnerAuctionId string `protobuf:"bytes,4,opt,name=ssp_partner_auction_id,json=sspPartnerAuctionId,proto3" json:"ssp_partner_auction_id,omitempty"` // bidrequest.id
-	// Winner Details
+	// 2. Transacting Partners
 	DspPartnerId   uint32 `protobuf:"varint,5,opt,name=dsp_partner_id,json=dspPartnerId,proto3" json:"dsp_partner_id,omitempty"`
 	DspInventoryId uint32 `protobuf:"varint,6,opt,name=dsp_inventory_id,json=dspInventoryId,proto3" json:"dsp_inventory_id,omitempty"`
-	// Financials
-	BidRequestPrice float64 `protobuf:"fixed64,7,opt,name=bid_request_price,json=bidRequestPrice,proto3" json:"bid_request_price,omitempty"` // Floor/Req Price
-	DspPrice        float64 `protobuf:"fixed64,8,opt,name=dsp_price,json=dspPrice,proto3" json:"dsp_price,omitempty"`                        // Winning Bid Price (Before Margin)
-	SspPrice        float64 `protobuf:"fixed64,9,opt,name=ssp_price,json=sspPrice,proto3" json:"ssp_price,omitempty"`                        // Final Bid Price (After Margin)
-	// Source Environment
+	// 3. User & Privacy
+	Ip          string `protobuf:"bytes,7,opt,name=ip,proto3" json:"ip,omitempty"`
+	UserAgent   string `protobuf:"bytes,8,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"`
+	Ifa         string `protobuf:"bytes,9,opt,name=ifa,proto3" json:"ifa,omitempty"`
+	GdprConsent string `protobuf:"bytes,10,opt,name=gdpr_consent,json=gdprConsent,proto3" json:"gdpr_consent,omitempty"`
+	// 4. Financials
+	BidRequestPrice float64 `protobuf:"fixed64,11,opt,name=bid_request_price,json=bidRequestPrice,proto3" json:"bid_request_price,omitempty"` // Floor/Req Price
+	DspPrice        float64 `protobuf:"fixed64,12,opt,name=dsp_price,json=dspPrice,proto3" json:"dsp_price,omitempty"`                        // Winning Bid Price (Before Margin)
+	SspPrice        float64 `protobuf:"fixed64,13,opt,name=ssp_price,json=sspPrice,proto3" json:"ssp_price,omitempty"`                        // Final Bid Price (After Margin)
+	// 5. Device Dimensions
+	DeviceType string `protobuf:"bytes,14,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	Os         string `protobuf:"bytes,15,opt,name=os,proto3" json:"os,omitempty"`
+	Osv        string `protobuf:"bytes,16,opt,name=osv,proto3" json:"osv,omitempty"`
+	Carrier    string `protobuf:"bytes,17,opt,name=carrier,proto3" json:"carrier,omitempty"`
+	// 6. Geography & Traffic Source
+	Country       string `protobuf:"bytes,18,opt,name=country,proto3" json:"country,omitempty"`
+	SiteAppDomain string `protobuf:"bytes,19,opt,name=site_app_domain,json=siteAppDomain,proto3" json:"site_app_domain,omitempty"`
+	BundleId      string `protobuf:"bytes,20,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	// 7. Ad Details & Selection
+	AdType     string `protobuf:"bytes,21,opt,name=ad_type,json=adType,proto3" json:"ad_type,omitempty"`
+	AdSize     string `protobuf:"bytes,22,opt,name=ad_size,json=adSize,proto3" json:"ad_size,omitempty"`
+	CreativeId string `protobuf:"bytes,23,opt,name=creative_id,json=creativeId,proto3" json:"creative_id,omitempty"`
+	AdDomain   string `protobuf:"bytes,24,opt,name=ad_domain,json=adDomain,proto3" json:"ad_domain,omitempty"`
+	DealId     string `protobuf:"bytes,25,opt,name=deal_id,json=dealId,proto3" json:"deal_id,omitempty"`
+	IsPmp      bool   `protobuf:"varint,26,opt,name=is_pmp,json=isPmp,proto3" json:"is_pmp,omitempty"`
+	// 8. Winning Audit
+	WinningBidId string `protobuf:"bytes,27,opt,name=winning_bid_id,json=winningBidId,proto3" json:"winning_bid_id,omitempty"`
+	ImpId        string `protobuf:"bytes,28,opt,name=imp_id,json=impId,proto3" json:"imp_id,omitempty"`
+	SeatId       string `protobuf:"bytes,29,opt,name=seat_id,json=seatId,proto3" json:"seat_id,omitempty"`
+	// 9. Source Environment (Oneof)
 	//
 	// Types that are valid to be assigned to Source:
 	//
 	//	*AuctionEvent_App
 	//	*AuctionEvent_Web
 	Source isAuctionEvent_Source `protobuf_oneof:"source"`
-	// System Metadata
-	Timestamp int64  `protobuf:"varint,12,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // Unix timestamp in MS
-	Hostname  string `protobuf:"bytes,13,opt,name=hostname,proto3" json:"hostname,omitempty"`    // Device/Server hostname
-	// Raw Payloads
-	RawBidRequest  []byte `protobuf:"bytes,14,opt,name=raw_bid_request,json=rawBidRequest,proto3" json:"raw_bid_request,omitempty"`
-	SspDspResponse []byte `protobuf:"bytes,15,opt,name=ssp_dsp_response,json=sspDspResponse,proto3" json:"ssp_dsp_response,omitempty"`
-	// Reporting & Analytics Dimensions
-	DeviceType    string `protobuf:"bytes,16,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
-	Carrier       string `protobuf:"bytes,17,opt,name=carrier,proto3" json:"carrier,omitempty"`
-	Os            string `protobuf:"bytes,18,opt,name=os,proto3" json:"os,omitempty"`
-	Osv           string `protobuf:"bytes,19,opt,name=osv,proto3" json:"osv,omitempty"`
-	Country       string `protobuf:"bytes,20,opt,name=country,proto3" json:"country,omitempty"`
-	AdType        string `protobuf:"bytes,21,opt,name=ad_type,json=adType,proto3" json:"ad_type,omitempty"`
-	SiteAppDomain string `protobuf:"bytes,22,opt,name=site_app_domain,json=siteAppDomain,proto3" json:"site_app_domain,omitempty"`
-	BundleId      string `protobuf:"bytes,23,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
-	AdSize        string `protobuf:"bytes,24,opt,name=ad_size,json=adSize,proto3" json:"ad_size,omitempty"`
-	// Audit & Identification
-	WinningBidId  string `protobuf:"bytes,25,opt,name=winning_bid_id,json=winningBidId,proto3" json:"winning_bid_id,omitempty"` // bid.id from DSP
-	ImpId         string `protobuf:"bytes,26,opt,name=imp_id,json=impId,proto3" json:"imp_id,omitempty"`                        // imp.id
-	SeatId        string `protobuf:"bytes,27,opt,name=seat_id,json=seatId,proto3" json:"seat_id,omitempty"`                     // seat.id (agency/buyer)
-	CreativeId    string `protobuf:"bytes,28,opt,name=creative_id,json=creativeId,proto3" json:"creative_id,omitempty"`         // bid.crid
-	DealId        string `protobuf:"bytes,29,opt,name=deal_id,json=dealId,proto3" json:"deal_id,omitempty"`                     // bid.dealid
-	AdDomain      string `protobuf:"bytes,30,opt,name=ad_domain,json=adDomain,proto3" json:"ad_domain,omitempty"`               // bid.adomain
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// 10. System Metadata
+	Timestamp int64  `protobuf:"varint,32,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // Unix timestamp in MS
+	Hostname  string `protobuf:"bytes,33,opt,name=hostname,proto3" json:"hostname,omitempty"`    // Device/Server hostname
+	// 11. Raw Payloads
+	RawBidRequest  []byte `protobuf:"bytes,34,opt,name=raw_bid_request,json=rawBidRequest,proto3" json:"raw_bid_request,omitempty"`
+	SspDspResponse []byte `protobuf:"bytes,35,opt,name=ssp_dsp_response,json=sspDspResponse,proto3" json:"ssp_dsp_response,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *AuctionEvent) Reset() {
 	*x = AuctionEvent{}
-	mi := &file_auction_log_proto_msgTypes[2]
+	mi := &file_proto_auction_log_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -203,7 +211,7 @@ func (x *AuctionEvent) String() string {
 func (*AuctionEvent) ProtoMessage() {}
 
 func (x *AuctionEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_auction_log_proto_msgTypes[2]
+	mi := &file_proto_auction_log_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -216,7 +224,7 @@ func (x *AuctionEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuctionEvent.ProtoReflect.Descriptor instead.
 func (*AuctionEvent) Descriptor() ([]byte, []int) {
-	return file_auction_log_proto_rawDescGZIP(), []int{2}
+	return file_proto_auction_log_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *AuctionEvent) GetTenantId() uint32 {
@@ -261,6 +269,34 @@ func (x *AuctionEvent) GetDspInventoryId() uint32 {
 	return 0
 }
 
+func (x *AuctionEvent) GetIp() string {
+	if x != nil {
+		return x.Ip
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetUserAgent() string {
+	if x != nil {
+		return x.UserAgent
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetIfa() string {
+	if x != nil {
+		return x.Ifa
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetGdprConsent() string {
+	if x != nil {
+		return x.GdprConsent
+	}
+	return ""
+}
+
 func (x *AuctionEvent) GetBidRequestPrice() float64 {
 	if x != nil {
 		return x.BidRequestPrice
@@ -280,6 +316,118 @@ func (x *AuctionEvent) GetSspPrice() float64 {
 		return x.SspPrice
 	}
 	return 0
+}
+
+func (x *AuctionEvent) GetDeviceType() string {
+	if x != nil {
+		return x.DeviceType
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetOs() string {
+	if x != nil {
+		return x.Os
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetOsv() string {
+	if x != nil {
+		return x.Osv
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetCarrier() string {
+	if x != nil {
+		return x.Carrier
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetCountry() string {
+	if x != nil {
+		return x.Country
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetSiteAppDomain() string {
+	if x != nil {
+		return x.SiteAppDomain
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetAdType() string {
+	if x != nil {
+		return x.AdType
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetAdSize() string {
+	if x != nil {
+		return x.AdSize
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetCreativeId() string {
+	if x != nil {
+		return x.CreativeId
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetAdDomain() string {
+	if x != nil {
+		return x.AdDomain
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetDealId() string {
+	if x != nil {
+		return x.DealId
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetIsPmp() bool {
+	if x != nil {
+		return x.IsPmp
+	}
+	return false
+}
+
+func (x *AuctionEvent) GetWinningBidId() string {
+	if x != nil {
+		return x.WinningBidId
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetImpId() string {
+	if x != nil {
+		return x.ImpId
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetSeatId() string {
+	if x != nil {
+		return x.SeatId
+	}
+	return ""
 }
 
 func (x *AuctionEvent) GetSource() isAuctionEvent_Source {
@@ -335,132 +483,27 @@ func (x *AuctionEvent) GetSspDspResponse() []byte {
 	return nil
 }
 
-func (x *AuctionEvent) GetDeviceType() string {
-	if x != nil {
-		return x.DeviceType
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetCarrier() string {
-	if x != nil {
-		return x.Carrier
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetOs() string {
-	if x != nil {
-		return x.Os
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetOsv() string {
-	if x != nil {
-		return x.Osv
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetCountry() string {
-	if x != nil {
-		return x.Country
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetAdType() string {
-	if x != nil {
-		return x.AdType
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetSiteAppDomain() string {
-	if x != nil {
-		return x.SiteAppDomain
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetBundleId() string {
-	if x != nil {
-		return x.BundleId
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetAdSize() string {
-	if x != nil {
-		return x.AdSize
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetWinningBidId() string {
-	if x != nil {
-		return x.WinningBidId
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetImpId() string {
-	if x != nil {
-		return x.ImpId
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetSeatId() string {
-	if x != nil {
-		return x.SeatId
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetCreativeId() string {
-	if x != nil {
-		return x.CreativeId
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetDealId() string {
-	if x != nil {
-		return x.DealId
-	}
-	return ""
-}
-
-func (x *AuctionEvent) GetAdDomain() string {
-	if x != nil {
-		return x.AdDomain
-	}
-	return ""
-}
-
 type isAuctionEvent_Source interface {
 	isAuctionEvent_Source()
 }
 
 type AuctionEvent_App struct {
-	App *App `protobuf:"bytes,10,opt,name=app,proto3,oneof"`
+	App *App `protobuf:"bytes,30,opt,name=app,proto3,oneof"`
 }
 
 type AuctionEvent_Web struct {
-	Web *Web `protobuf:"bytes,11,opt,name=web,proto3,oneof"`
+	Web *Web `protobuf:"bytes,31,opt,name=web,proto3,oneof"`
 }
 
 func (*AuctionEvent_App) isAuctionEvent_Source() {}
 
 func (*AuctionEvent_Web) isAuctionEvent_Source() {}
 
-var File_auction_log_proto protoreflect.FileDescriptor
+var File_proto_auction_log_proto protoreflect.FileDescriptor
 
-const file_auction_log_proto_rawDesc = "" +
+const file_proto_auction_log_proto_rawDesc = "" +
 	"\n" +
-	"\x11auction_log.proto\x12\x03log\"Y\n" +
+	"\x17proto/auction_log.proto\x12\x03log\"Y\n" +
 	"\x03App\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
@@ -468,62 +511,68 @@ const file_auction_log_proto_rawDesc = "" +
 	"\x06domain\x18\x04 \x01(\tR\x06domain\"1\n" +
 	"\x03Web\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\tR\x04page\"\xd3\a\n" +
+	"\x04page\x18\x02 \x01(\tR\x04page\"\xce\b\n" +
 	"\fAuctionEvent\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\rR\btenantId\x12$\n" +
 	"\x0essp_partner_id\x18\x02 \x01(\rR\fsspPartnerId\x12(\n" +
 	"\x10ssp_inventory_id\x18\x03 \x01(\rR\x0esspInventoryId\x123\n" +
 	"\x16ssp_partner_auction_id\x18\x04 \x01(\tR\x13sspPartnerAuctionId\x12$\n" +
 	"\x0edsp_partner_id\x18\x05 \x01(\rR\fdspPartnerId\x12(\n" +
-	"\x10dsp_inventory_id\x18\x06 \x01(\rR\x0edspInventoryId\x12*\n" +
-	"\x11bid_request_price\x18\a \x01(\x01R\x0fbidRequestPrice\x12\x1b\n" +
-	"\tdsp_price\x18\b \x01(\x01R\bdspPrice\x12\x1b\n" +
-	"\tssp_price\x18\t \x01(\x01R\bsspPrice\x12\x1c\n" +
-	"\x03app\x18\n" +
-	" \x01(\v2\b.log.AppH\x00R\x03app\x12\x1c\n" +
-	"\x03web\x18\v \x01(\v2\b.log.WebH\x00R\x03web\x12\x1c\n" +
-	"\ttimestamp\x18\f \x01(\x03R\ttimestamp\x12\x1a\n" +
-	"\bhostname\x18\r \x01(\tR\bhostname\x12&\n" +
-	"\x0fraw_bid_request\x18\x0e \x01(\fR\rrawBidRequest\x12(\n" +
-	"\x10ssp_dsp_response\x18\x0f \x01(\fR\x0esspDspResponse\x12\x1f\n" +
-	"\vdevice_type\x18\x10 \x01(\tR\n" +
-	"deviceType\x12\x18\n" +
-	"\acarrier\x18\x11 \x01(\tR\acarrier\x12\x0e\n" +
-	"\x02os\x18\x12 \x01(\tR\x02os\x12\x10\n" +
-	"\x03osv\x18\x13 \x01(\tR\x03osv\x12\x18\n" +
-	"\acountry\x18\x14 \x01(\tR\acountry\x12\x17\n" +
-	"\aad_type\x18\x15 \x01(\tR\x06adType\x12&\n" +
-	"\x0fsite_app_domain\x18\x16 \x01(\tR\rsiteAppDomain\x12\x1b\n" +
-	"\tbundle_id\x18\x17 \x01(\tR\bbundleId\x12\x17\n" +
-	"\aad_size\x18\x18 \x01(\tR\x06adSize\x12$\n" +
-	"\x0ewinning_bid_id\x18\x19 \x01(\tR\fwinningBidId\x12\x15\n" +
-	"\x06imp_id\x18\x1a \x01(\tR\x05impId\x12\x17\n" +
-	"\aseat_id\x18\x1b \x01(\tR\x06seatId\x12\x1f\n" +
-	"\vcreative_id\x18\x1c \x01(\tR\n" +
-	"creativeId\x12\x17\n" +
-	"\adeal_id\x18\x1d \x01(\tR\x06dealId\x12\x1b\n" +
-	"\tad_domain\x18\x1e \x01(\tR\badDomainB\b\n" +
+	"\x10dsp_inventory_id\x18\x06 \x01(\rR\x0edspInventoryId\x12\x0e\n" +
+	"\x02ip\x18\a \x01(\tR\x02ip\x12\x1d\n" +
+	"\n" +
+	"user_agent\x18\b \x01(\tR\tuserAgent\x12\x10\n" +
+	"\x03ifa\x18\t \x01(\tR\x03ifa\x12!\n" +
+	"\fgdpr_consent\x18\n" +
+	" \x01(\tR\vgdprConsent\x12*\n" +
+	"\x11bid_request_price\x18\v \x01(\x01R\x0fbidRequestPrice\x12\x1b\n" +
+	"\tdsp_price\x18\f \x01(\x01R\bdspPrice\x12\x1b\n" +
+	"\tssp_price\x18\r \x01(\x01R\bsspPrice\x12\x1f\n" +
+	"\vdevice_type\x18\x0e \x01(\tR\n" +
+	"deviceType\x12\x0e\n" +
+	"\x02os\x18\x0f \x01(\tR\x02os\x12\x10\n" +
+	"\x03osv\x18\x10 \x01(\tR\x03osv\x12\x18\n" +
+	"\acarrier\x18\x11 \x01(\tR\acarrier\x12\x18\n" +
+	"\acountry\x18\x12 \x01(\tR\acountry\x12&\n" +
+	"\x0fsite_app_domain\x18\x13 \x01(\tR\rsiteAppDomain\x12\x1b\n" +
+	"\tbundle_id\x18\x14 \x01(\tR\bbundleId\x12\x17\n" +
+	"\aad_type\x18\x15 \x01(\tR\x06adType\x12\x17\n" +
+	"\aad_size\x18\x16 \x01(\tR\x06adSize\x12\x1f\n" +
+	"\vcreative_id\x18\x17 \x01(\tR\n" +
+	"creativeId\x12\x1b\n" +
+	"\tad_domain\x18\x18 \x01(\tR\badDomain\x12\x17\n" +
+	"\adeal_id\x18\x19 \x01(\tR\x06dealId\x12\x15\n" +
+	"\x06is_pmp\x18\x1a \x01(\bR\x05isPmp\x12$\n" +
+	"\x0ewinning_bid_id\x18\x1b \x01(\tR\fwinningBidId\x12\x15\n" +
+	"\x06imp_id\x18\x1c \x01(\tR\x05impId\x12\x17\n" +
+	"\aseat_id\x18\x1d \x01(\tR\x06seatId\x12\x1c\n" +
+	"\x03app\x18\x1e \x01(\v2\b.log.AppH\x00R\x03app\x12\x1c\n" +
+	"\x03web\x18\x1f \x01(\v2\b.log.WebH\x00R\x03web\x12\x1c\n" +
+	"\ttimestamp\x18  \x01(\x03R\ttimestamp\x12\x1a\n" +
+	"\bhostname\x18! \x01(\tR\bhostname\x12&\n" +
+	"\x0fraw_bid_request\x18\" \x01(\fR\rrawBidRequest\x12(\n" +
+	"\x10ssp_dsp_response\x18# \x01(\fR\x0esspDspResponseB\b\n" +
 	"\x06sourceB4Z2github.com/prebid/prebid-server/v3/proto/generatedb\x06proto3"
 
 var (
-	file_auction_log_proto_rawDescOnce sync.Once
-	file_auction_log_proto_rawDescData []byte
+	file_proto_auction_log_proto_rawDescOnce sync.Once
+	file_proto_auction_log_proto_rawDescData []byte
 )
 
-func file_auction_log_proto_rawDescGZIP() []byte {
-	file_auction_log_proto_rawDescOnce.Do(func() {
-		file_auction_log_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_auction_log_proto_rawDesc), len(file_auction_log_proto_rawDesc)))
+func file_proto_auction_log_proto_rawDescGZIP() []byte {
+	file_proto_auction_log_proto_rawDescOnce.Do(func() {
+		file_proto_auction_log_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_auction_log_proto_rawDesc), len(file_proto_auction_log_proto_rawDesc)))
 	})
-	return file_auction_log_proto_rawDescData
+	return file_proto_auction_log_proto_rawDescData
 }
 
-var file_auction_log_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_auction_log_proto_goTypes = []any{
+var file_proto_auction_log_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_auction_log_proto_goTypes = []any{
 	(*App)(nil),          // 0: log.App
 	(*Web)(nil),          // 1: log.Web
 	(*AuctionEvent)(nil), // 2: log.AuctionEvent
 }
-var file_auction_log_proto_depIdxs = []int32{
+var file_proto_auction_log_proto_depIdxs = []int32{
 	0, // 0: log.AuctionEvent.app:type_name -> log.App
 	1, // 1: log.AuctionEvent.web:type_name -> log.Web
 	2, // [2:2] is the sub-list for method output_type
@@ -533,12 +582,12 @@ var file_auction_log_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_auction_log_proto_init() }
-func file_auction_log_proto_init() {
-	if File_auction_log_proto != nil {
+func init() { file_proto_auction_log_proto_init() }
+func file_proto_auction_log_proto_init() {
+	if File_proto_auction_log_proto != nil {
 		return
 	}
-	file_auction_log_proto_msgTypes[2].OneofWrappers = []any{
+	file_proto_auction_log_proto_msgTypes[2].OneofWrappers = []any{
 		(*AuctionEvent_App)(nil),
 		(*AuctionEvent_Web)(nil),
 	}
@@ -546,17 +595,17 @@ func file_auction_log_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auction_log_proto_rawDesc), len(file_auction_log_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_auction_log_proto_rawDesc), len(file_proto_auction_log_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_auction_log_proto_goTypes,
-		DependencyIndexes: file_auction_log_proto_depIdxs,
-		MessageInfos:      file_auction_log_proto_msgTypes,
+		GoTypes:           file_proto_auction_log_proto_goTypes,
+		DependencyIndexes: file_proto_auction_log_proto_depIdxs,
+		MessageInfos:      file_proto_auction_log_proto_msgTypes,
 	}.Build()
-	File_auction_log_proto = out.File
-	file_auction_log_proto_goTypes = nil
-	file_auction_log_proto_depIdxs = nil
+	File_proto_auction_log_proto = out.File
+	file_proto_auction_log_proto_goTypes = nil
+	file_proto_auction_log_proto_depIdxs = nil
 }

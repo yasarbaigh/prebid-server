@@ -401,6 +401,7 @@ func parseBidderFilter(filter *cookieSyncRequestFilter) (usersync.BidderFilter, 
 }
 
 func (c *cookieSyncEndpoint) handleError(w http.ResponseWriter, err error, httpStatus int) {
+	logger.Errorf("/cookie_sync error: %v", err)
 	http.Error(w, err.Error(), httpStatus)
 	c.pbsAnalytics.LogCookieSyncObject(&analytics.CookieSyncObject{
 		Status:       httpStatus,

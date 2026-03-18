@@ -43,7 +43,7 @@ type TrackingConfig struct {
 // getPositionalPayload generates a compact pipe-delimited string for high-speed URL reduction.
 func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, dspPrice float64, tck TrackingConfig, bidID, impID, adID string) string {
 	ts := time.Now().Unix()
-	// Order: ts|tid|sid|siid|did|diid|price|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid
+	// Order: ts|tid|sid|siid|did|diid|dsp_price|dt|os|osv|cnt|at|as|dom|bundle|car|aid|bid|imid|seat|adid
 	return fmt.Sprintf("%d|%d|%d|%d|%d|%d|%.6f|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s",
 		ts, ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID,
 		dspPrice,
