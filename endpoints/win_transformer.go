@@ -56,7 +56,7 @@ func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, 
 		Country:        tck.Country,
 		AdType:         cryptoutil.GetAdTypeEnum(tck.AdType),
 		AdSize:         tck.AdSize,
-		Domain:         "", // User requested empty website domain
+		Domain:         tck.SiteAppDomain,
 		BundleID:       tck.BundleID,
 		Carrier:        tck.Carrier,
 		AuctionID:      tck.AuctionID,
@@ -135,7 +135,7 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 
 		lossHost := baseDmn + "/e/loss"
 		// p query param with all signed values, and 3 specific macros
-		bid.LURL = fmt.Sprintf("%s?d=%s&p=%s&aid={AUCTION_ID}&mbr={AUCTION_MBR}&loss={AUCTION_LOSS}",
+		bid.LURL = fmt.Sprintf("%s?d=%s&p=%s&u=${AUCTION_ID}&m=${AUCTION_MBR}&l=${AUCTION_LOSS}",
 			lossHost, url.QueryEscape(encryptedLossD), url.QueryEscape(encryptedTrackP))
 	} else {
 		// If DSP didn't provide LURL, ensure it stays empty
