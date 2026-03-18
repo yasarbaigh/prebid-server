@@ -186,6 +186,12 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		targetedDSPs[d.DSPID] = bidResult{dsp: d}
 	}
 
+	// Build exact impression mapping for O(1) validation lookups
+	impMap := make(map[string]*openrtb2.Imp, len(bidReq.Imp))
+	for i := range bidReq.Imp {
+		impMap[bidReq.Imp[i].ID] = &bidReq.Imp[i]
+	}
+
 	for res := range bidChan {
 		resCopy := res
 		t := targetedDSPs[resCopy.dsp.DSPID]
@@ -201,6 +207,28 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		for _, sb := range resCopy.resp.SeatBid {
 			for i := range sb.Bid {
 				bid := &sb.Bid[i]
+
+				// Basic Validation Checks
+				imp, isValidImp := impMap[bid.ImpID]
+				if !isValidImp {
+					continue // DSP bid on unrecognized impression ID
+				}
+
+				// Price Floor Validation
+				if bid.Price <= 0 || bid.Price < imp.BidFloor {
+					continue // Bid violates the specific impression bidfloor
+				}
+
+				// Payload Verification
+				if bid.AdM == "" && bid.NURL == "" {
+					continue // Empty creative payload
+				}
+
+				// Creative ID Checks
+				if bid.CrID == "" && bid.AdID == "" {
+					continue // Missing Creative IDs
+				}
+
 				currentWinner, exists := winners[bid.ImpID]
 				if !exists || bid.Price > getBidPrice(currentWinner, bid.ImpID) {
 					winners[bid.ImpID] = &resCopy
@@ -219,11 +247,6 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		ID:    bidReq.ID,
 		BidID: fmt.Sprintf("pbs-%d", time.Now().UnixNano()),
 		Cur:   "USD",
-	}
-
-	impMap := make(map[string]*openrtb2.Imp, len(bidReq.Imp))
-	for i := range bidReq.Imp {
-		impMap[bidReq.Imp[i].ID] = &bidReq.Imp[i]
 	}
 
 	os, osv, country, carrier, deviceType, domain, bundle, _, _, _, _ := h.extractContext(&bidReq)
