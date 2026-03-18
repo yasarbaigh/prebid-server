@@ -48,7 +48,7 @@ func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, 
 		ts, ssp.TenantID, ssp.SSPID, ssp.SSPInventoryID, dsp.DSPID, dsp.DSPInventoryID,
 		dspPrice,
 		tck.DeviceType, tck.OS, tck.OSV, tck.Country, tck.AdType, tck.AdSize,
-		tck.SiteAppDomain, tck.BundleID, tck.Carrier,
+		"", tck.BundleID, tck.Carrier,
 		tck.AuctionID, bidID, impID, tck.Seat, adID)
 }
 
