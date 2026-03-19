@@ -22,8 +22,8 @@ type SSPInventory struct {
 	TenantID             int      `json:"tenant_id"`
 	SSPID                int      `json:"ssp_id"`
 	SSPInventoryID       int      `json:"ssp_inventory_id"`
-	PrometheusID         string   `json:"prometheus_id"`
-	PrometheusIdentifier string   `json:"prometheus_identifier"`
+	SSPInventoryPrometheusID         string   `json:"ssp_inventory_prometheus_id"`
+	SSPInventoryPrometheusIdentifier string   `json:"ssp_inventory_prometheus_identifier"`
 	AdFormats            []string `json:"ad_formats"`
 	WinURL               string   `json:"win_url"`
 	ImpTrackURL          string   `json:"imp_track_url"`
@@ -60,8 +60,8 @@ type DSPInventory struct {
 	TenantID             int      `json:"tenant_id"`
 	DSPID                int      `json:"dsp_id"`
 	DSPInventoryID       int      `json:"dsp_inventory_id"`
-	PrometheusID         string   `json:"prometheus_id"`
-	PrometheusIdentifier string   `json:"prometheus_identifier"`
+	DSPInventoryPrometheusID         string   `json:"dsp_inventory_prometheus_id"`
+	DSPInventoryPrometheusIdentifier string   `json:"dsp_inventory_prometheus_identifier"`
 	AdmPriceTransparency bool     `json:"adm_price_transparency"`
 	Margin               int      `json:"margin"`
 	BidAdjustment        float64  `json:"bid_adjustment"` // Multiplier (e.g. 0.9)

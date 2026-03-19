@@ -83,7 +83,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	// 1. Health check
 	cfg := h.PartnersManager.GetConfig()
 	if cfg == nil || !h.PartnersManager.IsHealthy() || !cfg.AdServing {
-		partners.AuctionCounter.WithLabelValues("rejected_unhealthy_config").Inc()
+		partners.AuctionCounter.WithLabelValues("unknown", "unknown", "unknown", "rejected_unhealthy_config").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -97,9 +97,13 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	ssp, ok := h.PartnersManager.GetSSPByInventoryCode(accountCode)
 	if !ok {
+		partners.SSPResponseCounter.WithLabelValues("unknown", "unknown", "unknown", "error", "400").Inc()
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	// 2.1 Metrics: Record SSP Request
+	partners.SSPRequestCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
 
 	// 3. Read & Parse Body
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 2*1024*1024))
@@ -115,7 +119,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 	computedTMax := originalTMax - ExchangeOverhead
 	if computedTMax < 120 {
-		partners.AuctionCounter.WithLabelValues("rejected_tmax").Inc()
+		partners.AuctionCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "rejected_tmax").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -159,18 +163,40 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		wg.Add(1)
 		go func(d partners.DSPInventory) {
 			defer wg.Done()
+
+			// Metrics: Record DSP Request
+			partners.DSPRequestCounter.WithLabelValues(d.DSPInventoryPrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Inc()
+
 			dspBidReq := endpoints.GetDspBidRequest(&bidReq, *ssp, d, h.GlobalASI)
 			dspBody, _ := json.Marshal(dspBidReq)
 
+			start := time.Now()
 			resp, rawBody, err := h.callDSP(auctionCtx, d, dspBody)
+			latency := time.Since(start).Seconds()
+
+			// Metrics: Record DSP Response and Latency
+			status := "error"
+			httpCode := "500"
 			if err == nil {
+				status = "bid"
+				if resp.NBR != nil {
+					status = "nobid"
+				} else if len(resp.SeatBid) == 0 {
+					status = "nobid"
+				}
+				httpCode = "200"
+
 				bidChan <- bidResult{
 					resp:        resp,
 					dsp:         d,
 					reqBody:     dspBody,
 					dspRespBody: rawBody,
 				}
+			} else {
+				logger.Errorf("DSP %s call failed: %v", d.DSPIdentifier, err)
 			}
+			partners.DSPResponseCounter.WithLabelValues(d.DSPInventoryPrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, status, httpCode).Inc()
+			partners.DSPLatencyHistogram.WithLabelValues(d.DSPInventoryPrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Observe(latency)
 		}(dsp)
 	}
 
@@ -238,6 +264,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	if len(winners) == 0 {
+		partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid", "204").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -271,10 +298,10 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 		marginMultiplier := endpoints.GetMarginMultiplier(win.dsp)
 		dspPrice := bestBid.Price / marginMultiplier
-		
+
 		imp := impMap[impID]
 		adType, adSize := h.getAdDimensions(bestBid, imp)
-		
+
 		tck := endpoints.TrackingConfig{
 			ExternalURL:   "http://win.event.cdapp.com:11000",
 			AccountID:     fmt.Sprintf("%d", ssp.SSPInventoryID),
@@ -295,11 +322,39 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 		endpoints.TransformWinningBid(bestBid, *ssp, win.dsp, dspPrice, imp.BidFloor, tck)
 
+		// Metrics: Record Financials (Impression level)
+		partners.ExchangeRevenueCounter.WithLabelValues(
+			ssp.SSPInventoryPrometheusIdentifier,
+			win.dsp.DSPInventoryPrometheusIdentifier,
+			ssp.TenantIdentifier,
+			ssp.SSPIdentifier,
+			win.dsp.DSPIdentifier,
+		).Add(dspPrice)
+
+		partners.ExchangeSpentCounter.WithLabelValues(
+			ssp.SSPInventoryPrometheusIdentifier,
+			win.dsp.DSPInventoryPrometheusIdentifier,
+			ssp.TenantIdentifier,
+			ssp.SSPIdentifier,
+			win.dsp.DSPIdentifier,
+		).Add(bestBid.Price)
+
+		partners.ExchangeProfitCounter.WithLabelValues(
+			ssp.SSPInventoryPrometheusIdentifier,
+			win.dsp.DSPInventoryPrometheusIdentifier,
+			ssp.TenantIdentifier,
+			ssp.SSPIdentifier,
+			win.dsp.DSPIdentifier,
+		).Add(dspPrice - bestBid.Price)
+
 		finalResp.SeatBid = append(finalResp.SeatBid, openrtb2.SeatBid{
 			Seat: win.dsp.DSPIdentifier,
 			Bid:  []openrtb2.Bid{*bestBid},
 		})
 	}
+
+	// Metrics: Record Successful SSP Response
+	partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
 
 	respBody, _ := json.Marshal(finalResp)
 	w.Header().Set("Content-Type", "application/json")
@@ -372,7 +427,7 @@ func (h *AuctionHandler) logWinners(ssp *partners.SSPInventory, bidReq *openrtb2
 		// Financials
 		event.DspPrice = bestBid.Price / endpoints.GetMarginMultiplier(win.dsp)
 		event.SspPrice = bestBid.Price
-		
+
 		if imp, ok := impMap[bestBid.ImpID]; ok {
 			event.BidRequestPrice = imp.BidFloor
 			adType, adSize := h.getAdDimensions(bestBid, imp)
@@ -408,10 +463,10 @@ func (h *AuctionHandler) logWinners(ssp *partners.SSPInventory, bidReq *openrtb2
 
 		// Verbose Logging (Only for winners)
 		if win.reqBody != nil {
-			bidLogger.LogDSP(win.dsp.PrometheusIdentifier, win.reqBody, "REQ")
+			bidLogger.LogDSP(win.dsp.DSPInventoryPrometheusIdentifier, win.reqBody, "REQ")
 		}
 		if win.dspRespBody != nil {
-			bidLogger.LogDSP(win.dsp.PrometheusIdentifier, win.dspRespBody, "RESP")
+			bidLogger.LogDSP(win.dsp.DSPInventoryPrometheusIdentifier, win.dspRespBody, "RESP")
 		}
 	}
 
@@ -520,14 +575,21 @@ func (h *AuctionHandler) getAdDimensions(bid *openrtb2.Bid, imp *openrtb2.Imp) (
 
 func getDeviceTypeName(dt int) string {
 	switch dt {
-	case 1: return "Mobile/Tablet"
-	case 2: return "Personal Computer"
-	case 3: return "Connected TV"
-	case 4: return "Phone"
-	case 5: return "Tablet"
-	case 6: return "Connected Device"
-	case 7: return "Set Top Box"
-	default: return "Unknown"
+	case 1:
+		return "Mobile/Tablet"
+	case 2:
+		return "Personal Computer"
+	case 3:
+		return "Connected TV"
+	case 4:
+		return "Phone"
+	case 5:
+		return "Tablet"
+	case 6:
+		return "Connected Device"
+	case 7:
+		return "Set Top Box"
+	default:
+		return "Unknown"
 	}
 }
-

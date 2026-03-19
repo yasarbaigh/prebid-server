@@ -3,32 +3,32 @@ groups:
     rules:
       # SSP Request Rate (QPS)
       - record: job:ssp_requests:rate5m
-        expr: sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier)
+        expr: sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier)
 
       # SSP Response Rate by Status
       - record: job:ssp_responses:rate5m
-        expr: sum(rate(prebid_rtb_ssp_responses_total[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier, status)
+        expr: sum(rate(prebid_rtb_ssp_responses_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier, status)
 
       # SSP Success Percentage (OK status)
       - record: ssp:success_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_ssp_responses_total{status="ok"}[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier)
+          sum(rate(prebid_rtb_ssp_responses_total{status="ok"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier)
           /
-          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier)
+          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier)
 
       # SSP No-Bid Percentage
       - record: ssp:nobid_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_ssp_responses_total{status="no_bid"}[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier)
+          sum(rate(prebid_rtb_ssp_responses_total{status="no_bid"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier)
           /
-          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier)
+          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier)
 
       # SSP Error Percentage
       - record: ssp:error_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_ssp_responses_total{status="error"}[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier)
+          sum(rate(prebid_rtb_ssp_responses_total{status="error"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier)
           /
-          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, prometheus_identifier)
+          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_prometheus_identifier)
 
   - name: ssp_alerts
     rules:

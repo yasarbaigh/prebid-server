@@ -2,6 +2,10 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+rule_files:
+  - "ssp_rules.yml"
+  - "dsp_rules.yml"
+
 scrape_configs:
   - job_name: 'prebid_cluster'
     static_configs:
@@ -16,3 +20,12 @@ scrape_configs:
         regex: '.*:(24029|24059|24089|24119|24149)'
         target_label: 'instance_id'
         replacement: 'pbs_${1}'
+
+  - job_name: 'pushgateway'
+    honor_labels: true
+    static_configs:
+      - targets: ['localhost:9091']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: 'instance'
+        replacement: 'shared_pushgateway'

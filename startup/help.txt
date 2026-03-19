@@ -14,6 +14,13 @@ pm2 start ecosystem.config.js
 
 
 =========
+
+npm install pm2@latest -g
+
+pm2 startup
+pm2 -v
+pm2 list
+
 sudo apt update
 sudo apt install -y certbot
 
@@ -22,3 +29,26 @@ sudo apt install -y python3-certbot-nginx
 sudo ln -s /etc/ngnix/sites-available/nginx_instance_1.conf /etc/nginx/sites-enabled/
 
 sudo certbot --nginx 
+
+===============
+
+SG_ID=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].SecurityGroups[0].GroupId' --output text)
+# Open Port 3000 (Grafana)
+aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3000 --cidr 0.0.0.0/0
+# Open Port 3306 (MySQL)
+aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3306 --cidr 0.0.0.0/0
+
+
+
+
+# Allow Grafana
+sudo ufw allow 3000/tcp
+# Allow MySQL
+sudo ufw allow 3306/tcp
+# Reload firewall
+sudo ufw reload
+
+
+=====================
+
+
