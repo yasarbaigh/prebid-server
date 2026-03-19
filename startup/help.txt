@@ -1,0 +1,24 @@
+go install github.com/air-verse/air@latest
+
+go mod download
+go mod tidy
+
+go install .
+
+
+
+go build -o prebid-server .
+
+pm2 start ecosystem.config.js
+
+
+
+=========
+sudo apt update
+sudo apt install -y certbot
+
+sudo apt install -y python3-certbot-nginx
+
+sudo ln -s /etc/ngnix/sites-available/nginx_instance_1.conf /etc/nginx/sites-enabled/
+
+sudo certbot --nginx 

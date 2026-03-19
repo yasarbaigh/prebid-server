@@ -1,0 +1,7 @@
+port: 18000
+gdpr:
+  default_value: "0"
+metrics:
+  prometheus:
+    port: 8000
+    namespace: prebid
