@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/prebid/openrtb/v20/openrtb2"
-	"github.com/prebid/prebid-server/v3/analytics"
 	"github.com/prebid/prebid-server/v3/partners"
 	"github.com/prebid/prebid-server/v3/util/cryptoutil"
 )
@@ -154,14 +153,13 @@ func modifyAdmEnhanced(adm, pixelUrl, admUrl, viewUrl, clickUrl, bidder string, 
 
 	// 1. Detect VAST (XML)
 	if strings.Contains(adm, "<?xml") || strings.Contains(adm, "<VAST") {
-		// Quartile Tracking (as an AdExchange)
+		// Quartile Tracking (Optimized with numeric enums for V7)
 		if strings.Contains(adm, "</TrackingEvents>") {
-			quartiles := []analytics.VastType{analytics.Start, analytics.FirstQuartile, analytics.MidPoint, analytics.ThirdQuartile, analytics.Complete}
 			var qTrackers strings.Builder
-			for _, q := range quartiles {
+			for _, q := range QuartileMapping {
 				videoHost := baseDmn + "/t/video"
-				url := fmt.Sprintf("%s?vq=%s&x=%s", videoHost, q, url.QueryEscape(encryptedPayload))
-				qTrackers.WriteString(fmt.Sprintf("<Tracking vq=\"%s\"><![CDATA[%s]]></Tracking>", q, url))
+				url := fmt.Sprintf("%s?vq=%s&x=%s", videoHost, q.Value, url.QueryEscape(encryptedPayload))
+				qTrackers.WriteString(fmt.Sprintf("<Tracking event=\"%s\"><![CDATA[%s]]></Tracking>", q.Label, url))
 			}
 			adm = strings.Replace(adm, "</TrackingEvents>", qTrackers.String()+"</TrackingEvents>", 1)
 		}

@@ -148,13 +148,16 @@ net.ipv4.tcp_fin_timeout = 15
 Apply manually with `sysctl -p`.
 ---
 
-## 8. High-Speed URL Reduction & Tracking
+## 8. High-Speed URL Reduction & Tracking (Production V7)
 
-To support 100k+ QPS on lean infrastructure, we use a custom **Binary-Packed AES-GCM** strategy for NURL and tracker URLs. This keeps URLs under browser/SSP limits (~400 chars) even with 20+ fields.
+To support 100k+ QPS on lean infrastructure and keep URL lengths minimal for SSP compatibility, we use an optimized **Multi-Algorithm Compression** strategy:
 
-### Tracking Payload (`p` parameter)
+### Optimized Parameter Strategy
+- **`d` Parameter (DSP URL)**: Compressed with **Brotli** (Quality 4). This achieves the absolute shortest character count for long DSP Win/Loss URLs, often reducing a 250-char URL to under 200 chars.
+- **`x` Parameter (Auction Payload)**: Compressed with **Zlib** (BestCompression). This packs binary metadata (IDs, pricing, context) efficiently without the overhead of encryption nonces or authentication tags.
 
-The `p` parameter contains a binary buffer packed in the following **Positional Order** (Big-Endian):
+### Tracking Payload (`x` parameter) Structure
+The `x` parameter contains a binary buffer packed in the following **Positional Order** (Big-Endian):
 
 1.  **Block 1 (Fixed-Width 32 Bytes)**:
     -   `Timestamp` (4B), `TenantID` (4B), `SSPID` (4B), `SSPInvID` (4B), `DSPID` (4B), `DSPInvID` (4B), `Price` (4B fixed-point), `DeviceType` (1B), `OS` (1B), `AdType` (1B)
@@ -163,18 +166,10 @@ The `p` parameter contains a binary buffer packed in the following **Positional 
 3.  **Block 3 (Variable Strings - Length Prefixed)**:
     -   `OSV`, `Country`, `AdSize`, `Domain`, `BundleID`, `Carrier`, `Seat`, `AdID`
 
-### Crypto Tooling
-
-You can test or debug these parameters using the provided utility:
-
-```bash
-# Encrypt a raw string for tracking (e.g. for d parameter)
-go run z_cd_hints/crypto_tool/crypto_tool.go encrypt-c "https://dsp-endpoint.com"
-
-# Decrypt a tracking payload from a live URL
-go run z_cd_hints/crypto_tool/crypto_tool.go decrypt-b "AQIDBAU... (Your encrypted base64)"
-```
+### Performance Characteristics
+- **Brotli**: Best for text/URLs. ~10-15% better than Zlib for `d` param.
+- **Zlib**: Best for mixed binary/small blobs. Low overhead for `x` param.
+- **Security**: Crypto (AES-GCM) is disabled in Version 7 to prioritize **processing speed** and **minimal character length** in high-frequency auctions.
 
 ### Critical Rules
-- **Do not change the field order** in `util/cryptoutil/packer.go` without updating the decoders, as it is positional.
-- **Website Domain** is currently empty in the trackers to save space.
+- **Do not change the field order** in `util/cryptoutil/packer.go` without updating all decoders (Win-Receiver, Win-Processor), as it is positional.

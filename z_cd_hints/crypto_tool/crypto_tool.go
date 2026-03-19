@@ -39,27 +39,23 @@ func main() {
 	}
 
 	switch command {
-	case "encrypt", "e":
-		res, err := cryptoutil.Encrypt(text)
-		run("Encryption", res, err)
-	case "decrypt", "d":
-		res, err := cryptoutil.Decrypt(text)
-		run("Decryption", res, err)
-	case "encrypt-c", "ec":
+	case "url-e", "ue":
+		// Production V7: Brotli (Quality 4) for DSP URL ('d' parameter)
 		res, err := cryptoutil.EncryptCompressed(text)
-		run("Compressed Encryption", res, err)
-	case "decrypt-c", "dc":
+		run("URL Encryption (Brotli V7 - 'd')", res, err)
+	case "url-d", "ud":
 		res, err := cryptoutil.DecryptCompressed(text)
-		run("Decrypted Decompression", res, err)
-	case "encrypt-b", "eb":
+		run("URL Decryption (Brotli V7 - 'd')", res, err)
+	case "pay-e", "pe":
+		// Production V7: Zlib (BestCompression) for Binary Payload ('x' parameter)
 		res, err := cryptoutil.EncryptBinary([]byte(text))
-		run("Binary Encryption", res, err)
-	case "decrypt-b", "db":
+		run("Payload Encryption (Zlib V7 - 'x')", res, err)
+	case "pay-d", "pd":
 		res, err := cryptoutil.DecryptBinary(text)
 		if err == nil {
-			run("Binary Decryption", string(res), nil)
+			run("Payload Decryption (Zlib V7 - 'x')", string(res), nil)
 		} else {
-			run("Binary Decryption", "", err)
+			run("Payload Decryption (Zlib V7 - 'x')", "", err)
 		}
 	case "help", "-h", "--help":
 		printUsage()
@@ -82,19 +78,17 @@ func run(label string, result string, err error) {
 }
 
 func printUsage() {
-	fmt.Println("\033[1mCrypto Tool - Simple Encrypt/Decrypt Utility\033[0m")
+	fmt.Println("\033[1mCrypto Tool V7 - Production Encoding Utility\033[0m")
 	fmt.Println("\nUsage:")
 	fmt.Println("  go run crypto_tool.go <command> <text>")
 	fmt.Println("  go run crypto_tool.go <command> -text=\"your text\"")
-	fmt.Println("\nCommands:")
-	fmt.Println("  encrypt (e)    - Standard AES-GCM encryption (for 'p' and 'p' params)")
-	fmt.Println("  decrypt (d)    - Standard AES-GCM decryption")
-	fmt.Println("  encrypt-c (ec) - Compressed + AES-GCM encryption (for 'd' param)")
-	fmt.Println("  decrypt-c (dc) - Decrypt + Decompression")
-	fmt.Println("  encrypt-b (eb) - Binary AES-GCM encryption (for 'p' param)")
-	fmt.Println("  decrypt-b (db) - Binary AES-GCM decryption")
+	fmt.Println("\nCommands (V7 Strategy):")
+	fmt.Println("  url-e (ue) - BROTLI encoding for DSP URLs (parameter 'd')")
+	fmt.Println("  url-d (ud) - BROTLI decoding for DSP URLs")
+	fmt.Println("  pay-e (pe) - ZLIB encoding for payloads (parameter 'x')")
+	fmt.Println("  pay-d (pd) - ZLIB decoding for payloads")
 	fmt.Println("\nExamples:")
-	fmt.Println("  go run z_cd_hints/crypto_tool/crypto_tool.go encrypt \"tid=1&sid=2\"")
-	fmt.Println("  go run z_cd_hints/crypto_tool/crypto_tool.go decrypt \"AQIDBAU...\"")
-	fmt.Println("  go run z_cd_hints/crypto_tool/crypto_tool.go ec \"https://dsp-nurl.com\"")
+	fmt.Println("  go run z_cd_hints/crypto_tool/crypto_tool.go ue \"https://dsp.com/win?p=${AUCTION_PRICE}\"")
+	fmt.Println("  go run z_cd_hints/crypto_tool/crypto_tool.go pe \"tid=1&sid=2&did=3\"")
+	fmt.Println("\n\033[90mNote: AES-GCM and XOR markers have been removed in V7 to maximize transmission speed.\033[0m")
 }
