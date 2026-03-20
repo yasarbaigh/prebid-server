@@ -1,4 +1,5 @@
-port: 18000
+port: 24001
+ports: [24001, 24002, 24003]
 gdpr:
   default_value: "0"
 metrics:

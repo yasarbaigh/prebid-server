@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/prebid/prebid-server/v3/logger"
 	"github.com/prebid/prebid-server/v3/openrtb_ext"
 	"github.com/prebid/prebid-server/v3/util/jsonutil"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
@@ -747,7 +750,20 @@ func (cfg *TimeoutNotification) validate(errs []error) []error {
 // New uses viper to get our server configurations.
 func New(v *viper.Viper, bidderInfos BidderInfos, normalizeBidderName openrtb_ext.BidderNameNormalizer) (*Configuration, error) {
 	var c Configuration
-	if err := v.Unmarshal(&c, viper.DecodeHook(AccountModulesHookFunc())); err != nil {
+	if err := v.Unmarshal(&c, func(config *mapstructure.DecoderConfig) {
+		config.DecodeHook = mapstructure.ComposeDecodeHookFunc(
+			StringToSliceIntHookFunc(),
+			AccountModulesHookFunc(),
+			mapstructure.StringToSliceHookFunc(","),
+			mapstructure.StringToIPHookFunc(),
+			mapstructure.StringToIPNetHookFunc(),
+			mapstructure.StringToTimeDurationHookFunc(),
+			mapstructure.StringToTimeHookFunc("2006-01-02 15:04:05"),
+		)
+		config.Metadata = nil
+		config.Result = &c
+		config.WeaklyTypedInput = true
+	}); err != nil {
 		return nil, fmt.Errorf("viper failed to unmarshal app config: %v", err)
 	}
 
@@ -937,7 +953,7 @@ func SetupViper(v *viper.Viper, filename string, bidderInfos BidderInfos) {
 	v.SetDefault("external_url", "http://localhost:8000")
 	v.SetDefault("host", "")
 	v.SetDefault("port", 8000)
-	v.SetDefault("ports", []int{})
+	v.SetDefault("ports", "")
 	v.SetDefault("unix_socket_enable", false)              // boolean which decide if the socket-server will be started.
 	v.SetDefault("unix_socket_name", "prebid-server.sock") // path of the socket's file which must be listened.
 	v.SetDefault("admin_port", 6060)
@@ -1142,6 +1158,9 @@ func SetupViper(v *viper.Viper, filename string, bidderInfos BidderInfos) {
 
 	v.BindEnv("user_sync.external_url")
 	v.BindEnv("user_sync.coop_sync.default")
+	if ports := os.Getenv("PBS_PORTS"); ports != "" {
+		v.Set("ports", ports)
+	}
 
 	// some adapters append the user id to the end of the redirect url instead of using
 	// macro substitution. it is important for the uid to be the last query parameter.
@@ -1415,4 +1434,31 @@ type TmaxAdjustments struct {
 	// BidderResponseDurationMin is the minimum amount of time expected to get a response from a bidder request.
 	// PBS won't send a request to the bidder if the bidder tmax calculated is less than the BidderResponseDurationMin value
 	BidderResponseDurationMin uint `mapstructure:"bidder_response_duration_min_ms"`
+}
+
+func StringToSliceIntHookFunc() mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String || t != reflect.TypeOf([]int{}) {
+			return data, nil
+		}
+
+		raw := data.(string)
+		if raw == "" {
+			return []int{}, nil
+		}
+
+		parts := strings.Split(raw, ",")
+		res := make([]int, 0, len(parts))
+		for _, part := range parts {
+			val, err := strconv.Atoi(strings.TrimSpace(part))
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, val)
+		}
+		return res, nil
+	}
 }

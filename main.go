@@ -44,6 +44,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Configuration could not be loaded or did not pass validation: %v", err)
 	}
+	logger.Infof("Loaded config: port=%d, ports=%v", cfg.Port, cfg.Ports)
 
 	// Create a soft memory limit on the total amount of memory that PBS uses to tune the behavior
 	// of the Go garbage collector. In summary, `cfg.GarbageCollectorThreshold` serves as a fixed cost

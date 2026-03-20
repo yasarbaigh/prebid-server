@@ -17,9 +17,25 @@ scrape_configs:
           - 'localhost:24149' # Instance 5 (Base 24120 + 29)
     relabel_configs:
       - source_labels: [__address__]
-        regex: '.*:(24029|24059|24089|24119|24149)'
+        regex: '.*:24029'
         target_label: 'instance_id'
-        replacement: 'pbs_${1}'
+        replacement: '1'
+      - source_labels: [__address__]
+        regex: '.*:24059'
+        target_label: 'instance_id'
+        replacement: '2'
+      - source_labels: [__address__]
+        regex: '.*:24089'
+        target_label: 'instance_id'
+        replacement: '3'
+      - source_labels: [__address__]
+        regex: '.*:24119'
+        target_label: 'instance_id'
+        replacement: '4'
+      - source_labels: [__address__]
+        regex: '.*:24149'
+        target_label: 'instance_id'
+        replacement: '5'
 
   - job_name: 'pushgateway'
     honor_labels: true
