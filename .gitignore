@@ -56,3 +56,5 @@ prebid-server.iml
 *.swo
 tmp/
 prebid-server
+*.bin
+

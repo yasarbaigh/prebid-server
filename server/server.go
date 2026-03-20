@@ -38,6 +38,20 @@ func Listen(cfg *config.Configuration, handler http.Handler, adminHandler http.H
 	
 	done := make(chan struct{})
 
+	// Log the port range for the cluster
+	if len(mainPorts) > 0 {
+		minPort, maxPort := mainPorts[0], mainPorts[0]
+		for _, p := range mainPorts {
+			if p < minPort {
+				minPort = p
+			}
+			if p > maxPort {
+				maxPort = p
+			}
+		}
+		logger.Infof("Accepting connections on ports: [%d - %d] (Total: %d)", minPort, maxPort, len(mainPorts))
+	}
+
 	if cfg.UnixSocketEnable && len(cfg.UnixSocketName) > 0 { // start the unix_socket server if config enable-it.
 		stopMainChannels[0] = make(chan os.Signal)
 		stopChannels = append(stopChannels, stopMainChannels[0])

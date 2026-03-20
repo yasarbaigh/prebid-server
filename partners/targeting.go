@@ -10,7 +10,7 @@ import (
 // MatchTargeting checks if a DSPInventory matches a specific BidRequest and calling SSP
 func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, computedTMax int64) bool {
 	// 1. Tmax threshold check
-	if int64(dsp.Tmax) < computedTMax {
+	if computedTMax < int64(dsp.Tmax) {
 		return false
 	}
 

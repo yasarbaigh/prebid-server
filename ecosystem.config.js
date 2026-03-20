@@ -2,7 +2,7 @@ const { execSync } = require('child_process'); // <--- ADDED THIS IMPORT
 
 const basePort = 24000;
 const portInterval = 30;
-const numInstances = 5;
+const numInstances = 1;
 
 
 const apps = [];

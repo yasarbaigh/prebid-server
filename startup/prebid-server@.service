@@ -22,7 +22,7 @@ ExecStart=/bin/bash -c '\
   PBS_PORT=$((BASE + 1)) \
   GOMEMLIMIT=2GiB \
   GOGC=200 \
-  exec ./prebid-server'
+  exec ./prebid-server.bin'
 Restart=always
 LimitNOFILE=65536
 

@@ -7,10 +7,17 @@ go install .
 
 
 
-go build -o prebid-server .
+go build -o prebid-server.bin .
 
 pm2 start ecosystem.config.js
 
+BUILD_PREBID=true pm2 restart startup/ecosystem.config.js
+
+
+rm -f /opt/service_logs/ssp_module/ssp_bids/*log
+BUILD_PREBID=true pm2 restart ecosystem.config.js
+
+pm2 list
 
 
 =========
@@ -52,3 +59,18 @@ sudo ufw reload
 =====================
 
 
+sudo cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prometheus/ssp_rules.yml /etc/prometheus/rules/
+sudo cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prometheus/dsp_rules.yml /etc/prometheus/rules/
+
+# Backup existing config
+sudo cp /etc/prometheus/prometheus.yml /etc/prometheus/prometheus.yml.bak
+# Replace the file with your optimized workspace version
+sudo cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
+
+
+sudo systemctl restart prometheus
+# Or use the reload API if enabled:
+# curl -X POST http://localhost:9090/-/reload
+
+
+============================
