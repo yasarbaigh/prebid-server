@@ -83,33 +83,40 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 		encryptedD, _ = cryptoutil.EncryptCompressed(bid.NURL)
 	}
 
-	// 2. Determine Base Domain and Update NURL
-	baseDmn := ssp.WinBaseDmn
-	if baseDmn == "" {
-		baseDmn = DefaultBaseDmn
+	// 2. Determine Base Domains
+	winDmn := ssp.WinBaseDmn
+	if winDmn == "" {
+		winDmn = partners.DefaultWinBaseDmn
 	}
-	baseDmn = strings.TrimRight(baseDmn, "/")
+	winDmn = strings.TrimRight(winDmn, "/")
 
-	winHost := baseDmn + "/e/win"
+	trackDmn := ssp.TrackBaseDmn
+	if trackDmn == "" {
+		trackDmn = partners.DefaultTrackBaseDmn
+	}
+	trackDmn = strings.TrimRight(trackDmn, "/")
+
+	// Update NURL with Win Domain
+	winHost := winDmn + "/e/win"
 	bid.NURL = fmt.Sprintf("%s?d=%s&x=%s&%s",
 		winHost, url.QueryEscape(encryptedD), url.QueryEscape(encryptedPayloadX), rtMacros)
 
-	// 3. Prepare Tracker Payload (x) for imp, view, click, video, omid
+	// 3. Prepare Tracker Payload (x)
 	trackPBytes := getPositionalPayload(ssp, dsp, dspPrice, tck, bid.ID, bid.ImpID, bid.AdID)
 	encryptedTrackPayloadX, _ := cryptoutil.EncryptBinary(trackPBytes)
 
-	// 4. Prepare Tracker Hosts
-	impHost := baseDmn + "/t/imp"
+	// 4. Prepare Tracker Hosts (using trackDmn)
+	impHost := trackDmn + "/t/imp"
 	pixelUrl := fmt.Sprintf("%s?x=%s", impHost, url.QueryEscape(encryptedTrackPayloadX))
 
-	admHost := baseDmn + "/t/adm"
+	admHost := trackDmn + "/t/adm"
 	admUrl := fmt.Sprintf("%s?x=%s", admHost, url.QueryEscape(encryptedTrackPayloadX))
 
-	viewHost := baseDmn + "/t/view"
+	viewHost := trackDmn + "/t/view"
 	viewUrl := fmt.Sprintf("%s?x=%s", viewHost, url.QueryEscape(encryptedTrackPayloadX))
 
-	// 5. Add Click Tracking
-	clickHost := baseDmn + "/t/clk"
+	// 5. Add Click Tracking (using trackDmn)
+	clickHost := trackDmn + "/t/clk"
 	clickUrl := fmt.Sprintf("%s?x=%s", clickHost, url.QueryEscape(encryptedTrackPayloadX))
 
 	// Check transparency: both must be true to avoid masking
@@ -120,19 +127,19 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	}
 
 	// 6. Inject all trackers into AdM
-	bid.AdM = modifyAdmEnhanced(bid.AdM, pixelUrl, admUrl, viewUrl, clickUrl, dsp.DSPIdentifier, tck, baseDmn, encryptedTrackPayloadX)
+	bid.AdM = modifyAdmEnhanced(bid.AdM, pixelUrl, admUrl, viewUrl, clickUrl, dsp.DSPIdentifier, tck, trackDmn, encryptedTrackPayloadX)
 
 	// 7. Handle Price Transparency (Masking/Cleansing)
 	if !isTransparent {
 		bid.AdM = cleanseDspMacros(bid.AdM)
 	}
 
-	// 7. Transform LURL
+	// 7. Transform LURL (Using Track Domain as requested)
 	if bid.LURL != "" {
 		// Encrypt original LURL into 'd'
 		encryptedLossD, _ := cryptoutil.EncryptCompressed(bid.LURL)
 
-		lossHost := baseDmn + "/e/loss"
+		lossHost := trackDmn + "/e/loss"
 		// p query param with all signed values, and 3 specific macros
 		bid.LURL = fmt.Sprintf("%s?d=%s&x=%s&u=${AUCTION_ID}&m=${AUCTION_MBR}&l=${AUCTION_LOSS}",
 			lossHost, url.QueryEscape(encryptedLossD), url.QueryEscape(encryptedTrackPayloadX))
@@ -146,7 +153,7 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 }
 
 // modifyAdmEnhanced handles the core injection logic for tracking inside the endpoint directory.
-func modifyAdmEnhanced(adm, pixelUrl, admUrl, viewUrl, clickUrl, bidder string, tck TrackingConfig, baseDmn string, encryptedPayload string) string {
+func modifyAdmEnhanced(adm, pixelUrl, admUrl, viewUrl, clickUrl, bidder string, tck TrackingConfig, trackDmn string, encryptedPayload string) string {
 	if adm == "" {
 		return adm
 	}
@@ -157,7 +164,7 @@ func modifyAdmEnhanced(adm, pixelUrl, admUrl, viewUrl, clickUrl, bidder string, 
 		if strings.Contains(adm, "</TrackingEvents>") {
 			var qTrackers strings.Builder
 			for _, q := range QuartileMapping {
-				videoHost := baseDmn + "/t/video"
+				videoHost := trackDmn + "/t/video"
 				url := fmt.Sprintf("%s?vq=%s&x=%s", videoHost, q.Value, url.QueryEscape(encryptedPayload))
 				qTrackers.WriteString(fmt.Sprintf("<Tracking event=\"%s\"><![CDATA[%s]]></Tracking>", q.Label, url))
 			}
