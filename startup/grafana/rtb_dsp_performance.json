@@ -237,6 +237,34 @@
             ],
             "title": "DSP Response Codes Breakdown",
             "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 24
+            },
+            "id": 19,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(job:dsp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\"}) by (dsp_identifier)",
+                    "legendFormat": "Failed: {{dsp_identifier}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "DSP Validation Failures (Rate)",
+            "type": "timeseries"
         }
     ],
     "refresh": "10s",

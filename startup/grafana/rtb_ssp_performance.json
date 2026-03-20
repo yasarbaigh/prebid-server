@@ -204,6 +204,34 @@
             ],
             "title": "SSP Response Codes Breakdown",
             "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "reqps"
+                }
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 30
+            },
+            "id": 16,
+            "targets": [
+                {
+                    "datasource": "Prometheus",
+                    "expr": "sum(job:ssp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\"}) by (ssp_identifier)",
+                    "legendFormat": "Failed: {{ssp_identifier}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "SSP Validation Failures (Rate)",
+            "type": "timeseries"
         }
     ],
     "refresh": "10s",

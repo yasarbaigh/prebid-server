@@ -14,6 +14,8 @@ var (
 	ExchangeProfitCounter  *prometheus.CounterVec
 	ExchangeRevenueCounter *prometheus.CounterVec
 	ExchangeSpentCounter   *prometheus.CounterVec
+	SSPValidationFailedCounter *prometheus.CounterVec
+	DSPValidationFailedCounter *prometheus.CounterVec
 )
 
 func init() {
@@ -22,6 +24,24 @@ func init() {
 }
 
 func InitMetrics(reg prometheus.Registerer) {
+	SSPValidationFailedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "rtb_ssp_validation_failed_total",
+			Help: "Total number of SSP bid requests that failed validation.",
+		},
+		[]string{"ssp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier"},
+	)
+	reg.MustRegister(SSPValidationFailedCounter)
+
+	DSPValidationFailedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "rtb_dsp_validation_failed_total",
+			Help: "Total number of DSP bid responses that failed validation.",
+		},
+		[]string{"dsp_inventory_prometheus_identifier", "tenant_identifier", "dsp_identifier"},
+	)
+	reg.MustRegister(DSPValidationFailedCounter)
+
 	SSPRequestCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "rtb_ssp_requests_total",

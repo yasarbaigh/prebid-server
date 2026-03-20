@@ -138,6 +138,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	if err := ValidateBidRequest(&bidReq, version); err != nil {
+		partners.SSPValidationFailedCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Invalid OpenRTB %s: %v", version, err)))
 		return
@@ -237,21 +238,25 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 				// Basic Validation Checks
 				imp, isValidImp := impMap[bid.ImpID]
 				if !isValidImp {
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // DSP bid on unrecognized impression ID
 				}
 
 				// Price Floor Validation
 				if bid.Price <= 0 || bid.Price < imp.BidFloor {
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // Bid violates the specific impression bidfloor
 				}
 
 				// Payload Verification
 				if bid.AdM == "" && bid.NURL == "" {
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // Empty creative payload
 				}
 
 				// Creative ID Checks
 				if bid.CrID == "" && bid.AdID == "" {
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // Missing Creative IDs
 				}
 
