@@ -1,0 +1,10 @@
+- targets:
+    - 'localhost:9209'
+  labels:
+    env: 'staging'
+    region: 'us-east'
+
+- targets:
+    - '192.168.1.50:9209'
+  labels:
+    env: 'dev'

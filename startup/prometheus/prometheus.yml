@@ -45,3 +45,9 @@ scrape_configs:
       - source_labels: [__address__]
         target_label: 'instance'
         replacement: 'shared_pushgateway'
+
+  - job_name: 'pm2-cluster'
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/rules/pm2_targets.yml'
+        refresh_interval: 30s # How often to check the file for changes
