@@ -39,6 +39,7 @@ for (let i = 1; i <= numInstances; i++) {
       PBS_METRICS_PROMETHEUS_PORT: prometheusPort,
       // Default to 8000 for standard pbs.port if not using multiple ports
       PBS_PORT: rtbPorts[0],
+      INSTANCE_ID: i,
       GOMEMLIMIT: "2GiB", // Explicit memory protection
       GOGC: "200"       // Optimized GC cycle for RTB
     },

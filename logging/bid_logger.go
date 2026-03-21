@@ -17,10 +17,11 @@ import (
 )
 
 func getInstanceID() string {
-	if val := os.Getenv("NODE_APP_INSTANCE"); val != "" {
+	if val := os.Getenv("INSTANCE_ID"); val != "" {
 		return val
 	}
-	if val := os.Getenv("INSTANCE_ID"); val != "" {
+	if val := os.Getenv("NODE_APP_INSTANCE"); val != "" {
+		// Cluster mode support
 		return val
 	}
 	return "1"
@@ -32,7 +33,8 @@ func formatLogPath(path, hostname, instanceID string) string {
 	}
 	ext := filepath.Ext(path)
 	base := path[:len(path)-len(ext)]
-	return fmt.Sprintf("%s_%s_%s%s", base, hostname, instanceID, ext)
+	// If the user hasn't added a placeholder, we append the instance ID
+	return fmt.Sprintf("%s_%s%s", base, instanceID, ext)
 }
 
 type BidLogger struct {
