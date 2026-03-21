@@ -49,7 +49,7 @@
       "title": "SSP Traffic by Partner",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(prebid_rtb_ssp_requests_total[1m])) by (ssp_identifier)", "legendFormat": "{{ssp_identifier}}" }
+        { "expr": "sum(rate(prebid_rtb_ssp_requests_total[1m])) by (ssp_identifier, ssp_inventory_identifier)", "legendFormat": "{{ssp_identifier}} - {{ssp_inventory_identifier}}" }
       ]
     },
     {
@@ -62,7 +62,7 @@
       "title": "DSP Participation Rate",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(prebid_rtb_dsp_responses_total{status=\"bid\"}[1m])) by (dsp_identifier)", "legendFormat": "{{dsp_identifier}}" }
+        { "expr": "sum(rate(prebid_rtb_dsp_responses_total{status=\"bid\"}[1m])) by (dsp_identifier, dsp_inventory_identifier)", "legendFormat": "{{dsp_identifier}} - {{dsp_inventory_identifier}}" }
       ]
     },
     {
@@ -103,6 +103,13 @@
       {
         "name": "tenant",
         "query": "label_values(prebid_rtb_auctions_total, tenant_identifier)",
+        "type": "query",
+        "datasource": "${datasource}",
+        "refresh": 1
+      },
+      {
+        "name": "ssp_inv",
+        "query": "label_values(prebid_rtb_auctions_total, ssp_inventory_identifier)",
         "type": "query",
         "datasource": "${datasource}",
         "refresh": 1

@@ -28,7 +28,7 @@
             "ssp_id": 8,
             "ssp_inventory_id": 6,
             "ssp_inventory_prometheus_id": "3___8___6",
-            "ssp_inventory_prometheus_identifier": "T3_App___T3_SSP_1___6",
+            "ssp_inventory_identifier": "T3_App___T3_SSP_1___6",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -61,7 +61,7 @@
             "ssp_id": 8,
             "ssp_inventory_id": 7,
             "ssp_inventory_prometheus_id": "3___8___7",
-            "ssp_inventory_prometheus_identifier": "T3_App___T3_SSP_1___7",
+            "ssp_inventory_identifier": "T3_App___T3_SSP_1___7",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -94,7 +94,7 @@
             "ssp_id": 9,
             "ssp_inventory_id": 8,
             "ssp_inventory_prometheus_id": "3___9___8",
-            "ssp_inventory_prometheus_identifier": "T3_App___T3_SSP_2___8",
+            "ssp_inventory_identifier": "T3_App___T3_SSP_2___8",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -127,7 +127,7 @@
             "ssp_id": 9,
             "ssp_inventory_id": 9,
             "ssp_inventory_prometheus_id": "3___9___9",
-            "ssp_inventory_prometheus_identifier": "T3_App___T3_SSP_2___9",
+            "ssp_inventory_identifier": "T3_App___T3_SSP_2___9",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -160,7 +160,7 @@
             "ssp_id": 1,
             "ssp_inventory_id": 1,
             "ssp_inventory_prometheus_id": "1___1___1",
-            "ssp_inventory_prometheus_identifier": "Cd_App___Pubmatic_MEA___1",
+            "ssp_inventory_identifier": "Cd_App___Pubmatic_MEA___1",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -193,7 +193,7 @@
             "ssp_id": 4,
             "ssp_inventory_id": 2,
             "ssp_inventory_prometheus_id": "2___4___2",
-            "ssp_inventory_prometheus_identifier": "T2_App___T2_SSP_1___2",
+            "ssp_inventory_identifier": "T2_App___T2_SSP_1___2",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -226,7 +226,7 @@
             "ssp_id": 4,
             "ssp_inventory_id": 3,
             "ssp_inventory_prometheus_id": "2___4___3",
-            "ssp_inventory_prometheus_identifier": "T2_App___T2_SSP_1___3",
+            "ssp_inventory_identifier": "T2_App___T2_SSP_1___3",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -259,7 +259,7 @@
             "ssp_id": 5,
             "ssp_inventory_id": 4,
             "ssp_inventory_prometheus_id": "2___5___4",
-            "ssp_inventory_prometheus_identifier": "T2_App___T2_Ssp_2___4",
+            "ssp_inventory_identifier": "T2_App___T2_Ssp_2___4",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -292,7 +292,7 @@
             "ssp_id": 5,
             "ssp_inventory_id": 5,
             "ssp_inventory_prometheus_id": "2___5___5",
-            "ssp_inventory_prometheus_identifier": "T2_App___T2_Ssp_2___5",
+            "ssp_inventory_identifier": "T2_App___T2_Ssp_2___5",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -325,7 +325,7 @@
             "ssp_id": 1,
             "ssp_inventory_id": 10,
             "ssp_inventory_prometheus_id": "1___1___10",
-            "ssp_inventory_prometheus_identifier": "Cd_App___Pubmatic_MEA___10",
+            "ssp_inventory_identifier": "Cd_App___Pubmatic_MEA___10",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -356,7 +356,7 @@
             "ssp_id": 2,
             "ssp_inventory_id": 11,
             "ssp_inventory_prometheus_id": "1___2___11",
-            "ssp_inventory_prometheus_identifier": "Cd_App___Inmobi_APAC___11",
+            "ssp_inventory_identifier": "Cd_App___Inmobi_APAC___11",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -389,7 +389,7 @@
             "ssp_id": 2,
             "ssp_inventory_id": 12,
             "ssp_inventory_prometheus_id": "1___2___12",
-            "ssp_inventory_prometheus_identifier": "Cd_App___Inmobi_APAC___12",
+            "ssp_inventory_identifier": "Cd_App___Inmobi_APAC___12",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -422,7 +422,7 @@
             "ssp_id": 3,
             "ssp_inventory_id": 13,
             "ssp_inventory_prometheus_id": "1___3___13",
-            "ssp_inventory_prometheus_identifier": "Cd_App___Rhythmone_CALA___13",
+            "ssp_inventory_identifier": "Cd_App___Rhythmone_CALA___13",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -455,7 +455,7 @@
             "ssp_id": 3,
             "ssp_inventory_id": 14,
             "ssp_inventory_prometheus_id": "1___3___14",
-            "ssp_inventory_prometheus_identifier": "Cd_App___Rhythmone_CALA___14",
+            "ssp_inventory_identifier": "Cd_App___Rhythmone_CALA___14",
             "adm_price_transparency": false,
             "win_base_dmn": "http://win.local.com",
             "track_base_dmn": "http://trk.local.com"
@@ -470,7 +470,7 @@
             "dsp_inventory_id": 11,
             "endpoint_url": "http://ys.dsp3.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "1___7___11",
-            "dsp_inventory_prometheus_identifier": "Cd_App___YS_Traffic_Media___11",
+            "dsp_inventory_identifier": "Cd_App___YS_Traffic_Media___11",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "2.000",
@@ -539,7 +539,8 @@
                 "com.apple.Passbook",
                 "com.apple.visionproapp"
             ],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 3,
@@ -549,7 +550,7 @@
             "dsp_inventory_id": 5,
             "endpoint_url": "http://t3.dsp1.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___3___5",
-            "dsp_inventory_prometheus_identifier": "T3_App___T3_DSP_1___5",
+            "dsp_inventory_identifier": "T3_App___T3_DSP_1___5",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "1.030",
@@ -592,7 +593,8 @@
             "publishers_black_list": [],
             "bundle_ids": [],
             "bundle_ids_black_list": [],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 1,
@@ -602,7 +604,7 @@
             "dsp_inventory_id": 9,
             "endpoint_url": "http://js.dsp1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "1___5___9",
-            "dsp_inventory_prometheus_identifier": "Cd_App___JS_Traffic_Media___9",
+            "dsp_inventory_identifier": "Cd_App___JS_Traffic_Media___9",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "2.000",
@@ -685,7 +687,8 @@
                 "com.apple.mobilecal",
                 "com.apple.iMovie"
             ],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 3,
@@ -695,7 +698,7 @@
             "dsp_inventory_id": 6,
             "endpoint_url": "http://t3.dsp1.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___3___6",
-            "dsp_inventory_prometheus_identifier": "T3_App___T3_DSP_1___6",
+            "dsp_inventory_identifier": "T3_App___T3_DSP_1___6",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "0.750",
@@ -746,7 +749,8 @@
                 "com.king.candycrushsaga"
             ],
             "bundle_ids_black_list": [],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 1,
@@ -756,7 +760,7 @@
             "dsp_inventory_id": 10,
             "endpoint_url": "http://sads.dsp2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "1___6___10",
-            "dsp_inventory_prometheus_identifier": "Cd_App___Smart_Ads___10",
+            "dsp_inventory_identifier": "Cd_App___Smart_Ads___10",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "1.000",
@@ -811,7 +815,8 @@
             ],
             "bundle_ids": [],
             "bundle_ids_black_list": [],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 3,
@@ -821,7 +826,7 @@
             "dsp_inventory_id": 7,
             "endpoint_url": "http://t3.dsp2.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___4___7",
-            "dsp_inventory_prometheus_identifier": "T3_App___T3_DSP_2___7",
+            "dsp_inventory_identifier": "T3_App___T3_DSP_2___7",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "2.000",
@@ -874,7 +879,8 @@
                 "com.king.candycrushsaga"
             ],
             "bundle_ids_black_list": [],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 3,
@@ -884,7 +890,7 @@
             "dsp_inventory_id": 8,
             "endpoint_url": "http://t3.dsp2.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___4___8",
-            "dsp_inventory_prometheus_identifier": "T3_App___T3_DSP_2___8",
+            "dsp_inventory_identifier": "T3_App___T3_DSP_2___8",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "0.650",
@@ -906,7 +912,8 @@
             "publishers_black_list": [],
             "bundle_ids": [],
             "bundle_ids_black_list": [],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 2,
@@ -916,7 +923,7 @@
             "dsp_inventory_id": 1,
             "endpoint_url": "http://t2.dsp1.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___1___1",
-            "dsp_inventory_prometheus_identifier": "T2_App___T2_DSP_1___1",
+            "dsp_inventory_identifier": "T2_App___T2_DSP_1___1",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "1.050",
@@ -957,7 +964,8 @@
             "publishers_black_list": [],
             "bundle_ids": [],
             "bundle_ids_black_list": [],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 2,
@@ -967,7 +975,7 @@
             "dsp_inventory_id": 2,
             "endpoint_url": "http://t2.dsp1.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___1___2",
-            "dsp_inventory_prometheus_identifier": "T2_App___T2_DSP_1___2",
+            "dsp_inventory_identifier": "T2_App___T2_DSP_1___2",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "1.450",
@@ -995,7 +1003,8 @@
                 "com.apple.mobilecal",
                 "com.apple.iMovie"
             ],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 2,
@@ -1005,7 +1014,7 @@
             "dsp_inventory_id": 3,
             "endpoint_url": "http://t2.dsp2.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___2___3",
-            "dsp_inventory_prometheus_identifier": "T2_App___T2_DSP_2___3",
+            "dsp_inventory_identifier": "T2_App___T2_DSP_2___3",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "2.050",
@@ -1031,7 +1040,8 @@
             "publishers_black_list": [],
             "bundle_ids": [],
             "bundle_ids_black_list": [],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         },
         {
             "tenant_id": 2,
@@ -1041,7 +1051,7 @@
             "dsp_inventory_id": 4,
             "endpoint_url": "http://t2.dsp2.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___2___4",
-            "dsp_inventory_prometheus_identifier": "T2_App___T2_DSP_2___4",
+            "dsp_inventory_identifier": "T2_App___T2_DSP_2___4",
             "margin": 0,
             "pricing_at": 1,
             "min_bidfloor": "1.050",
@@ -1076,10 +1086,11 @@
                 "com.apple.mobilecal",
                 "com.apple.iMovie"
             ],
-            "adm_price_transparency": false
+            "adm_price_transparency": false,
+            "status": "Active"
         }
     ],
-    "ts": "2026-03-20 10:16:57",
+    "ts": "2026-03-21 11:13:00",
     "ad_serving": true,
     "asi": "adexchange.cd.com"
 }

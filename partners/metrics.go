@@ -29,7 +29,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_ssp_validation_failed_total",
 			Help: "Total number of SSP bid requests that failed validation.",
 		},
-		[]string{"ssp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier"},
+		[]string{"ssp_inventory_identifier", "tenant_identifier", "ssp_identifier"},
 	)
 	reg.MustRegister(SSPValidationFailedCounter)
 
@@ -38,7 +38,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_dsp_validation_failed_total",
 			Help: "Total number of DSP bid responses that failed validation.",
 		},
-		[]string{"dsp_inventory_prometheus_identifier", "tenant_identifier", "dsp_identifier"},
+		[]string{"dsp_inventory_identifier", "tenant_identifier", "dsp_identifier"},
 	)
 	reg.MustRegister(DSPValidationFailedCounter)
 
@@ -47,7 +47,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_ssp_requests_total",
 			Help: "Total number of RTB requests received from SSPs.",
 		},
-		[]string{"ssp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier"},
+		[]string{"ssp_inventory_identifier", "tenant_identifier", "ssp_identifier"},
 	)
 	reg.MustRegister(SSPRequestCounter)
 
@@ -56,7 +56,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_ssp_responses_total",
 			Help: "Total number of RTB responses sent back to SSPs.",
 		},
-		[]string{"ssp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier", "status", "http_code"}, // status: ok, no_bid, error
+		[]string{"ssp_inventory_identifier", "tenant_identifier", "ssp_identifier", "status", "http_code"}, // status: ok, no_bid, error
 	)
 	reg.MustRegister(SSPResponseCounter)
 
@@ -65,7 +65,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_dsp_requests_total",
 			Help: "Total number of RTB requests fanned out to DSPs.",
 		},
-		[]string{"dsp_inventory_prometheus_identifier", "tenant_identifier", "dsp_identifier"},
+		[]string{"dsp_inventory_identifier", "tenant_identifier", "dsp_identifier"},
 	)
 	reg.MustRegister(DSPRequestCounter)
 
@@ -74,7 +74,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_dsp_responses_total",
 			Help: "Total number of RTB responses received from DSPs.",
 		},
-		[]string{"dsp_inventory_prometheus_identifier", "tenant_identifier", "dsp_identifier", "status", "http_code"}, // status: bid, nobid, error
+		[]string{"dsp_inventory_identifier", "tenant_identifier", "dsp_identifier", "status", "http_code"}, // status: bid, nobid, error
 	)
 	reg.MustRegister(DSPResponseCounter)
 
@@ -84,7 +84,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Help:    "Latency of RTB responses from DSPs in seconds.",
 			Buckets: []float64{0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5},
 		},
-		[]string{"dsp_inventory_prometheus_identifier", "tenant_identifier", "dsp_identifier"},
+		[]string{"dsp_inventory_identifier", "tenant_identifier", "dsp_identifier"},
 	)
 	reg.MustRegister(DSPLatencyHistogram)
 
@@ -93,7 +93,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_auctions_total",
 			Help: "Total number of RTB auctions conducted.",
 		},
-		[]string{"ssp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier", "status"}, // status: ok, rejected_tmax, rejected_adserving_disabled
+		[]string{"ssp_inventory_identifier", "tenant_identifier", "ssp_identifier", "status"}, // status: ok, rejected_tmax, rejected_adserving_disabled
 	)
 	reg.MustRegister(AuctionCounter)
 
@@ -102,7 +102,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_exchange_profit_total",
 			Help: "Total profit made by the exchange.",
 		},
-		[]string{"ssp_inventory_prometheus_identifier", "dsp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier", "dsp_identifier"},
+		[]string{"ssp_inventory_identifier", "dsp_inventory_identifier", "tenant_identifier", "ssp_identifier", "dsp_identifier"},
 	)
 	reg.MustRegister(ExchangeProfitCounter)
 
@@ -111,7 +111,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_exchange_revenue_total",
 			Help: "Total revenue paid by DSPs.",
 		},
-		[]string{"ssp_inventory_prometheus_identifier", "dsp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier", "dsp_identifier"},
+		[]string{"ssp_inventory_identifier", "dsp_inventory_identifier", "tenant_identifier", "ssp_identifier", "dsp_identifier"},
 	)
 	reg.MustRegister(ExchangeRevenueCounter)
 
@@ -120,7 +120,7 @@ func InitMetrics(reg prometheus.Registerer) {
 			Name: "rtb_exchange_spent_total",
 			Help: "Total amount paid to SSP/Publishers.",
 		},
-		[]string{"ssp_inventory_prometheus_identifier", "dsp_inventory_prometheus_identifier", "tenant_identifier", "ssp_identifier", "dsp_identifier"},
+		[]string{"ssp_inventory_identifier", "dsp_inventory_identifier", "tenant_identifier", "ssp_identifier", "dsp_identifier"},
 	)
 	reg.MustRegister(ExchangeSpentCounter)
 }

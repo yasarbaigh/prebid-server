@@ -103,7 +103,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// 2.1 Metrics: Record SSP Request
-	partners.SSPRequestCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
+	partners.SSPRequestCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
 
 	// 3. Read & Parse Body
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 2*1024*1024))
@@ -119,7 +119,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 	computedTMax := originalTMax - ExchangeOverhead
 	if computedTMax < 120 {
-		partners.AuctionCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "rejected_tmax").Inc()
+		partners.AuctionCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "rejected_tmax").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -138,7 +138,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	if err := ValidateBidRequest(&bidReq, version); err != nil {
-		partners.SSPValidationFailedCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
+		partners.SSPValidationFailedCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Invalid OpenRTB %s: %v", version, err)))
 		return
@@ -166,7 +166,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			defer wg.Done()
 
 			// Metrics: Record DSP Request
-			partners.DSPRequestCounter.WithLabelValues(d.DSPInventoryPrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Inc()
+			partners.DSPRequestCounter.WithLabelValues(d.DSPInventoryIdentifier, d.TenantIdentifier, d.DSPIdentifier).Inc()
 
 			dspBidReq := endpoints.GetDspBidRequest(&bidReq, *ssp, d, h.GlobalASI)
 			dspBody, _ := json.Marshal(dspBidReq)
@@ -196,8 +196,8 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			} else {
 				logger.Errorf("DSP %s call failed: %v", d.DSPIdentifier, err)
 			}
-			partners.DSPResponseCounter.WithLabelValues(d.DSPInventoryPrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier, status, httpCode).Inc()
-			partners.DSPLatencyHistogram.WithLabelValues(d.DSPInventoryPrometheusIdentifier, d.TenantIdentifier, d.DSPIdentifier).Observe(latency)
+			partners.DSPResponseCounter.WithLabelValues(d.DSPInventoryIdentifier, d.TenantIdentifier, d.DSPIdentifier, status, httpCode).Inc()
+			partners.DSPLatencyHistogram.WithLabelValues(d.DSPInventoryIdentifier, d.TenantIdentifier, d.DSPIdentifier).Observe(latency)
 		}(dsp)
 	}
 
@@ -238,25 +238,25 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 				// Basic Validation Checks
 				imp, isValidImp := impMap[bid.ImpID]
 				if !isValidImp {
-					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // DSP bid on unrecognized impression ID
 				}
 
 				// Price Floor Validation
 				if bid.Price <= 0 || bid.Price < imp.BidFloor {
-					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // Bid violates the specific impression bidfloor
 				}
 
 				// Payload Verification
 				if bid.AdM == "" && bid.NURL == "" {
-					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // Empty creative payload
 				}
 
 				// Creative ID Checks
 				if bid.CrID == "" && bid.AdID == "" {
-					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryPrometheusIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
+					partners.DSPValidationFailedCounter.WithLabelValues(resCopy.dsp.DSPInventoryIdentifier, resCopy.dsp.TenantIdentifier, resCopy.dsp.DSPIdentifier).Inc()
 					continue // Missing Creative IDs
 				}
 
@@ -269,7 +269,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	if len(winners) == 0 {
-		partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid", "204").Inc()
+		partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid", "204").Inc()
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -329,24 +329,24 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 		// Metrics: Record Financials (Impression level)
 		partners.ExchangeRevenueCounter.WithLabelValues(
-			ssp.SSPInventoryPrometheusIdentifier,
-			win.dsp.DSPInventoryPrometheusIdentifier,
+			ssp.SSPInventoryIdentifier,
+			win.dsp.DSPInventoryIdentifier,
 			ssp.TenantIdentifier,
 			ssp.SSPIdentifier,
 			win.dsp.DSPIdentifier,
 		).Add(dspPrice)
 
 		partners.ExchangeSpentCounter.WithLabelValues(
-			ssp.SSPInventoryPrometheusIdentifier,
-			win.dsp.DSPInventoryPrometheusIdentifier,
+			ssp.SSPInventoryIdentifier,
+			win.dsp.DSPInventoryIdentifier,
 			ssp.TenantIdentifier,
 			ssp.SSPIdentifier,
 			win.dsp.DSPIdentifier,
 		).Add(bestBid.Price)
 
 		partners.ExchangeProfitCounter.WithLabelValues(
-			ssp.SSPInventoryPrometheusIdentifier,
-			win.dsp.DSPInventoryPrometheusIdentifier,
+			ssp.SSPInventoryIdentifier,
+			win.dsp.DSPInventoryIdentifier,
 			ssp.TenantIdentifier,
 			ssp.SSPIdentifier,
 			win.dsp.DSPIdentifier,
@@ -359,7 +359,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// Metrics: Record Successful SSP Response
-	partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryPrometheusIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
+	partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
 
 	respBody, _ := json.Marshal(finalResp)
 	w.Header().Set("Content-Type", "application/json")
@@ -468,10 +468,10 @@ func (h *AuctionHandler) logWinners(ssp *partners.SSPInventory, bidReq *openrtb2
 
 		// Verbose Logging (Only for winners)
 		if win.reqBody != nil {
-			bidLogger.LogDSP(win.dsp.DSPInventoryPrometheusIdentifier, win.reqBody, "REQ")
+			bidLogger.LogDSP(win.dsp.DSPInventoryIdentifier, win.reqBody, "REQ")
 		}
 		if win.dspRespBody != nil {
-			bidLogger.LogDSP(win.dsp.DSPInventoryPrometheusIdentifier, win.dspRespBody, "RESP")
+			bidLogger.LogDSP(win.dsp.DSPInventoryIdentifier, win.dspRespBody, "RESP")
 		}
 	}
 
