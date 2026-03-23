@@ -1,0 +1,108 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "panels": [],
+      "title": "Ingestion Pipeline Health",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
+      "id": 2,
+      "title": "HTTP Ingestion Rate (Win/Track/Click)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(win_receiver_http_requests_total[1m])) by (handler)", "legendFormat": "{{handler}}" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 1 },
+      "id": 3,
+      "title": "Buffered Events Count (In-Memory Queue)",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(win_receiver_buffered_events_count) by (topic)", "legendFormat": "{{topic}} Queue Size" }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "id": 4,
+      "panels": [],
+      "title": "Downstream Reliability (Kafka & DSP Fire)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "id": 5,
+      "title": "Kafka Write Error Rate",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "sum(rate(win_receiver_kafka_write_errors_total[1m])) by (topic)", "legendFormat": "{{topic}} Errors" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "id": 6,
+      "title": "DSP Win-URL Firing Success %",
+      "type": "timeseries",
+      "targets": [
+        { 
+          "expr": "sum(rate(win_receiver_dsp_fire_total{result=\"success\"}[1m])) / sum(rate(win_receiver_dsp_fire_total[1m]))", 
+          "legendFormat": "Success Rate" 
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 34,
+  "style": "dark",
+  "tags": ["win-receiver", "kafka", "ad-tech"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "query": "prometheus",
+        "type": "datasource"
+      }
+    ]
+  },
+  "title": "Win Receiver Gateway Dashboard",
+  "uid": "win-recv-v1"
+}
