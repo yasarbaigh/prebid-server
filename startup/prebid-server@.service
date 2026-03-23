@@ -21,6 +21,7 @@ ExecStart=/bin/bash -c '\
   PBS_PORTS=$PORTS \
   PBS_PORT=$((BASE + 1)) \
   INSTANCE_ID=%i \
+  LOG_LEVEL=INFO \
   GOMEMLIMIT=2GiB \
   GOGC=200 \
   exec ./prebid-server.bin'

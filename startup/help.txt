@@ -59,14 +59,14 @@ sudo ufw reload
 =====================
 
 
-sudo cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prometheus/ssp_rules.yml /etc/prometheus/rules/
-sudo cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prometheus/dsp_rules.yml /etc/prometheus/rules/
-sudo cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prometheus/pm2_targets.yml /etc/prometheus/rules/
+sudo cp /opt/app_adserving/1_prebid-server/startup/prometheus/ssp_rules.yml /etc/prometheus/rules/
+sudo cp /opt/app_adserving/1_prebid-server/startup/prometheus/dsp_rules.yml /etc/prometheus/rules/
+sudo cp /opt/app_adserving/1_prebid-server/startup/prometheus/pm2_targets.yml /etc/prometheus/rules/
 
 # Backup existing config
 sudo cp /etc/prometheus/prometheus.yml /etc/prometheus/prometheus.yml.bak
 # Replace the file with your optimized workspace version
-sudo cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
+sudo cp /opt/app_adserving/1_prebid-server/startup/prometheus/prometheus.yml /etc/prometheus/prometheus.yml
 curl -X POST http://localhost:9090/-/reload
 
 

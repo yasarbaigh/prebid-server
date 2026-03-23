@@ -47,7 +47,7 @@ Recommended for production as it handles system reboots and provides native OS i
 
 ```bash
 # Link the service template
-cp /opt/adserving/14-feb-2026/1_prebid-server/startup/prebid-server@.service /etc/systemd/system/
+cp /opt/app_adserving/1_prebid-server/startup/prebid-server@.service /etc/systemd/system/
 systemctl daemon-reload
 ```
 
@@ -145,7 +145,7 @@ net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_fin_timeout = 15
 ```
 
-Apply manually with `sysctl -p`.
+Apply manually with `sysctl -p`
 ---
 
 ## 8. High-Speed URL Reduction & Tracking (Production V7)
@@ -153,23 +153,27 @@ Apply manually with `sysctl -p`.
 To support 100k+ QPS on lean infrastructure and keep URL lengths minimal for SSP compatibility, we use an optimized **Multi-Algorithm Compression** strategy:
 
 ### Optimized Parameter Strategy
+
 - **`d` Parameter (DSP URL)**: Compressed with **Brotli** (Quality 4). This achieves the absolute shortest character count for long DSP Win/Loss URLs, often reducing a 250-char URL to under 200 chars.
 - **`x` Parameter (Auction Payload)**: Compressed with **Zlib** (BestCompression). This packs binary metadata (IDs, pricing, context) efficiently without the overhead of encryption nonces or authentication tags.
 
 ### Tracking Payload (`x` parameter) Structure
+
 The `x` parameter contains a binary buffer packed in the following **Positional Order** (Big-Endian):
 
-1.  **Block 1 (Fixed-Width 32 Bytes)**:
-    -   `Timestamp` (4B), `TenantID` (4B), `SSPID` (4B), `SSPInvID` (4B), `DSPID` (4B), `DSPInvID` (4B), `Price` (4B fixed-point), `DeviceType` (1B), `OS` (1B), `AdType` (1B)
-2.  **Block 2 (UUIDs 48 Bytes)**:
-    -   `AuctionID` (16B), `BidID` (16B), `ImpID` (16B)
-3.  **Block 3 (Variable Strings - Length Prefixed)**:
-    -   `OSV`, `Country`, `AdSize`, `Domain`, `BundleID`, `Carrier`, `Seat`, `AdID`
+1. **Block 1 (Fixed-Width 32 Bytes)**:
+    - `Timestamp` (4B), `TenantID` (4B), `SSPID` (4B), `SSPInvID` (4B), `DSPID` (4B), `DSPInvID` (4B), `Price` (4B fixed-point), `DeviceType` (1B), `OS` (1B), `AdType` (1B)
+2. **Block 2 (UUIDs 48 Bytes)**:
+    - `AuctionID` (16B), `BidID` (16B), `ImpID` (16B)
+3. **Block 3 (Variable Strings - Length Prefixed)**:
+    - `OSV`, `Country`, `AdSize`, `Domain`, `BundleID`, `Carrier`, `Seat`, `AdID`
 
 ### Performance Characteristics
+
 - **Brotli**: Best for text/URLs. ~10-15% better than Zlib for `d` param.
 - **Zlib**: Best for mixed binary/small blobs. Low overhead for `x` param.
 - **Security**: Crypto (AES-GCM) is disabled in Version 7 to prioritize **processing speed** and **minimal character length** in high-frequency auctions.
 
 ### Critical Rules
+
 - **Do not change the field order** in `util/cryptoutil/packer.go` without updating all decoders (Win-Receiver, Win-Processor), as it is positional.
