@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"net/http"
 	"path/filepath"
@@ -73,7 +74,16 @@ func serve(cfg *config.Configuration) error {
 	httpTimeout := time.Duration(cfg.CurrencyConverter.FetchTimeoutMilliseconds) * time.Millisecond
 	fetchingInterval := time.Duration(cfg.CurrencyConverter.FetchIntervalSeconds) * time.Second
 	staleRatesThreshold := time.Duration(cfg.CurrencyConverter.StaleRatesSeconds) * time.Second
-	currencyConverter := currency.NewRateConverter(&http.Client{}, httpTimeout, cfg.CurrencyConverter.FetchURL, staleRatesThreshold)
+
+	insecureTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	insecureClient := &http.Client{
+		Transport: insecureTransport,
+		Timeout:   httpTimeout,
+	}
+
+	currencyConverter := currency.NewRateConverter(insecureClient, httpTimeout, cfg.CurrencyConverter.FetchURL, staleRatesThreshold)
 
 	currencyConverterTickerTask := task.NewTickerTask(fetchingInterval, currencyConverter)
 	currencyConverterTickerTask.Start()

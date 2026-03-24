@@ -20,6 +20,12 @@ BUILD_PREBID=true pm2 restart ecosystem.config.js
 pm2 list
 
 sudo truncate -s 0 /opt/service_logs/ssp_module/ssp_bids/*.log 
+
+systemctl list-unit-files --type=service | grep ssp
+ 
+systemctl list-units --type=service --all | grep ssp
+
+
 =========
 
 npm install pm2@latest -g

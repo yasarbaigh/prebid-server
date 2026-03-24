@@ -49,7 +49,7 @@ for (let i = 1; i <= numInstances; i++) {
     log_date_format: "YYYY-MM-DD HH:mm:ss Z",
     autorestart: true,
     watch: false,
-    max_memory_restart: "1"
+    max_memory_restart: "1G"
   });
 }
 
