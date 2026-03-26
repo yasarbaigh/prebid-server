@@ -97,7 +97,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	ssp, ok := h.PartnersManager.GetSSPByInventoryCode(accountCode)
 	if !ok {
-		partners.SSPResponseCounter.WithLabelValues("unknown", "unknown", "unknown", "error", "400").Inc()
+		h.recordSSPResponse(nil, "error", "400")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -108,6 +108,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	// 3. Read & Parse Body
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 2*1024*1024))
 	if err != nil {
+		h.recordSSPResponse(ssp, "error", "400")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -126,6 +127,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	var bidReq openrtb2.BidRequest
 	if err := json.Unmarshal(body, &bidReq); err != nil {
+		h.recordSSPResponse(ssp, "error", "400")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -139,6 +141,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	if err := ValidateBidRequest(&bidReq, version); err != nil {
 		partners.SSPValidationFailedCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
+		h.recordSSPResponse(ssp, "error", "400")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Invalid OpenRTB %s: %v", version, err)))
 		return
@@ -149,6 +152,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	selectedDSPs := partners.ShortlistDSPs(&bidReq, candidates, ssp.SSPIdentifier, 5, bidReq.TMax)
 
 	if len(selectedDSPs) == 0 {
+		h.recordSSPResponse(ssp, "no_bid", "204")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -176,8 +180,8 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			latency := time.Since(start).Seconds()
 
 			// Metrics: Record DSP Response and Latency
-			status := "error"
-			httpCode := "500"
+			status := "nobid"
+			httpCode := "204"
 			if err == nil {
 				status = "bid"
 				if resp.NBR != nil {
@@ -194,6 +198,15 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 					dspRespBody: rawBody,
 				}
 			} else {
+				status = "error"
+				httpCode = "5xx" // Default
+				if respErr, ok := err.(partners.HTTPError); ok {
+					if respErr.StatusCode >= 400 && respErr.StatusCode < 500 {
+						httpCode = "4xx"
+					} else {
+						httpCode = "5xx"
+					}
+				}
 				logger.Errorf("DSP %s call failed: %v", d.DSPIdentifier, err)
 			}
 			partners.DSPResponseCounter.WithLabelValues(d.DSPInventoryIdentifier, d.TenantIdentifier, d.DSPIdentifier, status, httpCode).Inc()
@@ -269,7 +282,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	if len(winners) == 0 {
-		partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "no_bid", "204").Inc()
+		h.recordSSPResponse(ssp, "no_bid", "204")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -359,7 +372,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// Metrics: Record Successful SSP Response
-	partners.SSPResponseCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "ok", "200").Inc()
+	h.recordSSPResponse(ssp, "ok", "200")
 
 	respBody, _ := json.Marshal(finalResp)
 	w.Header().Set("Content-Type", "application/json")
@@ -502,7 +515,10 @@ func (h *AuctionHandler) callDSP(ctx context.Context, dsp partners.DSPInventory,
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, respBody, fmt.Errorf("DSP returned status %d", resp.StatusCode)
+		return nil, respBody, partners.HTTPError{
+			StatusCode: resp.StatusCode,
+			Message:    fmt.Sprintf("DSP returned status %d", resp.StatusCode),
+		}
 	}
 
 	var bidResp openrtb2.BidResponse
@@ -576,6 +592,28 @@ func (h *AuctionHandler) getAdDimensions(bid *openrtb2.Bid, imp *openrtb2.Imp) (
 		}
 	}
 	return
+}
+
+func (h *AuctionHandler) recordSSPResponse(ssp *partners.SSPInventory, status string, code string) {
+	sspInvId := "unknown"
+	tenantId := "unknown"
+	sspId := "unknown"
+	if ssp != nil {
+		sspInvId = ssp.SSPInventoryIdentifier
+		tenantId = ssp.TenantIdentifier
+		sspId = ssp.SSPIdentifier
+	}
+
+	// Grouping 4xx and 5xx codes
+	if len(code) > 0 {
+		if code[0] == '4' {
+			code = "4xx"
+		} else if code[0] == '5' {
+			code = "5xx"
+		}
+	}
+
+	partners.SSPResponseCounter.WithLabelValues(sspInvId, tenantId, sspId, status, code).Inc()
 }
 
 func getDeviceTypeName(dt int) string {

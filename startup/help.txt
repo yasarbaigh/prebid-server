@@ -63,6 +63,7 @@ sudo ufw reload
 
 
 =====================
+sudo mkdir -p /etc/prometheus/rules/
 
 
 sudo cp /opt/app_adserving/1_prebid-server/startup/prometheus/ssp_rules.yml /etc/prometheus/rules/

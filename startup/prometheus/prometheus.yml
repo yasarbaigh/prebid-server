@@ -1,20 +1,13 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
-
 rule_files:
   - "ssp_rules.yml"
   - "dsp_rules.yml"
-
 scrape_configs:
   - job_name: 'prebid_cluster'
     static_configs:
-      - targets:
-          - 'localhost:24029' # Instance 1 (Base 24000 + 29)
-          - 'localhost:24059' # Instance 2 (Base 24030 + 29)
-          - 'localhost:24089' # Instance 3 (Base 24060 + 29)
-          - 'localhost:24119' # Instance 4 (Base 24090 + 29)
-          - 'localhost:24149' # Instance 5 (Base 24120 + 29)
+      - targets: ['localhost:24029', 'localhost:24059', 'localhost:24089', 'localhost:24119', 'localhost:24149']
     relabel_configs:
       - source_labels: [__address__]
         regex: '.*:24029'
@@ -36,7 +29,6 @@ scrape_configs:
         regex: '.*:24149'
         target_label: 'instance_id'
         replacement: '5'
-
   - job_name: 'pushgateway'
     honor_labels: true
     static_configs:
@@ -45,9 +37,11 @@ scrape_configs:
       - source_labels: [__address__]
         target_label: 'instance'
         replacement: 'shared_pushgateway'
-
   - job_name: 'pm2-cluster'
+    # Fix for Prometheus 3.x strictness with blank Content-Type
+    scrape_protocols: [PrometheusProto, PrometheusText, OpenMetricsText]
     file_sd_configs:
-      - files:
-          - '/etc/prometheus/rules/pm2_targets.yml'
-        refresh_interval: 30s # How often to check the file for changes
+      - files: ['/etc/prometheus/rules/pm2_targets.yml']
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']

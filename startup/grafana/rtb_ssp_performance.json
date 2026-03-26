@@ -51,7 +51,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(job:ssp_requests:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\"}) by ($group_by)",
+                    "expr": "sum(job:ssp_requests:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", instance_id=~\"$instance\"}) by ($group_by)",
                     "legendFormat": "{{$group_by}}",
                     "refId": "A"
                 }
@@ -96,7 +96,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "ssp:success_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\"} * 100",
+                    "expr": "ssp:success_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", instance_id=~\"$instance\"} * 100",
                     "legendFormat": "{{ssp_identifier}}",
                     "refId": "A"
                 }
@@ -124,7 +124,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "ssp:nobid_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\"} * 100",
+                    "expr": "ssp:nobid_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", instance_id=~\"$instance\"} * 100",
                     "legendFormat": "{{ssp_identifier}}",
                     "refId": "A"
                 }
@@ -169,7 +169,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "ssp:error_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\"} * 100",
+                    "expr": "ssp:error_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", instance_id=~\"$instance\"} * 100",
                     "legendFormat": "{{ssp_identifier}}",
                     "refId": "A"
                 }
@@ -197,7 +197,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(rate(prebid_rtb_ssp_responses_total{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\"}[$__rate_interval])) by (http_code)",
+                    "expr": "sum(rate(prebid_rtb_ssp_responses_total{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", instance_id=~\"$instance\"}[$__rate_interval])) by (http_code)",
                     "legendFormat": "HTTP {{http_code}}",
                     "refId": "A"
                 }
@@ -225,7 +225,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(job:ssp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\"}) by (ssp_identifier)",
+                    "expr": "sum(job:ssp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", instance_id=~\"$instance\"}) by (ssp_identifier)",
                     "legendFormat": "Failed: {{ssp_identifier}}",
                     "refId": "A"
                 }
@@ -244,6 +244,34 @@
     ],
     "templating": {
         "list": [
+            {
+                "current": {
+                    "selected": true,
+                    "text": [
+                        "All"
+                    ],
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": "Prometheus",
+                "definition": "label_values(prebid_rtb_ssp_requests_total, instance_id)",
+                "hide": 0,
+                "includeAll": true,
+                "label": "Instance",
+                "multi": true,
+                "name": "instance",
+                "options": [],
+                "query": {
+                    "query": "label_values(prebid_rtb_ssp_requests_total, instance_id)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            },
             {
                 "current": {
                     "selected": true,
@@ -348,9 +376,19 @@
                         "selected": false,
                         "text": "ssp_inventory_identifier",
                         "value": "ssp_inventory_identifier"
+                    },
+                    {
+                        "selected": false,
+                        "text": "status-codes",
+                        "value": "http_code"
+                    },
+                    {
+                        "selected": false,
+                        "text": "instance-ids",
+                        "value": "instance_id"
                     }
                 ],
-                "query": "tenant_identifier,ssp_identifier,ssp_inventory_identifier",
+                "query": "tenant_identifier,ssp_identifier,ssp_inventory_identifier,http_code,instance_id",
                 "skipUrlSync": false,
                 "type": "custom"
             }

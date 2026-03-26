@@ -4,6 +4,8 @@
 GRAFANA_URL="http://localhost:3000"
 GRAFANA_USER="admin"
 GRAFANA_PASS="admin"
+#GRAFANA_PASS="London@123"
+
 DASHBOARD_DIR="./grafana"
 
 echo "Updating Grafana dashboards from $DASHBOARD_DIR..."
