@@ -2,8 +2,8 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 rule_files:
-  - "ssp_rules.yml"
-  - "dsp_rules.yml"
+  - "rules/ssp_rules.yml"
+  - "rules/dsp_rules.yml"
 scrape_configs:
   - job_name: 'prebid_cluster'
     static_configs:
@@ -39,7 +39,7 @@ scrape_configs:
         replacement: 'shared_pushgateway'
   - job_name: 'pm2-cluster'
     # Fix for Prometheus 3.x strictness with blank Content-Type
-    scrape_protocols: [PrometheusProto, PrometheusText, OpenMetricsText]
+    scrape_protocols: [PrometheusProto, PrometheusText1.0.0, OpenMetricsText1.0.0]
     file_sd_configs:
       - files: ['/etc/prometheus/rules/pm2_targets.yml']
   - job_name: 'node'
