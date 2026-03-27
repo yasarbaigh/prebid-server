@@ -8,61 +8,38 @@ import (
 	"github.com/prebid/prebid-server/v3/partners"
 )
 
-const DefaultExchangeMargin = 20
-
 // ApplyExchangeMargin processes the DSP response and reduces the bid price by the exchange margin.
 // It also ensures that the final price meets the SSP's bid floor requirements.
 // Returns a bool indicating if any valid bids remain after the processing.
-func ApplyExchangeMargin(resp *openrtb2.BidResponse, bidReq *openrtb2.BidRequest, dsp partners.DSPInventory) bool {
-	if resp == nil || bidReq == nil {
+func ApplyExchangeMargin(resp *openrtb2.BidResponse, impMap map[string]*openrtb2.Imp, bcat []string, dsp partners.DSPInventory) bool {
+	if resp == nil || impMap == nil {
 		return false
 	}
 
-	// 1. Get validated multiplier
 	marginMultiplier := GetMarginMultiplier(dsp)
 	bidAdjustment := dsp.BidAdjustment
 	if bidAdjustment <= 0 {
-		bidAdjustment = 1.0 // Default to no adjustment if not set correctly
+		bidAdjustment = 1.0
 	}
 
 	var finalSeats []openrtb2.SeatBid
-
-	// 2. Iterate through bids and apply reduction
 	for _, sb := range resp.SeatBid {
 		var finalBids []openrtb2.Bid
 		for _, bid := range sb.Bid {
-			// Apply Bid Adjustment (Correction for discrepancies)
-			bid.Price = bid.Price * bidAdjustment
-
-			// Apply the Margin to the price
-			bid.Price = bid.Price * marginMultiplier
-
-			// Round to 6 decimal places
+			bid.Price = bid.Price * bidAdjustment * marginMultiplier
 			bid.Price = math.Round(bid.Price*1000000) / 1000000
 
-			// 3. Find corresponding floor for this specific impression
-			var floor float64
-			for _, imp := range bidReq.Imp {
-				if imp.ID == bid.ImpID {
-					floor = imp.BidFloor
-					break
-				}
-			}
-
-			// 4. Creative Attribute Filtering
-			if isBlocked(bid.Attr, bidReq) {
+			// O(1) Floor Lookup
+			imp, ok := impMap[bid.ImpID]
+			if !ok || bid.Price < imp.BidFloor {
 				continue
 			}
 
-			// 4.5 IAB Category Filtering
-			if isCategoryBlocked(bid.Cat, bidReq) {
+			if isAttributeBlocked(bid.Attr, imp) || isCategoryBlocked(bid.Cat, bcat) {
 				continue
 			}
 
-			// 5. Verification Check: Only keep bids that stay above the floor
-			if bid.Price >= floor {
-				finalBids = append(finalBids, bid)
-			}
+			finalBids = append(finalBids, bid)
 		}
 
 		if len(finalBids) > 0 {
@@ -100,53 +77,50 @@ func GetDspBidRequest(orig *openrtb2.BidRequest, ssp partners.SSPInventory, dsp 
 	return req
 }
 
-// GetMarginMultiplier calculates the multiplier (e.g. 0.8 for 20% margin) for a DSP.
+// GetMarginMultiplier calculates the multiplier (e.g. 0.85 for 15% margin) for a DSP.
 func GetMarginMultiplier(dsp partners.DSPInventory) float64 {
-	margin := dsp.Margin
-	if margin < 1 || margin > 100 {
-		margin = DefaultExchangeMargin
+	margin := float64(dsp.Margin)
+	// Additional safety check (already handled in partners.Load, but good for defensive programming)
+	if margin < 0.1 || margin > 100.0 {
+		margin = partners.DefaultMargin
 	}
-	return (100.0 - float64(margin)) / 100.0
+	return (100.0 - margin) / 100.0
 }
 
-// isBlocked checks if any creative attributes in the bid are blocked in the request.
-func isBlocked(attr []adcom1.CreativeAttribute, req *openrtb2.BidRequest) bool {
-	if len(attr) == 0 || req == nil {
+// isAttributeBlocked checks if creative attributes in the bid are blocked for a specific impression.
+func isAttributeBlocked(attr []adcom1.CreativeAttribute, imp *openrtb2.Imp) bool {
+	if len(attr) == 0 || imp == nil {
 		return false
 	}
 
-	// Check against global blocked categories (simplified)
-	// Usually Bcat is for categories, Battr is for attributes in individual impressions.
-	for _, imp := range req.Imp {
-		var battr []adcom1.CreativeAttribute
-		if imp.Banner != nil {
-			battr = imp.Banner.BAttr
-		} else if imp.Video != nil {
-			battr = imp.Video.BAttr
-		} else if imp.Audio != nil {
-			battr = imp.Audio.BAttr
-		} else if imp.Native != nil {
-			battr = imp.Native.BAttr
-		}
+	var battr []adcom1.CreativeAttribute
+	if imp.Banner != nil {
+		battr = imp.Banner.BAttr
+	} else if imp.Video != nil {
+		battr = imp.Video.BAttr
+	} else if imp.Audio != nil {
+		battr = imp.Audio.BAttr
+	} else if imp.Native != nil {
+		battr = imp.Native.BAttr
+	}
 
-		for _, a := range attr {
-			for _, b := range battr {
-				if a == b {
-					return true
-				}
+	for _, a := range attr {
+		for _, b := range battr {
+			if a == b {
+				return true
 			}
 		}
 	}
 	return false
 }
 
-// isCategoryBlocked checks if any of the bid categories are blocked in the request.
-func isCategoryBlocked(bidCats []string, req *openrtb2.BidRequest) bool {
-	if len(bidCats) == 0 || req == nil || len(req.BCat) == 0 {
+// isCategoryBlocked checks if the bid categories are present in the global block list (BCat).
+func isCategoryBlocked(bidCats []string, bcat []string) bool {
+	if len(bidCats) == 0 || len(bcat) == 0 {
 		return false
 	}
 
-	for _, bc := range req.BCat {
+	for _, bc := range bcat {
 		for _, cat := range bidCats {
 			if bc == cat {
 				return true

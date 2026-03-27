@@ -66,9 +66,15 @@ sudo ufw reload
 sudo mkdir -p /etc/prometheus/rules/
 
 
-sudo cp /opt/app_adserving/prebid-server/startup/prometheus/ssp_rules.yml /etc/prometheus/rules/
-sudo cp /opt/app_adserving/prebid-server/startup/prometheus/dsp_rules.yml /etc/prometheus/rules/
-sudo cp /opt/app_adserving/prebid-server/startup/prometheus/pm2_targets.yml /etc/prometheus/rules/
+sudo cp /opt/app_adserving/prebid-server/startup/*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable node_exporter pushgateway prometheus
+sudo systemctl restart node_exporter pushgateway prometheus
+
+
+sudo cp /opt/app_adserving/prebid-server/startup/prometheus/*_rules.yml /etc/prometheus/rules/
+sudo cp /opt/app_adserving/prebid-server/startup/prometheus/*_targets.yml /etc/prometheus/rules/
+
 
 # Backup existing config
 sudo cp /etc/prometheus/prometheus.yml /etc/prometheus/prometheus.yml.bak

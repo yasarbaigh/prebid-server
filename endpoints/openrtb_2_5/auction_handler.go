@@ -240,7 +240,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		t.reqBody = resCopy.reqBody
 		targetedDSPs[resCopy.dsp.DSPID] = t
 
-		if !endpoints.ApplyExchangeMargin(resCopy.resp, &bidReq, resCopy.dsp) {
+		if !endpoints.ApplyExchangeMargin(resCopy.resp, impMap, bidReq.BCat, resCopy.dsp) {
 			continue
 		}
 

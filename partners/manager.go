@@ -11,6 +11,37 @@ import (
 	"github.com/prebid/prebid-server/v3/logger"
 )
 
+const DefaultMargin = 15.0
+
+// FlexFloat64 handles both string and numeric float64 values in JSON
+type FlexFloat64 float64
+
+func (f *FlexFloat64) UnmarshalJSON(b []byte) error {
+	if len(b) > 0 && b[0] == '"' {
+		var s string
+		if err := json.Unmarshal(b, &s); err != nil {
+			return err
+		}
+		if s == "" {
+			*f = 0
+			return nil
+		}
+		var val float64
+		if _, err := fmt.Sscanf(s, "%f", &val); err != nil {
+			*f = 0 // Assign 0 on junk string so validation can catch it later
+			return nil
+		}
+		*f = FlexFloat64(val)
+		return nil
+	}
+	var val float64
+	if err := json.Unmarshal(b, &val); err != nil {
+		return err
+	}
+	*f = FlexFloat64(val)
+	return nil
+}
+
 type SSPInventory struct {
 	Name                 string   `json:"name"`
 	ID                   int      `json:"id"`
@@ -60,10 +91,10 @@ type DSPInventory struct {
 	TenantID             int      `json:"tenant_id"`
 	DSPID                int      `json:"dsp_id"`
 	DSPInventoryID       int      `json:"dsp_inventory_id"`
-	DSPInventoryIdentifier string   `json:"dsp_inventory_identifier"`
-	AdmPriceTransparency bool     `json:"adm_price_transparency"`
-	Margin               int      `json:"margin"`
-	BidAdjustment        float64  `json:"bid_adjustment"` // Multiplier (e.g. 0.9)
+	DSPInventoryIdentifier string       `json:"dsp_inventory_identifier"`
+	AdmPriceTransparency   bool         `json:"adm_price_transparency"`
+	Margin                 FlexFloat64  `json:"margin"`
+	BidAdjustment          float64      `json:"bid_adjustment"` // Multiplier (e.g. 0.9)
 	PricingAt            int      `json:"pricing_at"`
 }
 
@@ -131,10 +162,14 @@ func (m *Manager) Load(path string) error {
 		return fmt.Errorf("partners config TS is stale or missing (TS: %d, Now: %d, Raw: %s)", cfg.TS, now, raw.TS)
 	}
 
-	// Default PricingAt to 1 if not available
+	// Default PricingAt to 1 and validate Margin
 	for i := range cfg.DSPInventories {
 		if cfg.DSPInventories[i].PricingAt == 0 {
 			cfg.DSPInventories[i].PricingAt = 1
+		}
+		// Validate Margin: must be between 0.1 and 100.0. Default to DefaultMargin if invalid/zero/negative.
+		if cfg.DSPInventories[i].Margin <= 0 || cfg.DSPInventories[i].Margin > 100.0 {
+			cfg.DSPInventories[i].Margin = FlexFloat64(DefaultMargin)
 		}
 	}
 
