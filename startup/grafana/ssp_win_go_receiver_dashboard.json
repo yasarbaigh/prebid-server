@@ -1,16 +1,5 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": "-- Grafana --",
-        "enable": true,
-        "hide": true,
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
-  },
+  "annotations": { "list": [] },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -36,7 +25,7 @@
       "title": "HTTP Ingestion Rate (Win/Track/Click)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(win_receiver_http_requests_total[1m])) by (handler)", "legendFormat": "{{handler}}" }
+        { "expr": "sum(rate(win_receiver_http_requests_total{machine=~\"$machine\"}[1m])) by (machine, handler)", "legendFormat": "{{machine}} - {{handler}}" }
       ]
     },
     {
@@ -49,7 +38,7 @@
       "title": "Buffered Events Count (In-Memory Queue)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(win_receiver_buffered_events_count) by (topic)", "legendFormat": "{{topic}} Queue Size" }
+        { "expr": "sum(win_receiver_buffered_events_count{machine=~\"$machine\"}) by (machine, topic)", "legendFormat": "{{machine}} - {{topic}} Queue Size" }
       ]
     },
     {
@@ -70,7 +59,7 @@
       "title": "Kafka Write Error Rate",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(win_receiver_kafka_write_errors_total[1m])) by (topic)", "legendFormat": "{{topic}} Errors" }
+        { "expr": "sum(rate(win_receiver_kafka_write_errors_total{machine=~\"$machine\"}[1m])) by (machine, topic)", "legendFormat": "{{machine}} - {{topic}} Errors" }
       ]
     },
     {
@@ -84,8 +73,8 @@
       "type": "timeseries",
       "targets": [
         { 
-          "expr": "sum(rate(win_receiver_dsp_fire_total{result=\"success\"}[1m])) / sum(rate(win_receiver_dsp_fire_total[1m]))", 
-          "legendFormat": "Success Rate" 
+          "expr": "sum(rate(win_receiver_dsp_fire_total{machine=~\"$machine\", result=\"success\"}[1m])) / sum(rate(win_receiver_dsp_fire_total{machine=~\"$machine\"}[1m]))", 
+          "legendFormat": "Global Success Rate" 
         }
       ]
     }
@@ -100,9 +89,28 @@
         "name": "datasource",
         "query": "prometheus",
         "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "current": { "selected": false, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(win_receiver_http_requests_total, machine)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Machine",
+        "multi": true,
+        "name": "machine",
+        "options": [],
+        "query": "label_values(win_receiver_http_requests_total, machine)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrl": false,
+        "sort": 1,
+        "type": "query"
       }
     ]
   },
   "title": "Win Receiver Gateway Dashboard",
-  "uid": "win-recv-v1"
+  "uid": "win-recv-v1",
+  "version": 2
 }

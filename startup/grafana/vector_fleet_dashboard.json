@@ -105,13 +105,13 @@
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "sum(irate(vector_events_in_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[1m])) by (collector_type)",
+          "expr": "sum(irate(vector_events_in_total{machine=~\"$machine\", collector_type=~\"$collector_type\"}[1m])) by (collector_type)",
           "legendFormat": "Inbound: {{collector_type}}",
           "refId": "A"
         },
         {
           "datasource": "Prometheus",
-          "expr": "sum(irate(vector_events_out_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[1m])) by (collector_type)",
+          "expr": "sum(irate(vector_events_out_total{machine=~\"$machine\", collector_type=~\"$collector_type\"}[1m])) by (collector_type)",
           "legendFormat": "Outbound: {{collector_type}}",
           "refId": "B"
         }
@@ -167,7 +167,7 @@
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "sum(increase(vector_component_errors_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[5m]))",
+          "expr": "sum(increase(vector_component_errors_total{machine=~\"$machine\", collector_type=~\"$collector_type\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -268,8 +268,8 @@
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "vector_buffer_byte_size{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}",
-          "legendFormat": "{{device_name}} - {{collector_type}}",
+          "expr": "vector_buffer_byte_size{machine=~\"$machine\", collector_type=~\"$collector_type\"}",
+          "legendFormat": "{{machine}} - {{collector_type}}",
           "refId": "A"
         }
       ],
@@ -290,13 +290,13 @@
       {
         "current": {},
         "datasource": "Prometheus",
-        "definition": "label_values(device_name)",
+        "definition": "label_values(machine)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
-        "name": "device_name",
+        "name": "machine",
         "options": [],
-        "query": "label_values(device_name)",
+        "query": "label_values(machine)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

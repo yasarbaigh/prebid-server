@@ -3,15 +3,15 @@
 
 - targets: ['ad-1:49598', 'ad-1:49599', 'ad-1:49600']
   labels:
-    machine_id: 'ad-1'
+    machine: 'ad-1'
     cluster: 'ad-serving'
 
 - targets: ['ad-2:49598', 'ad-2:49599', 'ad-2:49600']
   labels:
-    machine_id: 'ad-2'
+    machine: 'ad-2'
     cluster: 'ad-serving'
 
 - targets: ['ad-3:49598', 'ad-3:49599', 'ad-3:49600']
   labels:
-    machine_id: 'ad-3'
+    machine: 'ad-3'
     cluster: 'ad-serving'
