@@ -1,0 +1,18 @@
+[Unit]
+Description=Prometheus Pushgateway
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/pushgateway \
+    --web.listen-address=":9091" \
+    --persistence.file="/var/lib/prometheus/pushgateway.persistence" \
+    --persistence.interval=5m
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

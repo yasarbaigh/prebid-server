@@ -1,6 +1,6 @@
 # Prebid Server Startup & Deployment Guide
 
-This directory contains configuration files for running multiple high-performance instances of **Prebid Server** on a single VM. It uses a **30-port isolation strategy** to prevent service collisions.
+This directory contains configuration files for running multiple high-performance instances of **Prebid Server** on a single VM. It uses a **30-port isolation strategy** to prevent service collisions and integrates with Prometheus/Grafana for full observability.
 
 ## 1. Port Allocation Map (Batch 30)
 
@@ -16,56 +16,85 @@ Each instance occupies a "lane" of 30 ports starting from `24000`.
 
 ---
 
-## 2. Option A: PM2 Deployment (Recommended for Local Dev/Debug)
+## 2. Option A: PM2 Deployment (Recommended)
 
-PM2 allows for easy log viewing and process management.
+PM2 is recommended for managing both Prebid Server instances and Mock Simulators. It provides automatic restarts and easy log management.
 
-### Commands
-
+### Start Prebid Server Cluster
 ```bash
-# Start all 5 instances
+# Start all 5 instances using the absolute path to the binary
 pm2 start startup/ecosystem.config.js
+```
+
+### Start Mock Simulators (Traffic Generation)
+```bash
+# Start SSP, DSP, Win Gen, and Receiver simulators
+# (Note: simulators.config.js is located in the simulators folder)
+pm2 start /opt/adserving/14-feb-2026/cd_adhoc/mock_simulators/simulators.config.js
+```
+
+### Management Commands
+```bash
+# View all running processes
+pm2 list
+
+# Save current process list to auto-start on boot (CRITICAL)
+pm2 save
 
 # View real-time logs
 pm2 logs prebid-server-1
+pm2 logs mock-ssp
 
 # Monitor resource usage (CPU/Mem)
 pm2 monit
-
-# Stop or restart instances
-pm2 restart all
-pm2 delete all
 ```
 
 ---
 
-## 3. Option B: Systemd Deployment (Production)
+## 3. Option B: Systemd Deployment (Core Services)
 
-Recommended for production as it handles system reboots and provides native OS isolation.
+These infrastructure components should be managed by systemd to ensure they are always running and survive reboots.
 
-### One-Time Setup
+### 3.1. Infrastructure Installation (If Binaries are Missing)
 
+If official binaries for **Pushgateway** or **Node Exporter** are not found in `/usr/local/bin/`, install them as follows:
+
+**Installing Pushgateway:**
 ```bash
-# Link the service template
-cp /opt/app_adserving/1_prebid-server/startup/prebid-server@.service /etc/systemd/system/
-systemctl daemon-reload
+wget https://github.com/prometheus/pushgateway/releases/download/v1.10.0/pushgateway-1.10.0.linux-amd64.tar.gz
+tar -xf pushgateway-1.10.0.linux-amd64.tar.gz
+sudo mv pushgateway-1.10.0.linux-amd64/pushgateway /usr/local/bin/
+sudo chmod +x /usr/local/bin/pushgateway
+rm -rf pushgateway-1.10.0.linux-amd64*
 ```
 
-### Start Individual Instances
-
+**Installing Node Exporter:**
 ```bash
-# Start Instance 1
-systemctl start prebid-server@1
-
-# Enable auto-start on boot
-systemctl enable prebid-server@1 prebid-server@2 prebid-server@3
+wget https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+tar -xf node_exporter-1.8.2.linux-amd64.tar.gz
+sudo mv node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin/
+sudo chmod +x /usr/local/bin/node_exporter
+rm -rf node_exporter-1.8.2.linux-amd64*
 ```
 
-### View Status
+### 3.2. Setup Instructions (Relinking & Activation)
+Inside the `startup/` folder, you will find systemd unit files. To activate them:
 
 ```bash
-systemctl status prebid-server@1
-journalctl -u prebid-server@1 -f
+# 1. Link & Enable Pushgateway
+sudo ln -sf $(pwd)/pushgateway.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now pushgateway
+
+# 2. Link & Enable Node Exporter
+sudo ln -sf $(pwd)/node_exporter.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now node_exporter
+
+# 3. Link & Enable Prometheus
+sudo ln -sf $(pwd)/prometheus.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now prometheus
 ```
 
 ---
@@ -86,12 +115,7 @@ curl http://localhost:24030/status
 
 ## 5. Load Balancer Configuration
 
-Your upstream load balancer (e.g., Nginx or HAProxy) should be configured to distribute traffic across the **RTB Port Ranges** for maximum parallel throughput.
-
-### Example for Instance 1
-
-- **Target IP**: `127.0.0.1`
-- **Target Ports**: `24001, 24002, 24003 ... 24020`
+Your upstream load balancer (e.g., HAProxy or Nginx) should be configured to distribute traffic across the **RTB Port Ranges** for maximum parallel throughput.
 
 ---
 
@@ -103,7 +127,7 @@ The monitoring configuration is located in `startup/prometheus/` and `startup/gr
 
 To collect metrics from all 5 instances:
 
-1. Copy or include `startup/prometheus/prometheus.yml` in your main Prometheus config.
+1. Copy or include `startup/prometheus/prometheus.yml` in your main Prometheus config (usually `/etc/prometheus/prometheus.yml`).
 2. The targets are pre-configured to hit the Prometheus ports (e.g., `24029`, `24059`).
 3. Load the custom rules from `startup/prometheus/dsp_rules.yml` and `ssp_rules.yml` for calculating derived rates and alerts.
 
@@ -120,32 +144,12 @@ Import the provided JSON files in `startup/grafana/` into your Grafana instance:
 
 ## 7. Production Kernel Tuning (Sysctl)
 
-To handle 100k+ QPS and avoid port exhaustion, you must optimize the host's TCP stack. We have provided a helper script for this.
-
-### Auto-Tuning (Recommended)
-
-Run the following inside the `startup/` directory of the new machine:
+To handle 100k+ QPS and avoid port exhaustion:
 
 ```bash
 sudo ./startup/tune_kernel.sh
 ```
 
-This script will apply the settings immediately and persist them to `/etc/sysctl.d/99-prebid-server.conf` so they survive system reboots.
-
-### Manual Tuning
-
-If you prefer to manually edit your configuration:
-
-```bash
-# Add to /etc/sysctl.conf or sysctl.d/
-net.core.somaxconn = 10000
-net.ipv4.tcp_max_syn_backlog = 10000
-net.ipv4.ip_local_port_range = 10000 65535
-net.ipv4.tcp_tw_reuse = 1
-net.ipv4.tcp_fin_timeout = 15
-```
-
-Apply manually with `sysctl -p`
 ---
 
 ## 8. High-Speed URL Reduction & Tracking (Production V7)
@@ -154,8 +158,8 @@ To support 100k+ QPS on lean infrastructure and keep URL lengths minimal for SSP
 
 ### Optimized Parameter Strategy
 
-- **`d` Parameter (DSP URL)**: Compressed with **Brotli** (Quality 4). This achieves the absolute shortest character count for long DSP Win/Loss URLs, often reducing a 250-char URL to under 200 chars.
-- **`x` Parameter (Auction Payload)**: Compressed with **Zlib** (BestCompression). This packs binary metadata (IDs, pricing, context) efficiently without the overhead of encryption nonces or authentication tags.
+- **`d` Parameter (DSP URL)**: Compressed with **Brotli** (Quality 4).
+- **`x` Parameter (Auction Payload)**: Compressed with **Zlib** (BestCompression).
 
 ### Tracking Payload (`x` parameter) Structure
 
@@ -167,13 +171,3 @@ The `x` parameter contains a binary buffer packed in the following **Positional 
     - `AuctionID` (16B), `BidID` (16B), `ImpID` (16B)
 3. **Block 3 (Variable Strings - Length Prefixed)**:
     - `OSV`, `Country`, `AdSize`, `Domain`, `BundleID`, `Carrier`, `Seat`, `AdID`
-
-### Performance Characteristics
-
-- **Brotli**: Best for text/URLs. ~10-15% better than Zlib for `d` param.
-- **Zlib**: Best for mixed binary/small blobs. Low overhead for `x` param.
-- **Security**: Crypto (AES-GCM) is disabled in Version 7 to prioritize **processing speed** and **minimal character length** in high-frequency auctions.
-
-### Critical Rules
-
-- **Do not change the field order** in `util/cryptoutil/packer.go` without updating all decoders (Win-Receiver, Win-Processor), as it is positional.

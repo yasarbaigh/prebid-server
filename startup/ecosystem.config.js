@@ -31,7 +31,7 @@ for (let i = 1; i <= numInstances; i++) {
 
   apps.push({
     name: `prebid-server-${i}`,
-    script: "./prebid-server.bin",
+    script: "/opt/app_adserving/prebid-server/prebid-server.bin",
     args: "",
     env: {
       PBS_ADMIN_PORT: healthPort,
@@ -40,7 +40,7 @@ for (let i = 1; i <= numInstances; i++) {
       // Default to 8000 for standard pbs.port if not using multiple ports
       PBS_PORT: rtbPorts[0],
       INSTANCE_ID: i,
-      GOMEMLIMIT: "2GiB", // Explicit memory protection
+      GOMEMLIMIT: "1GiB", // Explicit memory protection
       GOGC: "200"       // Optimized GC cycle for RTB
     },
     // Log files per instance
@@ -49,7 +49,8 @@ for (let i = 1; i <= numInstances; i++) {
     log_date_format: "YYYY-MM-DD HH:mm:ss Z",
     autorestart: true,
     watch: false,
-    max_memory_restart: "1G"
+    max_memory_restart: "1024M",
+    cwd: "/opt/app_adserving/prebid-server"
   });
 }
 
