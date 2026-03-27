@@ -1,0 +1,20 @@
+# Node Monitoring (Centralized Scriping of all Machines)
+- targets:
+    - 'localhost:9100'
+  labels:
+    machine_id: 'monit-1'
+
+- targets:
+    - 'ad-1:9100'
+  labels:
+    machine_id: 'ad-1'
+
+- targets:
+    - 'ad-2:9100'
+  labels:
+    machine_id: 'ad-2'
+
+- targets:
+    - 'ad-3:9100'
+  labels:
+    machine_id: 'ad-3'

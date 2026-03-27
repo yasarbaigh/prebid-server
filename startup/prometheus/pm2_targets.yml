@@ -1,10 +1,20 @@
+# PM2 Cluster State (Process/Memory Monitoring)
 - targets:
     - 'localhost:9209'
   labels:
-    env: 'staging'
-    region: 'us-east'
+    machine_id: 'localhost'
 
 - targets:
-    - '192.168.1.50:9209'
+    - 'ad-1:9209'
   labels:
-    env: 'dev'
+    machine_id: 'ad-1'
+
+- targets:
+    - 'ad-2:9209'
+  labels:
+    machine_id: 'ad-2'
+
+- targets:
+    - 'ad-3:9209'
+  labels:
+    machine_id: 'ad-3'

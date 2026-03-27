@@ -1,0 +1,39 @@
+# Machine: monit-1 (Local monitoring node)
+- targets:
+    - 'localhost:24029'
+    - 'localhost:24059'
+    - 'localhost:24089'
+    - 'localhost:24119'
+    - 'localhost:24149'
+  labels:
+    machine_id: 'localhost'
+
+# Machine: ad-1
+- targets:
+    - 'ad-1:24029'
+    - 'ad-1:24059'
+    - 'ad-1:24089'
+    - 'ad-1:24119'
+    - 'ad-1:24149'
+  labels:
+    machine_id: 'ad-1'
+
+# Machine: ad-2
+- targets:
+    - 'ad-2:24029'
+    - 'ad-2:24059'
+    - 'ad-2:24089'
+    - 'ad-2:24119'
+    - 'ad-2:24149'
+  labels:
+    machine_id: 'ad-2'
+
+# Machine: ad-3
+- targets:
+    - 'ad-3:24029'
+    - 'ad-3:24059'
+    - 'ad-3:24089'
+    - 'ad-3:24119'
+    - 'ad-3:24149'
+  labels:
+    machine_id: 'ad-3'

@@ -10,7 +10,7 @@ Type=simple
 # Update the paths below if your binary or config is in a different location
 ExecStart=/usr/local/bin/prometheus \
     --config.file=/etc/prometheus/prometheus.yml \
-    --storage.tsdb.path=/var/lib/prometheus/ \
+    --storage.tsdb.path=/opt/service_logs/prometheus_data/ \
     --web.enable-remote-write-receiver \
     --web.listen-address="0.0.0.0:9090" \
     --web.enable-lifecycle \
