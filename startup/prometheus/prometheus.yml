@@ -29,6 +29,11 @@ scrape_configs:
     file_sd_configs:
       - files: ['/etc/prometheus/rules/pm2_targets.yml']
 
+  # Vector Metrics (Throughput and Error rates)
+  - job_name: 'vector'
+    file_sd_configs:
+      - files: ['/etc/prometheus/rules/vector_targets.yml']
+
   # Pushgateway (Bridge for batch/short-lived tasks)
   - job_name: 'pushgateway'
     static_configs:

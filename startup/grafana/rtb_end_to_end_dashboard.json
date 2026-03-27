@@ -1,0 +1,119 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "GLOBAL CLUSTER PERFORMANCE",
+      "type": "row"
+    },
+    {
+      "title": "Total RTB Requests (SSP)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "targets": [
+        { "expr": "sum(rate(prebid_rtb_ssp_requests_total{machine_id=~\"$machine\"}[1m]))", "refId": "A" }
+      ],
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "title": "Win Events Processed",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "targets": [
+        { "expr": "sum(rate(win_processor_events_total{machine=~\"$machine\", status=\"success\"}[1m]))", "refId": "A" }
+      ],
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto" }
+    },
+    {
+      "title": "Log Pipeline: Last Run Status",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 },
+      "id": 3,
+      "targets": [
+        { "expr": "time() - log_processor_last_run_timestamp_seconds{machine=~\"$machine\"}", "legendFormat": "{{machine}} Lag", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "from": 0, "to": 600, "result": { "color": "green", "text": "HEALTHY" } }, "type": "range" },
+            { "options": { "from": 600, "to": 1200, "result": { "color": "orange", "text": "STALE" } }, "type": "range" },
+            { "options": { "from": 1200, "to": 999999, "result": { "color": "red", "text": "FAILED" } }, "type": "range" }
+          ],
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "id": 101,
+      "panels": [],
+      "title": "INFRASTRUCTURE & LAG",
+      "type": "row"
+    },
+    {
+      "title": "Kafka Consumer Lag (Partition Level)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 4,
+      "targets": [
+        { "expr": "sum by (group, topic) (kafka_consumer_group_lag{group=~\"ssp-.*\"})", "legendFormat": "{{group}} - {{topic}}" }
+      ],
+      "options": { "legend": { "displayMode": "table", "placement": "right" } }
+    },
+    {
+      "title": "Spark Log Processor: Data Volume",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 5,
+      "targets": [
+        { "expr": "log_processor_batch_files_processed{machine=~\"$machine\"}", "legendFormat": "{{machine}} Files" }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [ "rtb", "cluster", "pipeline" ],
+  "templating": {
+    "list": [
+      {
+        "name": "machine",
+        "type": "query",
+        "label": "Machine",
+        "datasource": "Prometheus",
+        "definition": "label_values(machine_id)",
+        "query": "label_values(machine_id)",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*"
+      }
+    ]
+  },
+  "time": { "from": "now-3h", "to": "now" },
+  "title": "RTB Cluster End-to-End Overview",
+  "uid": "rtb_end_to_end"
+}
