@@ -3,13 +3,13 @@ groups:
     rules:
       # 1. Pipeline Health (Is logs collector running?)
       - alert: VectorIngestionStall
-        expr: sum by (machine_id, collector_type) (rate(vector_component_received_events_total[5m])) == 0
+        expr: sum by (device_name, collector_type) (rate(vector_component_received_events_total[5m])) == 0
         for: 10m
         labels:
           severity: critical
         annotations:
-          summary: "Vector ingestion stalled on {{ $labels.machine_id }}"
-          description: "No logs being ingested for {{ $labels.collector_type }} on {{ $labels.machine_id }} for 10 minutes."
+          summary: "Vector ingestion stalled on {{ $labels.device_name }}"
+          description: "No logs being ingested for {{ $labels.collector_type }} on {{ $labels.device_name }} for 10 minutes."
 
       # 2. Log-to-Parquet Pipeline Stall (Is the Py-Spark job working?)
       - alert: LogProcessorStall
@@ -18,25 +18,25 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Log processing stall on {{ $labels.machine }}"
-          description: "Machine {{ $labels.machine }} hasn't successfully processed a log-to-parquet batch in 30 minutes."
+          summary: "Log processing stall on {{ $labels.device_name }}"
+          description: "Device {{ $labels.device_name }} hasn't successfully processed a log-to-parquet batch in 30 minutes."
 
       # 3. Kafka Consumer Health
       - alert: HighKafkaErrorRate
-        expr: sum by (machine, job) (rate(win_receiver_kafka_write_errors_total[5m])) > 10
+        expr: sum by (device_name, job) (rate(win_receiver_kafka_write_errors_total[5m])) > 10
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "High Kafka write errors on {{ $labels.machine }}"
+          summary: "High Kafka write errors on {{ $labels.device_name }}"
           description: "Win Receiver is failing to write to Kafka at a rate of {{ $value }} errors/sec."
 
       # 4. Processor Connectivity (DB/DLQ)
       - alert: HighDLQTraffic
-        expr: sum by (machine) (rate(ssp_processor_dlq_messages_total[5m])) > 1
+        expr: sum by (device_name) (rate(ssp_processor_dlq_messages_total[5m])) > 1
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "Critical DLQ Traffic detected on {{ $labels.machine }}"
-          description: "The SSP Win Processor is moving messages to the Dead Letter Queue due to processing failures."
+          summary: "Critical DLQ Traffic detected on {{ $labels.device_name }}"
+          description: "The SSP Win Processor on {{ $labels.device_name }} is moving messages to the Dead Letter Queue due to processing failures."

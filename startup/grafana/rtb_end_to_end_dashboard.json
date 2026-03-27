@@ -11,7 +11,7 @@
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 },
       "targets": [
-        { "expr": "sum(rate(win_receiver_http_requests_total[5m])) by (machine, handler)", "legendFormat": "{{machine}} - {{handler}}" }
+        { "expr": "sum(rate(win_receiver_http_requests_total{device_name=~\"$device_name\"}[5m])) by (device_name, handler)", "legendFormat": "{{device_name}} - {{handler}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "reqps" } }
     },
@@ -21,8 +21,8 @@
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 0 },
       "targets": [
         { 
-          "expr": "sum(rate(vector_component_received_events_total{collector_type!=''}[5m])) by (machine_id, collector_type)", 
-          "legendFormat": "{{machine_id}} - {{collector_type}}" 
+          "expr": "sum(rate(vector_component_received_events_total{device_name=~\"$device_name\", collector_type!=''}[5m])) by (device_name, collector_type)", 
+          "legendFormat": "{{device_name}} - {{collector_type}}" 
         }
       ],
       "fieldConfig": { "defaults": { "unit": "ops" } }
@@ -32,7 +32,7 @@
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
       "targets": [
-        { "expr": "sum(rate(vector_sink_errors_total[5m])) by (machine_id, component_id)", "legendFormat": "S3 Upload Errors" }
+        { "expr": "sum(rate(vector_sink_errors_total{device_name=~\"$device_name\"}[5m])) by (device_name, component_id)", "legendFormat": "{{device_name}} - S3 Errors" }
       ],
       "fieldConfig": { 
         "defaults": { "unit": "ops", "color": { "mode": "fixed", "fixedColor": "red" } }
@@ -43,7 +43,7 @@
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
       "targets": [
-        { "expr": "sum(rate(ssp_processor_reconciler_synced_total[5m])) by (machine)", "legendFormat": "DB Sync Rate" }
+        { "expr": "sum(rate(ssp_processor_reconciler_synced_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} DB Sync Rate" }
       ],
       "fieldConfig": { "defaults": { "unit": "ops" } }
     },
@@ -52,7 +52,7 @@
       "type": "gauge",
       "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
       "targets": [
-        { "expr": "time() - ssp_log_processor_last_run_timestamp_seconds", "legendFormat": "{{machine}}" }
+        { "expr": "time() - ssp_log_processor_last_run_timestamp_seconds{device_name=~\"$device_name\"}", "legendFormat": "{{device_name}}" }
       ],
       "fieldConfig": {
         "defaults": { "unit": "s", "min": 0, "max": 3600, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 600 }, { "color": "red", "value": 1800 } ] } }
@@ -63,8 +63,8 @@
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
       "targets": [
-        { "expr": "sum(rate(win_receiver_kafka_write_errors_total[5m])) by (machine)", "legendFormat": "Kafka Write Errors" },
-        { "expr": "sum(rate(ssp_processor_dlq_messages_total[5m])) by (machine)", "legendFormat": "Processor DLQ Messages" }
+        { "expr": "sum(rate(win_receiver_kafka_write_errors_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Kafka Write Errors" },
+        { "expr": "sum(rate(ssp_processor_dlq_messages_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Processor DLQ Messages" }
       ],
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } }
     }
@@ -75,10 +75,18 @@
   "tags": ["RTB", "Cluster", "Observability"],
   "templating": {
     "list": [
-      { "name": "machine", "type": "query", "query": "label_values(win_receiver_http_requests_total, machine)", "refresh": 1, "multi": true, "includeAll": true }
+      { 
+        "name": "device_name", 
+        "type": "query", 
+        "query": "label_values(device_name)", 
+        "refresh": 1, 
+        "multi": true, 
+        "includeAll": true,
+        "label": "Device Name"
+      }
     ]
   },
   "title": "SSP Cluster: End-to-End Observability",
   "uid": "ssp-central-cluster-monitoring",
-  "version": 4
+  "version": 5
 }

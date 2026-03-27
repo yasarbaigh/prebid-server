@@ -25,7 +25,7 @@
       "title": "HTTP Ingestion Rate (Win/Track/Click)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(win_receiver_http_requests_total{machine=~\"$machine\"}[1m])) by (machine, handler)", "legendFormat": "{{machine}} - {{handler}}" }
+        { "expr": "sum(rate(win_receiver_http_requests_total{{device_name=~\"$device_name\"}}[1m])) by (device_name, handler)", "legendFormat": "{{device_name}} - {{handler}}" }
       ]
     },
     {
@@ -38,7 +38,7 @@
       "title": "Buffered Events Count (In-Memory Queue)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(win_receiver_buffered_events_count{machine=~\"$machine\"}) by (machine, topic)", "legendFormat": "{{machine}} - {{topic}} Queue Size" }
+        { "expr": "sum(win_receiver_buffered_events_count{{device_name=~\"$device_name\"}}) by (device_name, topic)", "legendFormat": "{{device_name}} - {{topic}} Queue Size" }
       ]
     },
     {
@@ -59,7 +59,7 @@
       "title": "Kafka Write Error Rate",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(win_receiver_kafka_write_errors_total{machine=~\"$machine\"}[1m])) by (machine, topic)", "legendFormat": "{{machine}} - {{topic}} Errors" }
+        { "expr": "sum(rate(win_receiver_kafka_write_errors_total{{device_name=~\"$device_name\"}}[1m])) by (device_name, topic)", "legendFormat": "{{device_name}} - {{topic}} Errors" }
       ]
     },
     {
@@ -73,7 +73,7 @@
       "type": "timeseries",
       "targets": [
         { 
-          "expr": "sum(rate(win_receiver_dsp_fire_total{machine=~\"$machine\", result=\"success\"}[1m])) / sum(rate(win_receiver_dsp_fire_total{machine=~\"$machine\"}[1m]))", 
+          "expr": "sum(rate(win_receiver_dsp_fire_total{{device_name=~\"$device_name\", result=\"success\"}[1m])) / sum(rate(win_receiver_dsp_fire_total[1m]))", 
           "legendFormat": "Global Success Rate" 
         }
       ]
@@ -94,14 +94,14 @@
         "allValue": ".*",
         "current": { "selected": false, "text": "All", "value": "$__all" },
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(win_receiver_http_requests_total, machine)",
+        "definition": "label_values(win_receiver_http_requests_total, device_name)",
         "hide": 0,
         "includeAll": true,
-        "label": "Machine",
+        "label": "Device Name",
         "multi": true,
-        "name": "machine",
+        "name": "device_name",
         "options": [],
-        "query": "label_values(win_receiver_http_requests_total, machine)",
+        "query": "label_values(win_receiver_http_requests_total, device_name)",
         "refresh": 1,
         "regex": "",
         "skipUrl": false,
@@ -112,5 +112,5 @@
   },
   "title": "Win Receiver Gateway Dashboard",
   "uid": "win-recv-v1",
-  "version": 2
+  "version": 3
 }

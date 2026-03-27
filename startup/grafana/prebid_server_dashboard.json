@@ -36,7 +36,7 @@
       "title": "Auction Request Rate (TPS)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(prebid_rtb_auctions_total{machine_id=~"$machine"}[1m])) by (status)", "legendFormat": "{{status}}" }
+        { "expr": "sum(rate(prebid_rtb_auctions_total{device_name=~"$machine"}[1m])) by (status)", "legendFormat": "{{status}}" }
       ]
     },
     {
@@ -49,7 +49,7 @@
       "title": "SSP Traffic by Partner",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(prebid_rtb_ssp_requests_total{machine_id=~"$machine"}[1m])) by (ssp_identifier, ssp_inventory_identifier)", "legendFormat": "{{ssp_identifier}} - {{ssp_inventory_identifier}}" }
+        { "expr": "sum(rate(prebid_rtb_ssp_requests_total{device_name=~"$machine"}[1m])) by (ssp_identifier, ssp_inventory_identifier)", "legendFormat": "{{ssp_identifier}} - {{ssp_inventory_identifier}}" }
       ]
     },
     {
@@ -83,9 +83,9 @@
       "title": "Exchange Economics (Profit vs Revenue vs Spent)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(prebid_rtb_exchange_profit_total{machine_id=~"$machine"}[5m]))", "legendFormat": "Profit" },
-        { "expr": "sum(rate(prebid_rtb_exchange_revenue_total{machine_id=~"$machine"}[5m]))", "legendFormat": "Revenue (DSP Paid)" },
-        { "expr": "sum(rate(prebid_rtb_exchange_spent_total{machine_id=~"$machine"}[5m]))", "legendFormat": "Spent (SSP Owed)" }
+        { "expr": "sum(rate(prebid_rtb_exchange_profit_total{device_name=~"$machine"}[5m]))", "legendFormat": "Profit" },
+        { "expr": "sum(rate(prebid_rtb_exchange_revenue_total{device_name=~"$machine"}[5m]))", "legendFormat": "Revenue (DSP Paid)" },
+        { "expr": "sum(rate(prebid_rtb_exchange_spent_total{device_name=~"$machine"}[5m]))", "legendFormat": "Spent (SSP Owed)" }
       ]
     }
   ],
@@ -108,8 +108,8 @@
         "refresh": 1
       },
       {
-        "name": "machine",
-        "query": "label_values(prebid_rtb_auctions_total, machine_id)",
+        "name": "device_name",
+        "query": "label_values(prebid_rtb_auctions_total, device_name)",
         "type": "query",
         "datasource": "${datasource}",
         "refresh": 1,

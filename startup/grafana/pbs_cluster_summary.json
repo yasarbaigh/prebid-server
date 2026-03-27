@@ -9,7 +9,7 @@
     },
     {
       "title": "Median Latency (P50) per Instance", "type": "timeseries", "gridPos": { "h": 6, "w": 16, "x": 8, "y": 0 },
-      "targets": [{ "expr": "histogram_quantile(0.5, sum by (le, machine_id) (rate(prebid_rtb_dsp_latency_seconds_bucket[5m])))", "legendFormat": "{{machine_id}}" }]
+      "targets": [{ "expr": "histogram_quantile(0.5, sum by (le, device_name) (rate(prebid_rtb_dsp_latency_seconds_bucket[5m])))", "legendFormat": "{{device_name}}" }]
     },
     {
       "title": "SSP Response Status (200 vs Errors)", "type": "piechart", "gridPos": { "h": 8, "w": 8, "x": 0, "y": 6 },

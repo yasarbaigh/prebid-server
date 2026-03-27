@@ -150,14 +150,14 @@ scrape_configs:
 ```
 
 **Discovery File Setup (`/etc/prometheus/rules/prebid_targets.yml`):**
-List your machines and assign a `machine_id` label to each. This enables filtering in Grafana:
+List your machines and assign a `device_name` label to each. This enables filtering in Grafana:
 ```yaml
 - targets: ['ad-1:24029', 'ad-1:24059', ...]
   labels:
-    machine_id: 'ad-1'
+    device_name: 'ad-1'
 - targets: ['ad-2:24029', 'ad-2:24059', ...]
   labels:
-    machine_id: 'ad-2'
+    device_name: 'ad-2'
 ```
 
 ### 6.3. Pushgateway Metric Flow (Batch Tracking)
@@ -167,7 +167,7 @@ In a cluster, individual machines (`ad-X`) push their ephemeral metrics (like sy
 1.  **On ad-1/2/3**: Your scripts/apps push metrics to the central Pushgateway:
     `echo "job_success 1" | curl --data-binary @- http://monit-1:9091/metrics/job/my_script_name`
 2.  **On monit-1**: Prometheus scrapes its local port `9091` and reveals all the pushed metrics from all machines at once.
-3.  **Grafana**: You can then visualization "Machine-Level Sync Status" across the whole fleet.
+3.  **Grafana**: You can then visualization "Device-Level Sync Status" across the whole fleet.
 
 ### 6.4. Vector Monitoring (Pull-Based Scraper)
 

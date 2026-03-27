@@ -45,7 +45,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(job:dsp_requests:rate5m{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", dsp_inventory_identifier=~\"$dsp_inv\", machine_id=~\"$machine\"}) by ($group_by)",
+                    "expr": "sum(job:dsp_requests:rate5m{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", dsp_inventory_identifier=~\"$dsp_inv\", device_name=~\"$machine\"}) by ($group_by)",
                     "legendFormat": "{{$group_by}}",
                     "refId": "A"
                 }
@@ -202,7 +202,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "dsp:error_rate:ratio5m{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", dsp_inventory_identifier=~\"$dsp_inv\", machine_id=~\"$machine\"} * 100",
+                    "expr": "dsp:error_rate:ratio5m{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", dsp_inventory_identifier=~\"$dsp_inv\", device_name=~\"$machine\"} * 100",
                     "legendFormat": "{{dsp_identifier}}",
                     "refId": "A"
                 }
@@ -230,7 +230,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(rate(prebid_rtb_dsp_responses_total{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", machine_id=~\"$machine\"}[$__rate_interval])) by (http_code)",
+                    "expr": "sum(rate(prebid_rtb_dsp_responses_total{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", device_name=~\"$machine\"}[$__rate_interval])) by (http_code)",
                     "legendFormat": "HTTP {{http_code}}",
                     "refId": "A"
                 }
@@ -258,7 +258,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(job:dsp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", machine_id=~\"$machine\"}) by (dsp_identifier)",
+                    "expr": "sum(job:dsp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", dsp_identifier=~\"$dsp\", device_name=~\"$machine\"}) by (dsp_identifier)",
                     "legendFormat": "Failed: {{dsp_identifier}}",
                     "refId": "A"
                 }
@@ -288,15 +288,15 @@
                     ]
                 },
                 "datasource": "Prometheus",
-                "definition": "label_values(prebid_rtb_dsp_requests_total, machine_id)",
+                "definition": "label_values(prebid_rtb_dsp_requests_total, device_name)",
                 "hide": 0,
                 "includeAll": true,
-                "label": "Machine",
+                "label": "Device Name",
                 "multi": true,
-                "name": "machine",
+                "name": "device_name",
                 "options": [],
                 "query": {
-                    "query": "label_values(prebid_rtb_dsp_requests_total, machine_id)",
+                    "query": "label_values(prebid_rtb_dsp_requests_total, device_name)",
                     "refId": "StandardVariableQuery"
                 },
                 "refresh": 1,
@@ -417,11 +417,11 @@
                     },
                     {
                         "selected": false,
-                        "text": "machine-ids",
-                        "value": "machine_id"
+                        "text": "device-names",
+                        "value": "device_name"
                     }
                 ],
-                "query": "tenant_identifier,dsp_identifier,dsp_inventory_identifier,http_code,machine_id",
+                "query": "tenant_identifier,dsp_identifier,dsp_inventory_identifier,http_code,device_name",
                 "skipUrlSync": false,
                 "type": "custom"
             }

@@ -11,18 +11,12 @@
       "id": 1,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "text": {},
-        "textMode": "auto"
+        "reduceOptions": { "calcs": ["lastNotNull"] }
       },
-      "pluginVersion": "9.1.1",
       "targets": [
         {
-          "expr": "node_systemd_unit_state{name=\"ssp-bids-processor.service\",state=\"active\"}",
-          "legendFormat": "Bids Status",
+          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-bids-processor.service\",state=\"active\"}",
+          "legendFormat": "{{device_name}} Bids",
           "refId": "A"
         }
       ],
@@ -31,9 +25,8 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK / Active" }, "0": { "color": "red", "text": "FAILED / Inactive" } }, "type": "value" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" }
+          ]
         }
       }
     },
@@ -42,17 +35,12 @@
       "id": 2,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "text": {},
-        "textMode": "auto"
+        "reduceOptions": { "calcs": ["lastNotNull"] }
       },
       "targets": [
         {
-          "expr": "node_systemd_unit_state{name=\"ssp-win-processor.service\",state=\"active\"}",
-          "legendFormat": "Win Status",
+          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-win-processor.service\",state=\"active\"}",
+          "legendFormat": "{{device_name}} Win",
           "refId": "A"
         }
       ],
@@ -61,9 +49,8 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK / Active" }, "0": { "color": "red", "text": "FAILED / Inactive" } }, "type": "value" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" }
+          ]
         }
       }
     },
@@ -72,17 +59,12 @@
       "id": 3,
       "options": {
         "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "text": {},
-        "textMode": "auto"
+        "reduceOptions": { "calcs": ["lastNotNull"] }
       },
       "targets": [
         {
-          "expr": "node_systemd_unit_state{name=\"ssp-track-processor.service\",state=\"active\"}",
-          "legendFormat": "Track Status",
+          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-track-processor.service\",state=\"active\"}",
+          "legendFormat": "{{device_name}} Track",
           "refId": "A"
         }
       ],
@@ -91,80 +73,43 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK / Active" }, "0": { "color": "red", "text": "FAILED / Inactive" } }, "type": "value" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" }
+          ]
         }
       }
     },
     {
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
       "id": 4,
-      "options": {
-        "showValue": "never",
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
       "targets": [
         {
-          "expr": "node_systemd_unit_state{name=~\"ssp-.*-processor.service\",state=\"active\"}",
-          "legendFormat": "{{name}}",
+          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=~\"ssp-.*-processor.service\",state=\"active\"}",
+          "legendFormat": "{{device_name}}: {{name}}",
           "refId": "A"
         }
       ],
       "title": "Processing Task History (Activity Timeline)",
-      "type": "status-history",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [
-            { "options": { "1": { "color": "green", "text": "Processing" }, "0": { "color": "gray", "text": "Idle" } }, "type": "value" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
-        }
-      }
-    },
-    {
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 13 },
-      "id": 5,
-      "options": {
-        "footer": { "fields": "", "reducer": ["sum"], "show": false },
-        "showHeader": true
-      },
-      "targets": [
-        {
-          "expr": "time() - node_systemd_timer_last_trigger_seconds{name=~\"ssp-.*-processor.timer\"}",
-          "format": "table",
-          "legendFormat": "{{name}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Time Since Last Trigger (Seconds ago)",
-      "type": "table",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-             "mode": "absolute",
-             "steps": [
-               { "color": "green", "value": null },
-               { "color": "orange", "value": 1000 },
-               { "color": "red", "value": 2000 }
-             ]
-          }
-        }
-      }
+      "type": "status-history"
     }
   ],
   "refresh": "10s",
   "schemaVersion": 37,
   "style": "dark",
   "tags": ["ssp", "processing"],
-  "templating": { "list": [] },
-  "time": { "from": "now-6h", "to": "now" },
-  "timepicker": {},
-  "timezone": "",
+  "templating": {
+    "list": [
+      {
+        "name": "device_name",
+        "type": "query",
+        "query": "label_values(node_systemd_unit_state, device_name)",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "label": "Device"
+      }
+    ]
+  },
   "title": "SSP Log Processing Dashboard",
   "uid": "ssp-log-processor-v1",
-  "version": 1
+  "version": 2
 }
