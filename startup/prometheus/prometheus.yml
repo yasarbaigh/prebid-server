@@ -6,6 +6,7 @@ global:
 rule_files:
   - "/etc/prometheus/rules/ssp_rules.yml"
   - "/etc/prometheus/rules/dsp_rules.yml"
+  - "/etc/prometheus/rules/alerting_rules.yml"
 
 # 2. Scrape Configurations (Minimal & Externalized)
 scrape_configs:

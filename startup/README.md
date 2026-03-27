@@ -13,6 +13,9 @@ Each instance occupies a "lane" of 30 ports starting from `24000`.
 | **Inst 3** | `24060` | `24061 - 24080` | `24089` |
 | **Inst 4** | `24090` | `24091 - 24110` | `24119` |
 | **Inst 5** | `24120` | `24121 - 24140` | `24149` |
+| **Vector Bids** | - | - | `49598` |
+| **Vector Win** | - | - | `49599` |
+| **Vector Track** | - | - | `49600` |
 
 ---
 
@@ -21,12 +24,14 @@ Each instance occupies a "lane" of 30 ports starting from `24000`.
 PM2 is recommended for managing both Prebid Server instances and Mock Simulators. It provides automatic restarts and easy log management.
 
 ### Start Prebid Server Cluster
+
 ```bash
 # Start all 5 instances using the absolute path to the binary
 pm2 start startup/ecosystem.config.js
 ```
 
 ### Start Mock Simulators (Traffic Generation)
+
 ```bash
 # Start SSP, DSP, Win Gen, and Receiver simulators
 # (Note: simulators.config.js is located in the simulators folder)
@@ -34,13 +39,18 @@ pm2 start /opt/adserving/14-feb-2026/cd_adhoc/mock_simulators/simulators.config.
 ```
 
 ### Management Commands
+
 ```bash
 # View all running processes
 pm2 list
+```
 
+```bash
 # Save current process list to auto-start on boot (CRITICAL)
 pm2 save
+```
 
+```bash
 # View real-time logs
 pm2 logs prebid-server-1
 pm2 logs mock-ssp
@@ -158,6 +168,18 @@ In a cluster, individual machines (`ad-X`) push their ephemeral metrics (like sy
     `echo "job_success 1" | curl --data-binary @- http://monit-1:9091/metrics/job/my_script_name`
 2.  **On monit-1**: Prometheus scrapes its local port `9091` and reveals all the pushed metrics from all machines at once.
 3.  **Grafana**: You can then visualization "Machine-Level Sync Status" across the whole fleet.
+
+### 6.4. Vector Monitoring (Pull-Based Scraper)
+
+Unlike batch scripts, Vector collectors expose a persistent scraper port. This ensures high-throughput monitoring without the overhead of thousands of HTTP pushes.
+
+1.  **Default Ports**: Bids (`49598`), Win (`49599`), Track (`49600`).
+2.  **Safe Start (Port Conflict Override)**:
+    If a port is already in use, you can start Vector with a random dynamic port to ensure production log collection is not interrupted:
+    ```bash
+    VECTOR_WIN_PORT="0.0.0.0:0" vector --config <path_to_yaml>
+    ```
+3.  **Monit-1 Scraper**: Prometheus on `monit-1` is configured to pull from these ports on all ad-nodes using `startup/prometheus/vector_targets.yml`.
 
 ### Grafana Dashboards
 
