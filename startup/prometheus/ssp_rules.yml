@@ -3,36 +3,36 @@ groups:
     rules:
       # SSP Request Rate (QPS)
       - record: job:ssp_requests:rate5m
-        expr: sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+        expr: sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
 
       # SSP Validation Failure Rate
       - record: job:ssp_validation_failed:rate5m
-        expr: sum(rate(prebid_rtb_ssp_validation_failed_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+        expr: sum(rate(prebid_rtb_ssp_validation_failed_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
 
       # SSP Response Rate by Status
       - record: job:ssp_responses:rate5m
-        expr: sum(rate(prebid_rtb_ssp_responses_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, status, instance_id)
+        expr: sum(rate(prebid_rtb_ssp_responses_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, status, device_name)
 
       # SSP Success Percentage (OK status)
       - record: ssp:success_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_ssp_responses_total{status="ok"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_ssp_responses_total{status="ok"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
           /
-          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
 
       # SSP No-Bid Percentage
       - record: ssp:nobid_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_ssp_responses_total{status="no_bid"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_ssp_responses_total{status="no_bid"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
           /
-          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
 
       # SSP Error Percentage
       - record: ssp:error_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_ssp_responses_total{status="error"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_ssp_responses_total{status="error"}[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
           /
-          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_ssp_requests_total[5m])) by (tenant_identifier, ssp_identifier, ssp_inventory_identifier, device_name)
 
   - name: ssp_alerts
     rules:

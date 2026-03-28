@@ -3,46 +3,46 @@ groups:
     rules:
       # DSP Fan-out Request Rate (QPS)
       - record: job:dsp_requests:rate5m
-        expr: sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+        expr: sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
 
       # DSP Validation Failure Rate
       - record: job:dsp_validation_failed:rate5m
-        expr: sum(rate(prebid_rtb_dsp_validation_failed_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+        expr: sum(rate(prebid_rtb_dsp_validation_failed_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
 
       # DSP Response Rate by Status (bid, nobid, error)
       - record: job:dsp_responses:rate5m
-        expr: sum(rate(prebid_rtb_dsp_responses_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, status, instance_id)
+        expr: sum(rate(prebid_rtb_dsp_responses_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, status, device_name)
 
       # DSP Bid Rate Percentage
       - record: dsp:bid_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_dsp_responses_total{status="bid"}[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_dsp_responses_total{status="bid"}[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
           /
-          sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
 
       # DSP Error Rate Percentage
       - record: dsp:error_rate:ratio5m
         expr: >
-          sum(rate(prebid_rtb_dsp_responses_total{status="error"}[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_dsp_responses_total{status="error"}[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
           /
-          sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_dsp_requests_total[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
 
       # DSP P95 Latency (Seconds)
       - record: dsp:latency_p95:seconds5m
         expr: >
-          histogram_quantile(0.95, sum(rate(prebid_rtb_dsp_latency_seconds_bucket[5m])) by (le, tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id))
+          histogram_quantile(0.95, sum(rate(prebid_rtb_dsp_latency_seconds_bucket[5m])) by (le, tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name))
 
       # DSP P50 Latency (Median)
       - record: dsp:latency_p50:seconds5m
         expr: >
-          histogram_quantile(0.50, sum(rate(prebid_rtb_dsp_latency_seconds_bucket[5m])) by (le, tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id))
+          histogram_quantile(0.50, sum(rate(prebid_rtb_dsp_latency_seconds_bucket[5m])) by (le, tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name))
 
       # DSP Average Latency
       - record: dsp:latency_avg:seconds5m
         expr: >
-          sum(rate(prebid_rtb_dsp_latency_seconds_sum[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_dsp_latency_seconds_sum[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
           /
-          sum(rate(prebid_rtb_dsp_latency_seconds_count[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, instance_id)
+          sum(rate(prebid_rtb_dsp_latency_seconds_count[5m])) by (tenant_identifier, dsp_identifier, dsp_inventory_identifier, device_name)
 
   - name: dsp_alerts
     rules:

@@ -84,6 +84,7 @@
       "targets": [
         {
           "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=~\"ssp-.*-processor.service\",state=\"active\"}",
+          "interval": "5m",
           "legendFormat": "{{device_name}}: {{name}}",
           "refId": "A"
         }

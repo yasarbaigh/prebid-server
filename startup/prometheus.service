@@ -13,6 +13,7 @@ ExecStart=/usr/local/bin/prometheus \
     --storage.tsdb.path=/opt/service_logs/prometheus_data/ \
     --web.enable-remote-write-receiver \
     --web.listen-address="0.0.0.0:9090" \
+    --storage.tsdb.retention.time=60d \
     --web.enable-lifecycle \
     --web.console.templates=/etc/prometheus/consoles \
     --web.console.libraries=/etc/prometheus/console_libraries

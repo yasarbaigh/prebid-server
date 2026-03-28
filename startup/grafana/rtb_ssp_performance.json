@@ -51,7 +51,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(job:ssp_requests:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$machine\"}) by ($group_by)",
+                    "expr": "sum(job:ssp_requests:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$device_name\"}) by ($group_by)",
                     "legendFormat": "{{$group_by}}",
                     "refId": "A"
                 }
@@ -96,7 +96,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "ssp:success_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$machine\"} * 100",
+                    "expr": "ssp:success_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$device_name\"} * 100",
                     "legendFormat": "{{ssp_identifier}}",
                     "refId": "A"
                 }
@@ -124,7 +124,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "ssp:nobid_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$machine\"} * 100",
+                    "expr": "ssp:nobid_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$device_name\"} * 100",
                     "legendFormat": "{{ssp_identifier}}",
                     "refId": "A"
                 }
@@ -169,7 +169,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "ssp:error_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$machine\"} * 100",
+                    "expr": "ssp:error_rate:ratio5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", ssp_inventory_identifier=~\"$ssp_inv\", device_name=~\"$device_name\"} * 100",
                     "legendFormat": "{{ssp_identifier}}",
                     "refId": "A"
                 }
@@ -197,7 +197,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(rate(prebid_rtb_ssp_responses_total{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", device_name=~\"$machine\"}[$__rate_interval])) by (http_code)",
+                    "expr": "sum(rate(prebid_rtb_ssp_responses_total{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", device_name=~\"$device_name\"}[$__rate_interval])) by (http_code)",
                     "legendFormat": "HTTP {{http_code}}",
                     "refId": "A"
                 }
@@ -225,7 +225,7 @@
             "targets": [
                 {
                     "datasource": "Prometheus",
-                    "expr": "sum(job:ssp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", device_name=~\"$machine\"}) by (ssp_identifier)",
+                    "expr": "sum(job:ssp_validation_failed:rate5m{tenant_identifier=~\"$tenant\", ssp_identifier=~\"$ssp\", device_name=~\"$device_name\"}) by (ssp_identifier)",
                     "legendFormat": "Failed: {{ssp_identifier}}",
                     "refId": "A"
                 }

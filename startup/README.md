@@ -71,11 +71,14 @@ If official binaries for **Pushgateway** or **Node Exporter** are not found in `
 
 **Installing Pushgateway:**
 ```bash
-wget https://github.com/prometheus/pushgateway/releases/download/v1.10.0/pushgateway-1.10.0.linux-amd64.tar.gz
-tar -xf pushgateway-1.10.0.linux-amd64.tar.gz
-sudo mv pushgateway-1.10.0.linux-amd64/pushgateway /usr/local/bin/
+wget https://github.com/prometheus/pushgateway/releases/download/v1.11.2/pushgateway-1.11.2.linux-amd64.tar.gz
+tar xvf pushgateway-1.11.2.linux-amd64.tar.gz
+# 3. Move it to the expected location (requires sudo)
+sudo mv pushgateway-1.11.2.linux-amd64/pushgateway /usr/local/bin/
+# 4. Ensure it has execute permissions
 sudo chmod +x /usr/local/bin/pushgateway
-rm -rf pushgateway-1.10.0.linux-amd64*
+# 5. Restart the service
+sudo systemctl restart pushgateway
 ```
 
 **Installing Node Exporter:**
@@ -105,6 +108,9 @@ sudo systemctl enable --now node_exporter
 sudo ln -sf $(pwd)/prometheus.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now prometheus
+
+rm -rf pushgateway-1.11.2.linux-amd64/
+rm -f pushgateway-1.11.2.linux-amd64.tar.gz 
 ```
 
 ---
@@ -153,7 +159,7 @@ scrape_configs:
 List your machines and assign a `device_name` label to each. This enables filtering in Grafana:
 ```yaml
 - targets: ['ad-1:24029', 'ad-1:24059', ...]
-  labels:
+  labels:xvf
     device_name: 'ad-1'
 - targets: ['ad-2:24029', 'ad-2:24059', ...]
   labels:
