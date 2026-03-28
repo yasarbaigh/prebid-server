@@ -3,6 +3,7 @@ package openrtb_2_5
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -61,6 +62,9 @@ func NewAuctionHandler(pm *partners.Manager) *AuctionHandler {
 				MaxIdleConns:        1000,
 				MaxIdleConnsPerHost: 100,
 				IdleConnTimeout:     90 * time.Second,
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
 			},
 		},
 		Hostname: func() string {
