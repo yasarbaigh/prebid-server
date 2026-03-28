@@ -1,6 +1,11 @@
 # Vector Metrics Targets for Monit-1 (Safety High-Range Ports)
 # Scraping from ports 49598 (Bids), 49599 (Win), 49600 (Track)
 
+- targets: ['localhost:49598', 'localhost:49599', 'localhost:49600']
+  labels:
+    device_name: 'localhost'
+    cluster: 'ad-serving'
+
 - targets: ['ad-1:49598', 'ad-1:49599', 'ad-1:49600']
   labels:
     device_name: 'ad-1'

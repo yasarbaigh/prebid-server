@@ -2,7 +2,7 @@
 - targets:
     - 'localhost:9100'
   labels:
-    device_name: 'monit-1'
+    device_name: 'localhost'
 
 - targets:
     - 'ad-1:9100'
