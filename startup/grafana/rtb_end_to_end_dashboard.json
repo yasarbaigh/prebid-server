@@ -11,9 +11,9 @@
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 },
       "targets": [
-        { "expr": "sum(rate(win_receiver_http_requests_total{device_name=~\"$device_name\"}[5m])) by (device_name, handler)", "legendFormat": "{{device_name}} - {{handler}}" }
+        { "expr": "sum(rate(win_receiver_http_requests_total{device_name=~\"$device_name\"}[5m])) by (device_name, handler)", "legendFormat": "{{device_name}} - {{handler}}" , "time": { "from": "now-24h", "to": "now" } }
       ],
-      "fieldConfig": { "defaults": { "unit": "reqps" } }
+      "fieldConfig": { "defaults": { "unit": "reqps" } , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "title": "Vector Ingestion Throughput (Log Collector)",
@@ -23,40 +23,40 @@
         { 
           "expr": "sum(rate(vector_component_received_events_total{device_name=~\"$device_name\", collector_type!=''}[5m])) by (device_name, collector_type)", 
           "legendFormat": "{{device_name}} - {{collector_type}}" 
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
-      "fieldConfig": { "defaults": { "unit": "ops" } }
+      "fieldConfig": { "defaults": { "unit": "ops" } , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "title": "Vector Sink Health (S3 Write Errors)",
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
       "targets": [
-        { "expr": "sum(rate(vector_sink_errors_total{device_name=~\"$device_name\"}[5m])) by (device_name, component_id)", "legendFormat": "{{device_name}} - S3 Errors" }
+        { "expr": "sum(rate(vector_sink_errors_total{device_name=~\"$device_name\"}[5m])) by (device_name, component_id)", "legendFormat": "{{device_name}} - S3 Errors" , "time": { "from": "now-24h", "to": "now" } }
       ],
       "fieldConfig": { 
-        "defaults": { "unit": "ops", "color": { "mode": "fixed", "fixedColor": "red" } }
-      }
+        "defaults": { "unit": "ops", "color": { "mode": "fixed", "fixedColor": "red" } , "time": { "from": "now-24h", "to": "now" } }
+      , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "title": "Processor Database Sync (Reconciler)",
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
       "targets": [
-        { "expr": "sum(rate(ssp_processor_reconciler_synced_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} DB Sync Rate" }
+        { "expr": "sum(rate(ssp_processor_reconciler_synced_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} DB Sync Rate" , "time": { "from": "now-24h", "to": "now" } }
       ],
-      "fieldConfig": { "defaults": { "unit": "ops" } }
+      "fieldConfig": { "defaults": { "unit": "ops" } , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "title": "Log-to-Parquet Performance (Last Run)",
       "type": "gauge",
       "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
       "targets": [
-        { "expr": "time() - ssp_log_processor_last_run_timestamp_seconds{device_name=~\"$device_name\"}", "legendFormat": "{{device_name}}" }
+        { "expr": "time() - ssp_log_processor_last_run_timestamp_seconds{device_name=~\"$device_name\"}", "legendFormat": "{{device_name}}" , "time": { "from": "now-24h", "to": "now" } }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "s", "min": 0, "max": 3600, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 600 }, { "color": "red", "value": 1800 } ] } }
-      }
+        "defaults": { "unit": "s", "min": 0, "max": 3600, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 600 }, { "color": "red", "value": 1800 } ] } , "time": { "from": "now-24h", "to": "now" } }
+      , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "title": "Kafka & DLQ Errors (Critical Pipeline)",
@@ -64,10 +64,10 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
       "targets": [
         { "expr": "sum(rate(win_receiver_kafka_write_errors_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Kafka Write Errors" },
-        { "expr": "sum(rate(ssp_processor_dlq_messages_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Processor DLQ Messages" }
+        { "expr": "sum(rate(ssp_processor_dlq_messages_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Processor DLQ Messages" , "time": { "from": "now-24h", "to": "now" } }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } }
-    }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } , "time": { "from": "now-24h", "to": "now" } }
+    , "time": { "from": "now-24h", "to": "now" } }
   ],
   "refresh": "1m",
   "schemaVersion": 38,
@@ -83,10 +83,10 @@
         "multi": true, 
         "includeAll": true,
         "label": "Device Name"
-      }
+      , "time": { "from": "now-24h", "to": "now" } }
     ]
   },
   "title": "SSP Cluster: End-to-End Observability",
   "uid": "ssp-central-cluster-monitoring",
   "version": 5
-}
+, "time": { "from": "now-24h", "to": "now" } }

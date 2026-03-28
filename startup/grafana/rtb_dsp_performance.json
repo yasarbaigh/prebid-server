@@ -428,7 +428,7 @@
         ]
     },
     "time": {
-        "from": "now-1h",
+        "from": "now-24h",
         "to": "now"
     },
     "title": "RTB DSP Performance",

@@ -21,5 +21,5 @@
     }
   ],
   "refresh": "10s",
-  "schemaVersion": 36, "style": "dark", "tags": [ "prebid", "rtb" ], "templating": { "list": [] }, "time": { "from": "now-1h", "to": "now" }, "timepicker": {}, "timezone": "", "title": "Prebid Server Cluster Overview", "uid": "pbs_cluster"
+  "schemaVersion": 36, "style": "dark", "tags": [ "prebid", "rtb" ], "templating": { "list": [] }, "time": { "from": "now-24h", "to": "now" }, "timepicker": {}, "timezone": "", "title": "Prebid Server Cluster Overview", "uid": "pbs_cluster"
 }

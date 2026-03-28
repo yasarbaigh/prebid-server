@@ -20,7 +20,7 @@
       "id": 2,
       "options": {
         "legend": { "calcs": ["mean", "last", "max"], "displayMode": "table", "placement": "bottom" },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "tooltip": { "mode": "multi", "sort": "none" , "time": { "from": "now-24h", "to": "now" } }
       },
       "targets": [
         {
@@ -34,18 +34,18 @@
           "expr": "sum(irate(vector_events_out_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[1m])) by (collector_type)",
           "legendFormat": "Outbound: {{collector_type}}",
           "refId": "B"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Fleet-wide Events In/Out Rate",
       "type": "timeseries",
-      "fieldConfig": { "defaults": { "unit": "ops" } }
+      "fieldConfig": { "defaults": { "unit": "ops" } , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "datasource": "Prometheus",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "id": 3,
       "options": {
-        "legend": { "calcs": ["max"], "displayMode": "table", "placement": "right" }
+        "legend": { "calcs": ["max"], "displayMode": "table", "placement": "right" , "time": { "from": "now-24h", "to": "now" } }
       },
       "targets": [
         {
@@ -53,11 +53,11 @@
           "expr": "sum(increase(vector_component_errors_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[5m])) by (device_name)",
           "legendFormat": "{{device_name}} errors",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Error Count by Node (Last 5m)",
       "type": "timeseries",
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" } } }
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" } } , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "collapsed": false,
@@ -78,11 +78,11 @@
           "expr": "vector_buffer_byte_size{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}",
           "legendFormat": "{{device_name}} - {{collector_type}}",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Buffer Usage per Collector",
       "type": "timeseries"
-    }
+    , "time": { "from": "now-24h", "to": "now" } }
   ],
   "refresh": "1m",
   "schemaVersion": 38,
@@ -121,10 +121,10 @@
         "sort": 1,
         "type": "query",
         "label": "Collector"
-      }
+      , "time": { "from": "now-24h", "to": "now" } }
     ]
   },
   "title": "Vector Fleet Health Overview",
   "uid": "vector-fleet-v1",
   "version": 3
-}
+, "time": { "from": "now-24h", "to": "now" } }

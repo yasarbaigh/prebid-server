@@ -18,27 +18,27 @@
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
-        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } , "time": { "from": "now-24h", "to": "now" } }
       },
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 1 },
       "id": 2,
       "title": "HTTP Ingestion Rate (Win/Track/Click)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(win_receiver_http_requests_total{device_name=~\"$device_name\"}[1m])) by (device_name, handler)", "legendFormat": "{{device_name}} - {{handler}}" }
+        { "expr": "sum(rate(win_receiver_http_requests_total{device_name=~\"$device_name\"}[1m])) by (device_name, handler)", "legendFormat": "{{device_name}} - {{handler}}" , "time": { "from": "now-24h", "to": "now" } }
       ]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
-        "defaults": { "unit": "short" }
+        "defaults": { "unit": "short" , "time": { "from": "now-24h", "to": "now" } }
       },
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 1 },
       "id": 3,
       "title": "Buffered Events Count (In-Memory Queue)",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(win_receiver_buffered_events_count{device_name=~\"$device_name\"}) by (device_name, topic)", "legendFormat": "{{device_name}} - {{topic}} Queue Size" }
+        { "expr": "sum(win_receiver_buffered_events_count{device_name=~\"$device_name\"}) by (device_name, topic)", "legendFormat": "{{device_name}} - {{topic}} Queue Size" , "time": { "from": "now-24h", "to": "now" } }
       ]
     },
     {
@@ -52,20 +52,20 @@
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" } }
+        "defaults": { "color": { "mode": "palette-classic" } , "time": { "from": "now-24h", "to": "now" } }
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
       "id": 5,
       "title": "Kafka Write Error Rate",
       "type": "timeseries",
       "targets": [
-        { "expr": "sum(rate(win_receiver_kafka_write_errors_total{device_name=~\"$device_name\"}[1m])) by (device_name, topic)", "legendFormat": "{{device_name}} - {{topic}} Errors" }
+        { "expr": "sum(rate(win_receiver_kafka_write_errors_total{device_name=~\"$device_name\"}[1m])) by (device_name, topic)", "legendFormat": "{{device_name}} - {{topic}} Errors" , "time": { "from": "now-24h", "to": "now" } }
       ]
     },
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
-        "defaults": { "unit": "percentunit" }
+        "defaults": { "unit": "percentunit" , "time": { "from": "now-24h", "to": "now" } }
       },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
       "id": 6,
@@ -75,9 +75,9 @@
         { 
           "expr": "sum(rate(win_receiver_dsp_fire_total{device_name=~\"$device_name\", result=\"success\"}[1m])) / sum(rate(win_receiver_dsp_fire_total[1m]))", 
           "legendFormat": "Global Success Rate" 
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ]
-    }
+    , "time": { "from": "now-24h", "to": "now" } }
   ],
   "refresh": "10s",
   "schemaVersion": 34,
@@ -107,10 +107,10 @@
         "skipUrl": false,
         "sort": 1,
         "type": "query"
-      }
+      , "time": { "from": "now-24h", "to": "now" } }
     ]
   },
   "title": "Win Receiver Gateway Dashboard",
   "uid": "win-recv-v1",
   "version": 3
-}
+, "time": { "from": "now-24h", "to": "now" } }

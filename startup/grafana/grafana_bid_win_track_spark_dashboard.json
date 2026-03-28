@@ -11,72 +11,72 @@
       "id": 1,
       "options": {
         "colorMode": "background",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
+        "reduceOptions": { "calcs": ["lastNotNull"] , "time": { "from": "now-24h", "to": "now" } }
       },
       "targets": [
         {
           "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-bids-processor.service\",state=\"active\"}",
           "legendFormat": "{{device_name}} Bids",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Bids Processor Status",
       "type": "stat",
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" }
+            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" , "time": { "from": "now-24h", "to": "now" } }
           ]
-        }
-      }
+        , "time": { "from": "now-24h", "to": "now" } }
+      , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
       "id": 2,
       "options": {
         "colorMode": "background",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
+        "reduceOptions": { "calcs": ["lastNotNull"] , "time": { "from": "now-24h", "to": "now" } }
       },
       "targets": [
         {
           "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-win-processor.service\",state=\"active\"}",
           "legendFormat": "{{device_name}} Win",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Win Processor Status",
       "type": "stat",
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" }
+            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" , "time": { "from": "now-24h", "to": "now" } }
           ]
-        }
-      }
+        , "time": { "from": "now-24h", "to": "now" } }
+      , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
       "id": 3,
       "options": {
         "colorMode": "background",
-        "reduceOptions": { "calcs": ["lastNotNull"] }
+        "reduceOptions": { "calcs": ["lastNotNull"] , "time": { "from": "now-24h", "to": "now" } }
       },
       "targets": [
         {
           "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-track-processor.service\",state=\"active\"}",
           "legendFormat": "{{device_name}} Track",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Track Processor Status",
       "type": "stat",
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" }
+            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" , "time": { "from": "now-24h", "to": "now" } }
           ]
-        }
-      }
+        , "time": { "from": "now-24h", "to": "now" } }
+      , "time": { "from": "now-24h", "to": "now" } }
     },
     {
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
@@ -87,11 +87,11 @@
           "interval": "5m",
           "legendFormat": "{{device_name}}: {{name}}",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Processing Task History (Activity Timeline)",
       "type": "status-history"
-    }
+    , "time": { "from": "now-24h", "to": "now" } }
   ],
   "refresh": "10s",
   "schemaVersion": 37,
@@ -107,10 +107,10 @@
         "multi": true,
         "includeAll": true,
         "label": "Device"
-      }
+      , "time": { "from": "now-24h", "to": "now" } }
     ]
   },
   "title": "SSP Log Processing Dashboard",
   "uid": "ssp-log-processor-v1",
   "version": 2
-}
+, "time": { "from": "now-24h", "to": "now" } }

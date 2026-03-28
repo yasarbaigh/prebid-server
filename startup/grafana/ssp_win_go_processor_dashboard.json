@@ -18,7 +18,7 @@
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
-        "defaults": { "unit": "reqps" }
+        "defaults": { "unit": "reqps" , "time": { "from": "now-24h", "to": "now" } }
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "id": 2,
@@ -27,7 +27,7 @@
           "expr": "sum by (device_name, type, status) (rate(win_processor_events_total{device_name=~\"$device_name\", type=~\"$type\"}[1m]))",
           "legendFormat": "{{device_name}} - {{type}} ({{status}})",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Throughput by Device & Status",
       "type": "timeseries"
@@ -35,7 +35,7 @@
     {
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
-        "defaults": { "unit": "s" }
+        "defaults": { "unit": "s" , "time": { "from": "now-24h", "to": "now" } }
       },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "id": 3,
@@ -44,7 +44,7 @@
           "expr": "histogram_quantile(0.99, sum by (le, device_name, type) (rate(win_processor_batch_duration_seconds_bucket{device_name=~\"$device_name\", type=~\"$type\"}[1m])))",
           "legendFormat": "{{device_name}} {{type}} P99",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Batch Processing Latency",
       "type": "timeseries"
@@ -67,11 +67,11 @@
           "expr": "sum by (device_name, status) (rate(win_processor_reconciler_synced_total{device_name=~\"$device_name\"}[5m]))",
           "legendFormat": "{{device_name}} - {{status}}",
           "refId": "A"
-        }
+        , "time": { "from": "now-24h", "to": "now" } }
       ],
       "title": "Reconciler Sync Rate by Device",
       "type": "timeseries"
-    }
+    , "time": { "from": "now-24h", "to": "now" } }
   ],
   "refresh": "10s",
   "schemaVersion": 34,
@@ -111,10 +111,10 @@
         "refresh": 1,
         "sort": 1,
         "type": "query"
-      }
+      , "time": { "from": "now-24h", "to": "now" } }
     ]
   },
   "title": "Win Processor Advanced Dashboard",
   "uid": "win-proc-adv-v2",
   "version": 2
-}
+, "time": { "from": "now-24h", "to": "now" } }
