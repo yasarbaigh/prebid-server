@@ -75,7 +75,7 @@ func TransformWinningBid(bid *openrtb2.Bid, ssp partners.SSPInventory, dsp partn
 	}
 
 	// 1. NURL Specific Optimized Parameters (x and d)
-	pBytes := getPositionalPayload(ssp, dsp, dspPrice, tck, "", "", "")
+	pBytes := getPositionalPayload(ssp, dsp, dspPrice, tck, bid.ID, bid.ImpID, bid.AdID)
 	encryptedPayloadX, _ := cryptoutil.EncryptBinary(pBytes)
 
 	encryptedD := ""

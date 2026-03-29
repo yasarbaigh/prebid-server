@@ -3,3 +3,11 @@ go run z_cd_hints/crypto_tool/crypto_tool.go d "ENCRYPTED_STRING_HERE"
 
 go run z_cd_hints/crypto_tool/crypto_tool.go ec "https://my-dsp.com/win?aid=MACROS"
 go run z_cd_hints/crypto_tool/crypto_tool.go dc "comprssd_ENCRYPTED_URL_STRING"
+
+
+================
+
+
+
+
+go run z_cd_hints/pb_tool/pb_tool.go -file /tmp/dummy/auction_proto_text.txt

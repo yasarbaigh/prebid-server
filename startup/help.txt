@@ -90,3 +90,11 @@ sudo systemctl restart prometheus
 
 
 ============================
+
+
+grafana dashboard ids
+
+
+7589 - kafka-exporter
+1860  - node_exporter
+pm2 monitoring

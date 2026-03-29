@@ -69,24 +69,22 @@ type PositionalData struct {
 func (p *PositionalData) Pack() ([]byte, error) {
 	buf := new(bytes.Buffer)
 
-	// 1. Fixed Width Block (32 Bytes)
+	// 1. Fixed Width Block (35 Bytes)
 	binary.Write(buf, binary.BigEndian, p.Timestamp)
 	binary.Write(buf, binary.BigEndian, p.TenantID)
 	binary.Write(buf, binary.BigEndian, p.SSPID)
 	binary.Write(buf, binary.BigEndian, p.SSPInventoryID)
 	binary.Write(buf, binary.BigEndian, p.DSPID)
 	binary.Write(buf, binary.BigEndian, p.DSPInventoryID)
-	binary.Write(buf, binary.BigEndian, uint32(p.Price*1000000)) // Price as Fixed Point
+	binary.Write(buf, binary.BigEndian, p.Price) // Double (8 bytes)
 	binary.Write(buf, binary.BigEndian, uint8(p.DeviceType))
 	binary.Write(buf, binary.BigEndian, uint8(p.OS))
 	binary.Write(buf, binary.BigEndian, uint8(p.AdType))
 
-	// 2. UUID Hashing (16 Bytes each = 48 Bytes total)
-	packUUID(buf, p.AuctionID)
-	packUUID(buf, p.BidID)
-	packUUID(buf, p.ImpID)
-
-	// 3. Variable Strings (Length Prefixed)
+	// 2. String Block (All Length Prefixed)
+	writeLPString(buf, p.AuctionID)
+	writeLPString(buf, p.BidID)
+	writeLPString(buf, p.ImpID)
 	writeLPString(buf, p.OSV)
 	writeLPString(buf, p.Country)
 	writeLPString(buf, p.AdSize)
@@ -105,7 +103,7 @@ func Unpack(data []byte) (*PositionalData, error) {
 	p := &PositionalData{}
 
 	// 1. Fixed Width Block
-	var ts, tid, sid, siid, did, diid, priceInt uint32
+	var ts, tid, sid, siid, did, diid uint32
 	var dt, os, at uint8
 	
 	if err := binary.Read(reader, binary.BigEndian, &ts); err != nil { return nil, err }
@@ -114,7 +112,7 @@ func Unpack(data []byte) (*PositionalData, error) {
 	if err := binary.Read(reader, binary.BigEndian, &siid); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &did); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &diid); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &priceInt); err != nil { return nil, err }
+	if err := binary.Read(reader, binary.BigEndian, &p.Price); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &dt); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &os); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &at); err != nil { return nil, err }
@@ -125,17 +123,15 @@ func Unpack(data []byte) (*PositionalData, error) {
 	p.SSPInventoryID = siid
 	p.DSPID = did
 	p.DSPInventoryID = diid
-	p.Price = float64(priceInt) / 1000000.0
+	// p.Price already set
 	p.DeviceType = DeviceType(dt)
 	p.OS = OS(os)
 	p.AdType = AdType(at)
 
-	// 2. UUIDs
-	p.AuctionID = unpackUUID(reader)
-	p.BidID = unpackUUID(reader)
-	p.ImpID = unpackUUID(reader)
-
-	// 3. Strings
+	// 2. Strings
+	p.AuctionID = readLPString(reader)
+	p.BidID = readLPString(reader)
+	p.ImpID = readLPString(reader)
 	p.OSV = readLPString(reader)
 	p.Country = readLPString(reader)
 	p.AdSize = readLPString(reader)
