@@ -1,26 +1,106 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
+  "id": null,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
       "panels": [],
-      "title": "Throughput Summary (Inbound/Outbound)",
+      "title": "Throughput & Reliability",
       "type": "row"
     },
     {
       "datasource": "Prometheus",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "Events / Second",
+            "axisPlacement": "left",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
       "id": 2,
       "options": {
-        "legend": { "calcs": ["mean", "last", "max"], "displayMode": "table", "placement": "bottom" },
-        "tooltip": { "mode": "multi", "sort": "none" , "time": { "from": "now-24h", "to": "now" } }
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
@@ -34,60 +114,406 @@
           "expr": "sum(irate(vector_events_out_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[1m])) by (collector_type)",
           "legendFormat": "Outbound: {{collector_type}}",
           "refId": "B"
-        , "time": { "from": "now-24h", "to": "now" } }
+        }
       ],
-      "title": "Fleet-wide Events In/Out Rate",
-      "type": "timeseries",
-      "fieldConfig": { "defaults": { "unit": "ops" } , "time": { "from": "now-24h", "to": "now" } }
+      "title": "Log Throughput (EPS)",
+      "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
-      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "id": 6,
       "options": {
-        "legend": { "calcs": ["max"], "displayMode": "table", "placement": "right" , "time": { "from": "now-24h", "to": "now" } }
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
       },
       "targets": [
         {
           "datasource": "Prometheus",
-          "expr": "sum(increase(vector_component_errors_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[5m])) by (device_name)",
-          "legendFormat": "{{device_name}} errors",
+          "expr": "sum(increase(vector_component_errors_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[5m]))",
           "refId": "A"
-        , "time": { "from": "now-24h", "to": "now" } }
+        }
       ],
-      "title": "Error Count by Node (Last 5m)",
-      "type": "timeseries",
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" } } , "time": { "from": "now-24h", "to": "now" } }
+      "title": "Total Component Errors (Last 5m)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.01
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(increase(vector_component_dropped_events_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Dropped Events (CRITICAL)",
+      "type": "stat"
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
       "id": 4,
       "panels": [],
-      "title": "Buffer & Memory Health",
+      "title": "Resource & Buffer Health",
       "type": "row"
     },
     {
       "datasource": "Prometheus",
-      "fieldConfig": { "defaults": { "unit": "decbytes" } },
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 10 },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "Bytes",
+            "axisPlacement": "left",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5368709120
+              },
+              {
+                "color": "red",
+                "value": 8589934592
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
       "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
       "targets": [
         {
           "datasource": "Prometheus",
           "expr": "vector_buffer_byte_size{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}",
           "legendFormat": "{{device_name}} - {{collector_type}}",
           "refId": "A"
-        , "time": { "from": "now-24h", "to": "now" } }
+        }
       ],
-      "title": "Buffer Usage per Collector",
+      "title": "Disk Buffer Usage (Bytes)",
       "type": "timeseries"
-    , "time": { "from": "now-24h", "to": "now" } }
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 7,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "max(vector_buffer_byte_size{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}) by (device_name) / 10737418240 * 100",
+          "legendFormat": "{{device_name}} %",
+          "refId": "A"
+        }
+      ],
+      "title": "Buffer Fill Percentage (10GB Limit)",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "CPU Cores",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(vector_process_cpu_seconds_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[1m])) by (device_name, collector_type)",
+          "legendFormat": "{{device_name}} - CPU",
+          "refId": "A"
+        }
+      ],
+      "title": "Vector Process CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "Errors",
+            "drawStyle": "line",
+            "fillOpacity": 10
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(vector_vrl_errors_total{device_name=~\"$device_name\", collector_type=~\"$collector_type\"}[1m])) by (device_name)",
+          "legendFormat": "{{device_name}} VRL Errors",
+          "refId": "A"
+        }
+      ],
+      "title": "VRL Transform Errors (Windowing Logic)",
+      "type": "timeseries"
+    }
   ],
-  "refresh": "1m",
-  "schemaVersion": 38,
+  "refresh": "10s",
+  "schemaVersion": 36,
   "style": "dark",
-  "tags": ["Vector", "Fleet", "Logs"],
+  "tags": [
+    "vector",
+    "adserving",
+    "ssp"
+  ],
   "templating": {
     "list": [
       {
@@ -104,8 +530,7 @@
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
-        "type": "query",
-        "label": "Device"
+        "type": "query"
       },
       {
         "current": {},
@@ -118,13 +543,21 @@
         "options": [],
         "query": "label_values(collector_type)",
         "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
         "sort": 1,
-        "type": "query",
-        "label": "Collector"
-      , "time": { "from": "now-24h", "to": "now" } }
+        "type": "query"
+      }
     ]
   },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
   "title": "Vector Fleet Health Overview",
-  "uid": "vector-fleet-v1",
-  "version": 3
-, "time": { "from": "now-24h", "to": "now" } }
+  "uid": "vector-ssp-fleet",
+  "version": 1,
+  "weekStart": ""
+}

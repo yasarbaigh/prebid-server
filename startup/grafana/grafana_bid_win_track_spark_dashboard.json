@@ -11,106 +11,255 @@
       "id": 1,
       "options": {
         "colorMode": "background",
-        "reduceOptions": { "calcs": ["lastNotNull"] , "time": { "from": "now-24h", "to": "now" } }
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "text": {},
+        "textMode": "auto"
       },
+      "pluginVersion": "9.1.1",
       "targets": [
         {
-          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-bids-processor.service\",state=\"active\"}",
-          "legendFormat": "{{device_name}} Bids",
+          "expr": "node_systemd_unit_state{name=\"ssp-bids-processor.service\",state=\"active\"}",
+          "legendFormat": "Bids Status",
           "refId": "A"
-        , "time": { "from": "now-24h", "to": "now" } }
+        }
       ],
       "title": "Bids Processor Status",
       "type": "stat",
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" , "time": { "from": "now-24h", "to": "now" } }
-          ]
-        , "time": { "from": "now-24h", "to": "now" } }
-      , "time": { "from": "now-24h", "to": "now" } }
+            { "options": { "1": { "color": "green", "text": "OK / Active" }, "0": { "color": "red", "text": "FAILED / Inactive" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      }
     },
     {
       "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
       "id": 2,
       "options": {
         "colorMode": "background",
-        "reduceOptions": { "calcs": ["lastNotNull"] , "time": { "from": "now-24h", "to": "now" } }
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "text": {},
+        "textMode": "auto"
       },
       "targets": [
         {
-          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-win-processor.service\",state=\"active\"}",
-          "legendFormat": "{{device_name}} Win",
+          "expr": "node_systemd_unit_state{name=\"ssp-win-processor.service\",state=\"active\"}",
+          "legendFormat": "Win Status",
           "refId": "A"
-        , "time": { "from": "now-24h", "to": "now" } }
+        }
       ],
       "title": "Win Processor Status",
       "type": "stat",
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" , "time": { "from": "now-24h", "to": "now" } }
-          ]
-        , "time": { "from": "now-24h", "to": "now" } }
-      , "time": { "from": "now-24h", "to": "now" } }
+            { "options": { "1": { "color": "green", "text": "OK / Active" }, "0": { "color": "red", "text": "FAILED / Inactive" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      }
     },
     {
       "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
       "id": 3,
       "options": {
         "colorMode": "background",
-        "reduceOptions": { "calcs": ["lastNotNull"] , "time": { "from": "now-24h", "to": "now" } }
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "text": {},
+        "textMode": "auto"
       },
       "targets": [
         {
-          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=\"ssp-track-processor.service\",state=\"active\"}",
-          "legendFormat": "{{device_name}} Track",
+          "expr": "node_systemd_unit_state{name=\"ssp-track-processor.service\",state=\"active\"}",
+          "legendFormat": "Track Status",
           "refId": "A"
-        , "time": { "from": "now-24h", "to": "now" } }
+        }
       ],
       "title": "Track Processor Status",
       "type": "stat",
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "options": { "1": { "color": "green", "text": "OK" }, "0": { "color": "red", "text": "FAILED" } }, "type": "value" , "time": { "from": "now-24h", "to": "now" } }
-          ]
-        , "time": { "from": "now-24h", "to": "now" } }
-      , "time": { "from": "now-24h", "to": "now" } }
+            { "options": { "1": { "color": "green", "text": "OK / Active" }, "0": { "color": "red", "text": "FAILED / Inactive" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      }
     },
     {
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
       "id": 4,
+      "options": {
+        "showValue": "never",
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
       "targets": [
         {
-          "expr": "node_systemd_unit_state{device_name=~\"$device_name\", name=~\"ssp-.*-processor.service\",state=\"active\"}",
-          "interval": "5m",
-          "legendFormat": "{{device_name}}: {{name}}",
+          "expr": "max_over_time(node_systemd_unit_state{name=~\"ssp-.*-processor.service\",state=\"active\"}[$__interval])",
+          "legendFormat": "{{name}}",
           "refId": "A"
-        , "time": { "from": "now-24h", "to": "now" } }
+        }
       ],
       "title": "Processing Task History (Activity Timeline)",
-      "type": "status-history"
-    , "time": { "from": "now-24h", "to": "now" } }
+      "type": "status-history",
+      "minInterval": "1m",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "1": { "color": "green", "text": "Processing" }, "0": { "color": "gray", "text": "Idle" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      }
+    },
+    {
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 13 },
+      "id": 5,
+      "options": {
+        "footer": { "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "time() - node_systemd_timer_last_trigger_seconds{name=~\"ssp-.*-processor.timer\"}",
+          "format": "table",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Time Since Last Trigger (Seconds ago)",
+      "type": "table",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+             "mode": "absolute",
+             "steps": [
+               { "color": "green", "value": null },
+               { "color": "orange", "value": 1000 },
+               { "color": "red", "value": 2000 }
+             ]
+          }
+        }
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
+      "id": 6,
+      "panels": [],
+      "title": "Batch Processing Statistics (Spark)",
+      "type": "row"
+    },
+    {
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 20 },
+      "id": 7,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "targets": [
+        {
+          "expr": "ssp_log_processor_batch_files_processed",
+          "legendFormat": "{{device_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Files Processed per Batch",
+      "type": "gauge",
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 50 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 20 },
+      "id": 8,
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["max"] },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "targets": [
+        {
+          "expr": "sum(ssp_log_processor_db_rows_upserted_total) by (table)",
+          "legendFormat": "{{table}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Rows Upserted into DB (per batch)",
+      "type": "timeseries",
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1 },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 20 },
+      "id": 9,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "expr": "time() - ssp_log_processor_last_run_timestamp_seconds",
+          "format": "table",
+          "legendFormat": "{{device_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Time Since Last Successful Batch",
+      "type": "table",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 600 },
+              { "color": "red", "value": 1200 }
+            ]
+          }
+        }
+      }
+    }
   ],
   "refresh": "10s",
   "schemaVersion": 37,
   "style": "dark",
   "tags": ["ssp", "processing"],
-  "templating": {
-    "list": [
-      {
-        "name": "device_name",
-        "type": "query",
-        "query": "label_values(node_systemd_unit_state, device_name)",
-        "refresh": 1,
-        "multi": true,
-        "includeAll": true,
-        "label": "Device"
-      , "time": { "from": "now-24h", "to": "now" } }
-    ]
-  },
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
   "title": "SSP Log Processing Dashboard",
   "uid": "ssp-log-processor-v1",
-  "version": 2
-, "time": { "from": "now-24h", "to": "now" } }
+  "version": 1
+}
