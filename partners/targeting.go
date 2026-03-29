@@ -16,15 +16,14 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 
 	// 2. Source check (App vs Web)
 	isApp := req.App != nil
-	sourceMatch := false
-	for _, s := range dsp.Source {
-		if (isApp && strings.ToLower(s) == "app") || (!isApp && strings.ToLower(s) == "web") {
-			sourceMatch = true
-			break
+	if len(dsp.SourceMap) > 0 {
+		src := "web"
+		if isApp {
+			src = "app"
 		}
-	}
-	if !sourceMatch && len(dsp.Source) > 0 {
-		return false
+		if !dsp.SourceMap[src] {
+			return false
+		}
 	}
 
 	// 3. Country matching - normalized to uppercase
@@ -34,21 +33,12 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	}
 	if country != "" {
 		// Check Blacklist
-		for _, bc := range dsp.CountryBlackList {
-			if bc == country {
-				return false
-			}
+		if dsp.CountryBlackListMap[country] {
+			return false
 		}
 		// Check Whitelist
-		if len(dsp.Country) > 0 {
-			whiteMatch := false
-			for _, wc := range dsp.Country {
-				if wc == country || wc == "ANY" {
-					whiteMatch = true
-					break
-				}
-			}
-			if !whiteMatch {
+		if len(dsp.CountryMap) > 0 {
+			if !dsp.CountryMap[country] && !dsp.CountryMap["ANY"] {
 				return false
 			}
 		}
@@ -58,21 +48,12 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	if isApp && req.App.Bundle != "" {
 		bundle := strings.ToLower(req.App.Bundle)
 		// Check Blacklist
-		for _, bb := range dsp.BundleIDsBlackList {
-			if bb == bundle {
-				return false
-			}
+		if dsp.BundleIDsBlackListMap[bundle] {
+			return false
 		}
 		// Check Whitelist
-		if len(dsp.BundleIDs) > 0 {
-			bundleMatch := false
-			for _, wb := range dsp.BundleIDs {
-				if wb == bundle {
-					bundleMatch = true
-					break
-				}
-			}
-			if !bundleMatch {
+		if len(dsp.BundleIDsMap) > 0 {
+			if !dsp.BundleIDsMap[bundle] {
 				return false
 			}
 		}
@@ -81,21 +62,12 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	// 5. SSP Filtering
 	if sspID != "" {
 		// Check Blacklist
-		for _, sb := range dsp.SSPsBlackList {
-			if sb == sspID {
-				return false
-			}
+		if dsp.SSPsBlackListMap[sspID] {
+			return false
 		}
 		// Check Whitelist
-		if len(dsp.SSPs) > 0 {
-			sspMatch := false
-			for _, ws := range dsp.SSPs {
-				if ws == sspID || ws == "ANY" {
-					sspMatch = true
-					break
-				}
-			}
-			if !sspMatch {
+		if len(dsp.SSPsMap) > 0 {
+			if !dsp.SSPsMap[sspID] && !dsp.SSPsMap["ANY"] {
 				return false
 			}
 		}
@@ -133,28 +105,23 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	}
 
 	// 7. Ad Formats matching
-	if len(dsp.AdFormats) > 0 {
+	if len(dsp.AdFormatsMap) > 0 {
 		formatMatch := false
 		for _, imp := range req.Imp {
-			for _, df := range dsp.AdFormats {
-				if imp.Banner != nil && df == "banner" {
-					formatMatch = true
-					break
-				}
-				if imp.Video != nil && df == "video" {
-					formatMatch = true
-					break
-				}
-				if imp.Audio != nil && df == "audio" {
-					formatMatch = true
-					break
-				}
-				if imp.Native != nil && df == "native" {
-					formatMatch = true
-					break
-				}
+			if imp.Banner != nil && dsp.AdFormatsMap["banner"] {
+				formatMatch = true
+				break
 			}
-			if formatMatch {
+			if imp.Video != nil && dsp.AdFormatsMap["video"] {
+				formatMatch = true
+				break
+			}
+			if imp.Audio != nil && dsp.AdFormatsMap["audio"] {
+				formatMatch = true
+				break
+			}
+			if imp.Native != nil && dsp.AdFormatsMap["native"] {
+				formatMatch = true
 				break
 			}
 		}

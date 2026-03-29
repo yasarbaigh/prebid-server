@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -95,7 +96,15 @@ type DSPInventory struct {
 	AdmPriceTransparency   bool         `json:"adm_price_transparency"`
 	Margin                 FlexFloat64  `json:"margin"`
 	BidAdjustment          float64      `json:"bid_adjustment"` // Multiplier (e.g. 0.9)
-	PricingAt            int      `json:"pricing_at"`
+	PricingAt            int             `json:"pricing_at"`
+	AdFormatsMap         map[string]bool `json:"-"`
+	CountryMap           map[string]bool `json:"-"`
+	CountryBlackListMap  map[string]bool `json:"-"`
+	BundleIDsMap         map[string]bool `json:"-"`
+	BundleIDsBlackListMap map[string]bool `json:"-"`
+	SSPsMap              map[string]bool `json:"-"`
+	SSPsBlackListMap     map[string]bool `json:"-"`
+	SourceMap            map[string]bool `json:"-"`
 }
 
 type PartnersConfig struct {
@@ -181,9 +190,20 @@ func (m *Manager) Load(path string) error {
 
 	cfg.dspMap = make(map[int][]DSPInventory)
 	for i := range cfg.DSPInventories {
+		dsp := &cfg.DSPInventories[i]
+		// Pre-populate maps for O(1) matching
+		dsp.AdFormatsMap = listToMap(dsp.AdFormats, true)
+		dsp.CountryMap = listToMap(dsp.Country, true)
+		dsp.CountryBlackListMap = listToMap(dsp.CountryBlackList, true)
+		dsp.BundleIDsMap = listToMap(dsp.BundleIDs, true)
+		dsp.BundleIDsBlackListMap = listToMap(dsp.BundleIDsBlackList, true)
+		dsp.SSPsMap = listToMap(dsp.SSPs, true)
+		dsp.SSPsBlackListMap = listToMap(dsp.SSPsBlackList, true)
+		dsp.SourceMap = listToMap(dsp.Source, true)
+
 		// Only index Active DSPs
-		if cfg.DSPInventories[i].Status == "Active" {
-			cfg.dspMap[cfg.DSPInventories[i].TenantID] = append(cfg.dspMap[cfg.DSPInventories[i].TenantID], cfg.DSPInventories[i])
+		if dsp.Status == "Active" {
+			cfg.dspMap[dsp.TenantID] = append(cfg.dspMap[dsp.TenantID], *dsp)
 		}
 	}
 
@@ -238,4 +258,15 @@ func (m *Manager) GetDSPsByTenant(tenantID int) []DSPInventory {
 		return nil
 	}
 	return cfg.dspMap[tenantID]
+}
+func listToMap(list []string, lowercase bool) map[string]bool {
+	m := make(map[string]bool)
+	for _, s := range list {
+		if lowercase {
+			m[strings.ToLower(s)] = true
+		} else {
+			m[s] = true
+		}
+	}
+	return m
 }
