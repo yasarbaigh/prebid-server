@@ -21,16 +21,6 @@ const (
 	DT_SetTopBox       DeviceType = 7 // Set Top Box
 )
 
-type OS uint8
-const (
-	OS_Unknown OS = 0
-	OS_Android OS = 1
-	OS_iOS     OS = 2
-	OS_Windows OS = 3
-	OS_MacOS   OS = 4
-	OS_Linux   OS = 5
-)
-
 type AdType uint8
 const (
 	AT_Unknown AdType = 0
@@ -50,7 +40,7 @@ type PositionalData struct {
 	DSPInventoryID uint32
 	Price          float64
 	DeviceType     DeviceType
-	OS             OS
+	OS             string
 	OSV            string
 	Country        string
 	AdType         AdType
@@ -63,6 +53,7 @@ type PositionalData struct {
 	ImpID          string // UUID
 	Seat           string
 	AdID           string
+	DSPCurrency    string
 }
 
 // Pack converts the struct into a tight Big-Endian binary buffer.
@@ -77,20 +68,21 @@ func (p *PositionalData) Pack() ([]byte, error) {
 	binary.Write(buf, binary.BigEndian, p.DSPID)
 	binary.Write(buf, binary.BigEndian, p.DSPInventoryID)
 	binary.Write(buf, binary.BigEndian, p.Price) // Double (8 bytes)
+	writeLPString(buf, strings.ToUpper(p.DSPCurrency))
 	binary.Write(buf, binary.BigEndian, uint8(p.DeviceType))
-	binary.Write(buf, binary.BigEndian, uint8(p.OS))
 	binary.Write(buf, binary.BigEndian, uint8(p.AdType))
 
-	// 2. String Block (All Length Prefixed)
+	// 2. String Block (All Length Prefixed) - Enforce Case Standards
+	writeLPString(buf, strings.ToLower(p.OS))
 	writeLPString(buf, p.AuctionID)
 	writeLPString(buf, p.BidID)
 	writeLPString(buf, p.ImpID)
-	writeLPString(buf, p.OSV)
-	writeLPString(buf, p.Country)
-	writeLPString(buf, p.AdSize)
-	writeLPString(buf, p.Domain)
-	writeLPString(buf, p.BundleID)
-	writeLPString(buf, p.Carrier)
+	writeLPString(buf, strings.ToLower(p.OSV))
+	writeLPString(buf, strings.ToUpper(p.Country))
+	writeLPString(buf, strings.ToLower(p.AdSize))
+	writeLPString(buf, strings.ToLower(p.Domain))
+	writeLPString(buf, strings.ToLower(p.BundleID))
+	writeLPString(buf, strings.ToLower(p.Carrier))
 	writeLPString(buf, p.Seat)
 	writeLPString(buf, p.AdID)
 
@@ -104,7 +96,7 @@ func Unpack(data []byte) (*PositionalData, error) {
 
 	// 1. Fixed Width Block
 	var ts, tid, sid, siid, did, diid uint32
-	var dt, os, at uint8
+	var dt, at uint8
 	
 	if err := binary.Read(reader, binary.BigEndian, &ts); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &tid); err != nil { return nil, err }
@@ -113,8 +105,8 @@ func Unpack(data []byte) (*PositionalData, error) {
 	if err := binary.Read(reader, binary.BigEndian, &did); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &diid); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &p.Price); err != nil { return nil, err }
+	p.DSPCurrency = readLPString(reader)
 	if err := binary.Read(reader, binary.BigEndian, &dt); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &os); err != nil { return nil, err }
 	if err := binary.Read(reader, binary.BigEndian, &at); err != nil { return nil, err }
 
 	p.Timestamp = ts
@@ -125,10 +117,10 @@ func Unpack(data []byte) (*PositionalData, error) {
 	p.DSPInventoryID = diid
 	// p.Price already set
 	p.DeviceType = DeviceType(dt)
-	p.OS = OS(os)
 	p.AdType = AdType(at)
 
 	// 2. Strings
+	p.OS = readLPString(reader)
 	p.AuctionID = readLPString(reader)
 	p.BidID = readLPString(reader)
 	p.ImpID = readLPString(reader)
@@ -180,18 +172,6 @@ func readLPString(r *bytes.Reader) string {
 }
 
 // Helpers for strict mapping
-func GetOsEnum(os string) OS {
-	val := strings.ToLower(os)
-	switch {
-	case strings.Contains(val, "android"): return OS_Android
-	case strings.Contains(val, "ios") || strings.Contains(val, "iphone"): return OS_iOS
-	case strings.Contains(val, "windows"): return OS_Windows
-	case strings.Contains(val, "mac"): return OS_MacOS
-	case strings.Contains(val, "linux"): return OS_Linux
-	default: return OS_Unknown
-	}
-}
-
 func GetDeviceTypeEnum(dt string) DeviceType {
 	val := strings.ToLower(dt)
 	switch {

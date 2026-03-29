@@ -78,4 +78,24 @@ message AuctionEvent {
     // 12. Model & Metadata
     uint32 pricing_at = 36;
     string ad_id = 37;
+
+    // 13. Advanced Audit & Financials
+    string currency = 38; // The actual currency of the winning bid from the DSP response. Preferred for financial precision as it represents the committed transaction amount.
+    string ssp_currency = 50; // The currency of the SSP request (the currency in which the floor was set).
+
+    // 14. Granular Geography
+    string region = 39;
+    string city = 40;
+    string zip = 41;
+
+    // 15. Advanced Device & Connectivity
+    uint32 connection_type = 42; // (OpenRTB device.connectiontype)
+    string language = 43;
+    string device_make = 44;
+    string device_model = 45;
+
+    // 16. Video Specific Dimensions
+    uint32 playback_method = 46;
+    uint32 video_placement = 47;
+
 }

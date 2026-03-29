@@ -27,7 +27,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		return false
 	}
 
-	// 3. Country matching
+	// 3. Country matching - normalized to uppercase
 	country := ""
 	if req.Device != nil && req.Device.Geo != nil {
 		country = strings.ToUpper(req.Device.Geo.Country)
@@ -35,7 +35,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	if country != "" {
 		// Check Blacklist
 		for _, bc := range dsp.CountryBlackList {
-			if strings.ToUpper(bc) == country {
+			if bc == country {
 				return false
 			}
 		}
@@ -43,7 +43,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		if len(dsp.Country) > 0 {
 			whiteMatch := false
 			for _, wc := range dsp.Country {
-				if strings.ToUpper(wc) == country || strings.ToUpper(wc) == "ANY" {
+				if wc == country || wc == "ANY" {
 					whiteMatch = true
 					break
 				}
@@ -54,11 +54,12 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 4. Bundle ID matching (App only)
+	// 4. Bundle ID matching (App only) - normalized to lowercase
 	if isApp && req.App.Bundle != "" {
+		bundle := strings.ToLower(req.App.Bundle)
 		// Check Blacklist
 		for _, bb := range dsp.BundleIDsBlackList {
-			if bb == req.App.Bundle {
+			if bb == bundle {
 				return false
 			}
 		}
@@ -66,7 +67,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		if len(dsp.BundleIDs) > 0 {
 			bundleMatch := false
 			for _, wb := range dsp.BundleIDs {
-				if wb == req.App.Bundle {
+				if wb == bundle {
 					bundleMatch = true
 					break
 				}
@@ -109,6 +110,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	}
 
 	if pubID != "" {
+		pubID = strings.ToLower(pubID)
 		// Check Blacklist
 		for _, pb := range dsp.PublishersBlackList {
 			if pb == pubID {
@@ -119,7 +121,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		if len(dsp.Publishers) > 0 {
 			pubMatch := false
 			for _, wp := range dsp.Publishers {
-				if wp == pubID || wp == "ANY" {
+				if wp == pubID || strings.ToUpper(wp) == "ANY" {
 					pubMatch = true
 					break
 				}
@@ -135,20 +137,19 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		formatMatch := false
 		for _, imp := range req.Imp {
 			for _, df := range dsp.AdFormats {
-				dfLower := strings.ToLower(df)
-				if imp.Banner != nil && dfLower == "banner" {
+				if imp.Banner != nil && df == "banner" {
 					formatMatch = true
 					break
 				}
-				if imp.Video != nil && dfLower == "video" {
+				if imp.Video != nil && df == "video" {
 					formatMatch = true
 					break
 				}
-				if imp.Audio != nil && dfLower == "audio" {
+				if imp.Audio != nil && df == "audio" {
 					formatMatch = true
 					break
 				}
-				if imp.Native != nil && dfLower == "native" {
+				if imp.Native != nil && df == "native" {
 					formatMatch = true
 					break
 				}
@@ -162,11 +163,11 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 8. IAB Categories
+	// 8. IAB Categories - normalized to uppercase
 	if len(dsp.IABCategories) > 0 {
 		hasAny := false
 		for _, cat := range dsp.IABCategories {
-			if strings.ToLower(cat) == "any" {
+			if cat == "ANY" {
 				hasAny = true
 				break
 			}
