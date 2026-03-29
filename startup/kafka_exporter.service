@@ -1,0 +1,13 @@
+[Unit]
+Description=Kafka Exporter
+After=network.target kafka.service
+Wants=kafka.service
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/kafka_exporter --kafka.server=localhost:9092
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

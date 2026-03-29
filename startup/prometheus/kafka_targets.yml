@@ -1,0 +1,5 @@
+- targets:
+  - 'localhost:9308' # Kafka Exporter (Default Port)
+  labels:
+    job_name: 'kafka-exporter'
+    component: 'kafka'

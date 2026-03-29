@@ -109,6 +109,11 @@ sudo ln -sf $(pwd)/prometheus.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now prometheus
 
+# 4. Link & Enable Kafka Exporter
+sudo ln -sf $(pwd)/kafka_exporter.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now kafka-exporter
+
 rm -rf pushgateway-1.11.2.linux-amd64/
 rm -f pushgateway-1.11.2.linux-amd64.tar.gz 
 ```
@@ -186,6 +191,14 @@ Unlike batch scripts, Vector collectors expose a persistent scraper port. This e
     VECTOR_WIN_PORT="0.0.0.0:0" vector --config <path_to_yaml>
     ```
 3.  **Monit-1 Scraper**: Prometheus on `monit-1` is configured to pull from these ports on all ad-nodes using `startup/prometheus/vector_targets.yml`.
+
+### 6.5. Kafka Monitoring (Consumer Lag & Offset Tracking)
+
+Kafka Exporter is used to monitor consumer group lags (e.g., how far behind the `ssp-win-processor` is from the Kafka head).
+
+1.  **Default Port**: Kafka Exporter listens on `9308`.
+2.  **Monit-1 Scraper**: Prometheus on `monit-1` pulls from this port using `startup/prometheus/kafka_targets.yml`.
+3.  **Grafana Dashboard**: Import Dashboard ID `7589` for full visualization of lags and message rates.
 
 ### Grafana Dashboards
 

@@ -42,3 +42,8 @@ scrape_configs:
     relabel_configs:
       - target_label: 'instance'
         replacement: 'shared_pushgateway'
+
+  # Kafka Exporter (Consumer Lags & Throughput)
+  - job_name: 'kafka-exporter'
+    file_sd_configs:
+      - files: ['/etc/prometheus/rules/kafka_targets.yml']
