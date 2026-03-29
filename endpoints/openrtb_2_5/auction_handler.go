@@ -324,6 +324,13 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 		imp := impMap[impID]
 		adType, adSize := h.getAdDimensions(bestBid, imp)
+		adTypeStr := "unknown"
+		switch adType {
+		case 1: adTypeStr = "banner"
+		case 2: adTypeStr = "video"
+		case 3: adTypeStr = "native"
+		case 4: adTypeStr = "audio"
+		}
 
 		tck := endpoints.TrackingConfig{
 			ExternalURL:   "http://win.event.cdapp.com:11000",
@@ -339,7 +346,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			DeviceType:    deviceType,
 			SiteAppDomain: domain,
 			BundleID:      bundle,
-			AdType:        adType,
+			AdType:        adTypeStr,
 			AdSize:        adSize,
 			DSPCurrency:   strings.ToUpper(win.resp.Cur),
 		}
@@ -617,16 +624,16 @@ func (h *AuctionHandler) extractContext(bidReq *openrtb2.BidRequest) (os, osv, c
 	return
 }
 
-func (h *AuctionHandler) getAdDimensions(bid *openrtb2.Bid, imp *openrtb2.Imp) (adType, adSize string) {
+func (h *AuctionHandler) getAdDimensions(bid *openrtb2.Bid, imp *openrtb2.Imp) (adType uint32, adSize string) {
 	if imp != nil {
 		if imp.Banner != nil {
-			adType = "banner"
+			adType = 1
 		} else if imp.Video != nil {
-			adType = "video"
+			adType = 2
 		} else if imp.Native != nil {
-			adType = "native"
+			adType = 3
 		} else if imp.Audio != nil {
-			adType = "audio"
+			adType = 4
 		}
 
 		if bid.W > 0 && bid.H > 0 {

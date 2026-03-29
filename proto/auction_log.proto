@@ -49,7 +49,7 @@ message AuctionEvent {
     string bundle_id = 20;
 
     // 7. Ad Details & Selection
-    string ad_type = 21;
+    uint32 ad_type = 21;
     string ad_size = 22;
     string creative_id = 23;
     string ad_domain = 24;
