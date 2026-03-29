@@ -88,6 +88,62 @@
           "legendFormat": "Success Rate" 
         }
       ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "id": 7,
+      "panels": [],
+      "title": "Persistence Failures (On-Disk Missed/Failed Logs)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "id": 8,
+      "title": "Active Failure Log Sizes",
+      "type": "table",
+      "targets": [
+        { "expr": "ssp_win_receiver_error_log_size_bytes > 0", "format": "table", "legendFormat": "{{device_name}}: {{file_name}}" }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {
+              "device_name": 0,
+              "file_name": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "device_name": "VM Node",
+              "file_name": "Error Log File",
+              "Value": "Size (Bytes)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "id": 9,
+      "title": "Failure Log Accumulation Trend",
+      "type": "timeseries",
+      "targets": [
+        { "expr": "ssp_win_receiver_error_log_size_bytes", "legendFormat": "{{device_name}}: {{file_name}}" }
+      ]
     }
   ],
   "refresh": "10s",
