@@ -28,7 +28,7 @@ type TrackingConfig struct {
 	Integration   string
 	AuctionID     string // The original SSP request ID
 	Seat          string // The bidder name/seat
-	DeviceType    string
+	DeviceType    uint32
 	OS            string
 	OSV           string
 	Country       string

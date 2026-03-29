@@ -38,7 +38,7 @@ message AuctionEvent {
     double ssp_price = 13;         // Final Bid Price (After Margin)
 
     // 5. Device Dimensions
-    string device_type = 14;
+    uint32 device_type = 14;
     string os = 15;
     string osv = 16;
     string carrier = 17;

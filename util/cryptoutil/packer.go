@@ -3,6 +3,7 @@ package cryptoutil
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"strings"
 
 	"github.com/gofrs/uuid"
@@ -172,8 +173,26 @@ func readLPString(r *bytes.Reader) string {
 }
 
 // Helpers for strict mapping
-func GetDeviceTypeEnum(dt string) DeviceType {
-	val := strings.ToLower(dt)
+func GetDeviceTypeEnum(dt interface{}) DeviceType {
+	var valStr string
+	switch v := dt.(type) {
+	case string:
+		valStr = strings.ToLower(v)
+		if v == "" {
+			return DT_Unknown
+		}
+	case uint32, int32, int8, int:
+		id := 0
+		fmt.Sscanf(fmt.Sprintf("%v", v), "%d", &id)
+		if id >= 1 && id <= 7 {
+			return DeviceType(id)
+		}
+		return DT_Unknown
+	default:
+		return DT_Unknown
+	}
+
+	val := valStr
 	switch {
 	case strings.Contains(val, "phone"): return DT_Phone
 	case strings.Contains(val, "tablet") && !strings.Contains(val, "mobile"): return DT_Tablet

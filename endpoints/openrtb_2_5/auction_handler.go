@@ -571,7 +571,7 @@ func getBidPrice(res *bidResult, impID string) float64 {
 	return 0.0
 }
 
-func (h *AuctionHandler) extractContext(bidReq *openrtb2.BidRequest) (os, osv, country, carrier, deviceType, domain, bundle, ip, ua, ifa, gdprConsent, region, city, zip, language, make, model string, connType int, sspCur string) {
+func (h *AuctionHandler) extractContext(bidReq *openrtb2.BidRequest) (os, osv, country, carrier string, deviceType uint32, domain, bundle, ip, ua, ifa, gdprConsent, region, city, zip, language, make, model string, connType int, sspCur string) {
 	if len(bidReq.Cur) > 0 && len(bidReq.Cur[0]) == 3 {
 		sspCur = strings.ToUpper(bidReq.Cur[0])
 	} else {
@@ -592,7 +592,7 @@ func (h *AuctionHandler) extractContext(bidReq *openrtb2.BidRequest) (os, osv, c
 			connType = int(*bidReq.Device.ConnectionType)
 		}
 		if bidReq.Device.DeviceType > 0 {
-			deviceType = getDeviceTypeName(int(bidReq.Device.DeviceType))
+			deviceType = uint32(bidReq.Device.DeviceType)
 		}
 		if bidReq.Device.Geo != nil {
 			country = strings.ToUpper(bidReq.Device.Geo.Country)
