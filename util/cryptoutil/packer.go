@@ -74,16 +74,17 @@ func (p *PositionalData) Pack() ([]byte, error) {
 	binary.Write(buf, binary.BigEndian, uint8(p.AdType))
 
 	// 2. String Block (All Length Prefixed) - Enforce Case Standards
+	writeLPString(buf, strings.ToLower(p.AdSize))
 	writeLPString(buf, strings.ToLower(p.OS))
-	writeLPString(buf, p.AuctionID)
-	writeLPString(buf, p.BidID)
-	writeLPString(buf, p.ImpID)
 	writeLPString(buf, strings.ToLower(p.OSV))
 	writeLPString(buf, strings.ToUpper(p.Country))
-	writeLPString(buf, strings.ToLower(p.AdSize))
 	writeLPString(buf, strings.ToLower(p.Domain))
 	writeLPString(buf, strings.ToLower(p.BundleID))
 	writeLPString(buf, strings.ToLower(p.Carrier))
+
+	writeLPString(buf, p.AuctionID)
+	writeLPString(buf, p.BidID)
+	writeLPString(buf, p.ImpID)
 	writeLPString(buf, p.Seat)
 	writeLPString(buf, p.AdID)
 
@@ -121,16 +122,17 @@ func Unpack(data []byte) (*PositionalData, error) {
 	p.AdType = AdType(at)
 
 	// 2. Strings
+	p.AdSize = readLPString(reader)
 	p.OS = readLPString(reader)
-	p.AuctionID = readLPString(reader)
-	p.BidID = readLPString(reader)
-	p.ImpID = readLPString(reader)
 	p.OSV = readLPString(reader)
 	p.Country = readLPString(reader)
-	p.AdSize = readLPString(reader)
 	p.Domain = readLPString(reader)
 	p.BundleID = readLPString(reader)
 	p.Carrier = readLPString(reader)
+
+	p.AuctionID = readLPString(reader)
+	p.BidID = readLPString(reader)
+	p.ImpID = readLPString(reader)
 	p.Seat = readLPString(reader)
 	p.AdID = readLPString(reader)
 
