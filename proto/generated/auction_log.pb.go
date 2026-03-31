@@ -161,7 +161,7 @@ type AuctionEvent struct {
 	DspPrice        float64 `protobuf:"fixed64,12,opt,name=dsp_price,json=dspPrice,proto3" json:"dsp_price,omitempty"`                        // Winning Bid Price (Before Margin)
 	SspPrice        float64 `protobuf:"fixed64,13,opt,name=ssp_price,json=sspPrice,proto3" json:"ssp_price,omitempty"`                        // Final Bid Price (After Margin)
 	// 5. Device Dimensions
-	DeviceType string `protobuf:"bytes,14,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	DeviceType uint32 `protobuf:"varint,14,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
 	Os         string `protobuf:"bytes,15,opt,name=os,proto3" json:"os,omitempty"`
 	Osv        string `protobuf:"bytes,16,opt,name=osv,proto3" json:"osv,omitempty"`
 	Carrier    string `protobuf:"bytes,17,opt,name=carrier,proto3" json:"carrier,omitempty"`
@@ -170,7 +170,7 @@ type AuctionEvent struct {
 	SiteAppDomain string `protobuf:"bytes,19,opt,name=site_app_domain,json=siteAppDomain,proto3" json:"site_app_domain,omitempty"`
 	BundleId      string `protobuf:"bytes,20,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	// 7. Ad Details & Selection
-	AdType     string `protobuf:"bytes,21,opt,name=ad_type,json=adType,proto3" json:"ad_type,omitempty"`
+	AdType     uint32 `protobuf:"varint,21,opt,name=ad_type,json=adType,proto3" json:"ad_type,omitempty"`
 	AdSize     string `protobuf:"bytes,22,opt,name=ad_size,json=adSize,proto3" json:"ad_size,omitempty"`
 	CreativeId string `protobuf:"bytes,23,opt,name=creative_id,json=creativeId,proto3" json:"creative_id,omitempty"`
 	AdDomain   string `protobuf:"bytes,24,opt,name=ad_domain,json=adDomain,proto3" json:"ad_domain,omitempty"`
@@ -193,6 +193,24 @@ type AuctionEvent struct {
 	// 11. Raw Payloads
 	RawBidRequest  []byte `protobuf:"bytes,34,opt,name=raw_bid_request,json=rawBidRequest,proto3" json:"raw_bid_request,omitempty"`
 	SspDspResponse []byte `protobuf:"bytes,35,opt,name=ssp_dsp_response,json=sspDspResponse,proto3" json:"ssp_dsp_response,omitempty"`
+	// 12. Model & Metadata
+	PricingAt uint32 `protobuf:"varint,36,opt,name=pricing_at,json=pricingAt,proto3" json:"pricing_at,omitempty"`
+	AdId      string `protobuf:"bytes,37,opt,name=ad_id,json=adId,proto3" json:"ad_id,omitempty"`
+	// 13. Advanced Audit & Financials
+	Currency    string `protobuf:"bytes,38,opt,name=currency,proto3" json:"currency,omitempty"`                          // The actual currency of the winning bid from the DSP response. Preferred for financial precision as it represents the committed transaction amount.
+	SspCurrency string `protobuf:"bytes,50,opt,name=ssp_currency,json=sspCurrency,proto3" json:"ssp_currency,omitempty"` // The currency of the SSP request (the currency in which the floor was set).
+	// 14. Granular Geography
+	Region string `protobuf:"bytes,39,opt,name=region,proto3" json:"region,omitempty"`
+	City   string `protobuf:"bytes,40,opt,name=city,proto3" json:"city,omitempty"`
+	Zip    string `protobuf:"bytes,41,opt,name=zip,proto3" json:"zip,omitempty"`
+	// 15. Advanced Device & Connectivity
+	ConnectionType uint32 `protobuf:"varint,42,opt,name=connection_type,json=connectionType,proto3" json:"connection_type,omitempty"` // (OpenRTB device.connectiontype)
+	Language       string `protobuf:"bytes,43,opt,name=language,proto3" json:"language,omitempty"`
+	DeviceMake     string `protobuf:"bytes,44,opt,name=device_make,json=deviceMake,proto3" json:"device_make,omitempty"`
+	DeviceModel    string `protobuf:"bytes,45,opt,name=device_model,json=deviceModel,proto3" json:"device_model,omitempty"`
+	// 16. Video Specific Dimensions
+	PlaybackMethod uint32 `protobuf:"varint,46,opt,name=playback_method,json=playbackMethod,proto3" json:"playback_method,omitempty"`
+	VideoPlacement uint32 `protobuf:"varint,47,opt,name=video_placement,json=videoPlacement,proto3" json:"video_placement,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -318,11 +336,11 @@ func (x *AuctionEvent) GetSspPrice() float64 {
 	return 0
 }
 
-func (x *AuctionEvent) GetDeviceType() string {
+func (x *AuctionEvent) GetDeviceType() uint32 {
 	if x != nil {
 		return x.DeviceType
 	}
-	return ""
+	return 0
 }
 
 func (x *AuctionEvent) GetOs() string {
@@ -367,11 +385,11 @@ func (x *AuctionEvent) GetBundleId() string {
 	return ""
 }
 
-func (x *AuctionEvent) GetAdType() string {
+func (x *AuctionEvent) GetAdType() uint32 {
 	if x != nil {
 		return x.AdType
 	}
-	return ""
+	return 0
 }
 
 func (x *AuctionEvent) GetAdSize() string {
@@ -483,6 +501,97 @@ func (x *AuctionEvent) GetSspDspResponse() []byte {
 	return nil
 }
 
+func (x *AuctionEvent) GetPricingAt() uint32 {
+	if x != nil {
+		return x.PricingAt
+	}
+	return 0
+}
+
+func (x *AuctionEvent) GetAdId() string {
+	if x != nil {
+		return x.AdId
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetCurrency() string {
+	if x != nil {
+		return x.Currency
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetSspCurrency() string {
+	if x != nil {
+		return x.SspCurrency
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetRegion() string {
+	if x != nil {
+		return x.Region
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetCity() string {
+	if x != nil {
+		return x.City
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetZip() string {
+	if x != nil {
+		return x.Zip
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetConnectionType() uint32 {
+	if x != nil {
+		return x.ConnectionType
+	}
+	return 0
+}
+
+func (x *AuctionEvent) GetLanguage() string {
+	if x != nil {
+		return x.Language
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetDeviceMake() string {
+	if x != nil {
+		return x.DeviceMake
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetDeviceModel() string {
+	if x != nil {
+		return x.DeviceModel
+	}
+	return ""
+}
+
+func (x *AuctionEvent) GetPlaybackMethod() uint32 {
+	if x != nil {
+		return x.PlaybackMethod
+	}
+	return 0
+}
+
+func (x *AuctionEvent) GetVideoPlacement() uint32 {
+	if x != nil {
+		return x.VideoPlacement
+	}
+	return 0
+}
+
 type isAuctionEvent_Source interface {
 	isAuctionEvent_Source()
 }
@@ -511,7 +620,7 @@ const file_proto_auction_log_proto_rawDesc = "" +
 	"\x06domain\x18\x04 \x01(\tR\x06domain\"1\n" +
 	"\x03Web\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\tR\x04page\"\xce\b\n" +
+	"\x04page\x18\x02 \x01(\tR\x04page\"\xda\v\n" +
 	"\fAuctionEvent\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\rR\btenantId\x12$\n" +
 	"\x0essp_partner_id\x18\x02 \x01(\rR\fsspPartnerId\x12(\n" +
@@ -528,7 +637,7 @@ const file_proto_auction_log_proto_rawDesc = "" +
 	"\x11bid_request_price\x18\v \x01(\x01R\x0fbidRequestPrice\x12\x1b\n" +
 	"\tdsp_price\x18\f \x01(\x01R\bdspPrice\x12\x1b\n" +
 	"\tssp_price\x18\r \x01(\x01R\bsspPrice\x12\x1f\n" +
-	"\vdevice_type\x18\x0e \x01(\tR\n" +
+	"\vdevice_type\x18\x0e \x01(\rR\n" +
 	"deviceType\x12\x0e\n" +
 	"\x02os\x18\x0f \x01(\tR\x02os\x12\x10\n" +
 	"\x03osv\x18\x10 \x01(\tR\x03osv\x12\x18\n" +
@@ -536,7 +645,7 @@ const file_proto_auction_log_proto_rawDesc = "" +
 	"\acountry\x18\x12 \x01(\tR\acountry\x12&\n" +
 	"\x0fsite_app_domain\x18\x13 \x01(\tR\rsiteAppDomain\x12\x1b\n" +
 	"\tbundle_id\x18\x14 \x01(\tR\bbundleId\x12\x17\n" +
-	"\aad_type\x18\x15 \x01(\tR\x06adType\x12\x17\n" +
+	"\aad_type\x18\x15 \x01(\rR\x06adType\x12\x17\n" +
 	"\aad_size\x18\x16 \x01(\tR\x06adSize\x12\x1f\n" +
 	"\vcreative_id\x18\x17 \x01(\tR\n" +
 	"creativeId\x12\x1b\n" +
@@ -551,7 +660,22 @@ const file_proto_auction_log_proto_rawDesc = "" +
 	"\ttimestamp\x18  \x01(\x03R\ttimestamp\x12\x1a\n" +
 	"\bhostname\x18! \x01(\tR\bhostname\x12&\n" +
 	"\x0fraw_bid_request\x18\" \x01(\fR\rrawBidRequest\x12(\n" +
-	"\x10ssp_dsp_response\x18# \x01(\fR\x0esspDspResponseB\b\n" +
+	"\x10ssp_dsp_response\x18# \x01(\fR\x0esspDspResponse\x12\x1d\n" +
+	"\n" +
+	"pricing_at\x18$ \x01(\rR\tpricingAt\x12\x13\n" +
+	"\x05ad_id\x18% \x01(\tR\x04adId\x12\x1a\n" +
+	"\bcurrency\x18& \x01(\tR\bcurrency\x12!\n" +
+	"\fssp_currency\x182 \x01(\tR\vsspCurrency\x12\x16\n" +
+	"\x06region\x18' \x01(\tR\x06region\x12\x12\n" +
+	"\x04city\x18( \x01(\tR\x04city\x12\x10\n" +
+	"\x03zip\x18) \x01(\tR\x03zip\x12'\n" +
+	"\x0fconnection_type\x18* \x01(\rR\x0econnectionType\x12\x1a\n" +
+	"\blanguage\x18+ \x01(\tR\blanguage\x12\x1f\n" +
+	"\vdevice_make\x18, \x01(\tR\n" +
+	"deviceMake\x12!\n" +
+	"\fdevice_model\x18- \x01(\tR\vdeviceModel\x12'\n" +
+	"\x0fplayback_method\x18. \x01(\rR\x0eplaybackMethod\x12'\n" +
+	"\x0fvideo_placement\x18/ \x01(\rR\x0evideoPlacementB\b\n" +
 	"\x06sourceB4Z2github.com/prebid/prebid-server/v3/proto/generatedb\x06proto3"
 
 var (
