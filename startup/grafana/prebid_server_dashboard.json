@@ -115,7 +115,7 @@
         "refresh": 1,
         "includeAll": true,
         "multi": true,
-        "label": "Machine"
+        "label": "Device Name"
       },
       {
         "name": "ssp_inv",

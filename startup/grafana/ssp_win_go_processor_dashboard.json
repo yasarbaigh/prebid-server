@@ -118,7 +118,7 @@
           "refId": "A"
         }
       ],
-      "title": "Throughput by Machine & Status",
+      "title": "Throughput by Device & Status",
       "type": "timeseries"
     },
     {
@@ -321,7 +321,7 @@
           "refId": "A"
         }
       ],
-      "title": "Reconciler Sync Rate by Machine",
+      "title": "Reconciler Sync Rate by Device",
       "type": "timeseries"
     },
     {
@@ -410,7 +410,7 @@
           "refId": "A"
         }
       ],
-      "title": "Reconciliation Latency by Machine",
+      "title": "Reconciliation Latency by Device",
       "type": "timeseries"
     },
     {
@@ -581,7 +581,7 @@
         "definition": "label_values(ssp_win_processor_events_total, device_name)",
         "hide": 0,
         "includeAll": true,
-        "label": "Machine",
+        "label": "Device Name",
         "multi": true,
         "name": "device_name",
         "options": [],
