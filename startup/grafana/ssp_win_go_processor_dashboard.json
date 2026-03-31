@@ -112,7 +112,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (machine, type, status) (rate(win_processor_events_total{device_name=~\"$machine\", type=~\"$type\"}[1m]))",
+          "expr": "sum by (device_name, type, status) (rate(ssp_win_processor_events_total{device_name=~\"$device_name\", type=~\"$type\"}[1m]))",
           "legendFormat": "{{device_name}} - {{type}} ({{status}})",
           "range": true,
           "refId": "A"
@@ -201,7 +201,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le, machine, type) (rate(win_processor_batch_duration_seconds_bucket{device_name=~\"$machine\", type=~\"$type\"}[1m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, device_name, type) (rate(ssp_win_processor_batch_duration_seconds_bucket{device_name=~\"$device_name\", type=~\"$type\"}[1m])))",
           "legendFormat": "{{device_name}} {{type}} P99",
           "range": true,
           "refId": "A"
@@ -212,7 +212,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le, machine, type) (rate(win_processor_batch_duration_seconds_bucket{device_name=~\"$machine\", type=~\"$type\"}[1m])))",
+          "expr": "histogram_quantile(0.5, sum by (le, device_name, type) (rate(ssp_win_processor_batch_duration_seconds_bucket{device_name=~\"$device_name\", type=~\"$type\"}[1m])))",
           "hide": false,
           "legendFormat": "{{device_name}} {{type}} Median",
           "range": true,
@@ -315,7 +315,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (machine, status) (rate(win_processor_reconciler_synced_total{device_name=~\"$machine\"}[5m]))",
+          "expr": "sum by (device_name, status) (rate(ssp_win_processor_reconciler_synced_total{device_name=~\"$device_name\"}[5m]))",
           "legendFormat": "{{device_name}} - {{status}}",
           "range": true,
           "refId": "A"
@@ -404,7 +404,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, machine) (rate(win_processor_reconciler_duration_seconds_bucket{device_name=~\"$machine\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, device_name) (rate(ssp_win_processor_reconciler_duration_seconds_bucket{device_name=~\"$device_name\"}[5m])))",
           "legendFormat": "{{device_name}} P95",
           "range": true,
           "refId": "A"
@@ -506,7 +506,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, machine, table) (rate(win_processor_local_db_insert_seconds_bucket{device_name=~\"$machine\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, device_name, table) (rate(ssp_win_processor_local_db_insert_seconds_bucket{device_name=~\"$device_name\"}[5m])))",
           "legendFormat": "{{device_name}} - {{table}} P95",
           "range": true,
           "refId": "A"
@@ -531,7 +531,7 @@
       "id": 10,
       "targets": [
         {
-          "expr": "sum by (table) (rate(win_processor_local_db_insert_seconds_count{device_name=~\"$device_name\"}[5m]))",
+          "expr": "sum by (table) (rate(ssp_win_processor_local_db_insert_seconds_count{device_name=~\"$device_name\"}[5m]))",
           "legendFormat": "{{table}} - Rows/sec",
           "refId": "A"
         }
@@ -578,7 +578,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(win_processor_events_total, device_name)",
+        "definition": "label_values(ssp_win_processor_events_total, device_name)",
         "hide": 0,
         "includeAll": true,
         "label": "Machine",
@@ -586,7 +586,7 @@
         "name": "device_name",
         "options": [],
         "query": {
-          "query": "label_values(win_processor_events_total, device_name)",
+          "query": "label_values(ssp_win_processor_events_total, device_name)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -606,7 +606,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(win_processor_events_total, type)",
+        "definition": "label_values(ssp_win_processor_events_total, type)",
         "hide": 0,
         "includeAll": true,
         "label": "Event Type",
@@ -614,7 +614,7 @@
         "name": "type",
         "options": [],
         "query": {
-          "query": "label_values(win_processor_events_total, type)",
+          "query": "label_values(ssp_win_processor_events_total, type)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,

@@ -43,7 +43,7 @@
       "type": "timeseries",
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
       "targets": [
-        { "expr": "sum(rate(ssp_processor_reconciler_synced_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} DB Sync Rate" , "time": { "from": "now-24h", "to": "now" } }
+        { "expr": "sum(rate(ssp_win_processor_reconciler_synced_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} DB Sync Rate" , "time": { "from": "now-24h", "to": "now" } }
       ],
       "fieldConfig": { "defaults": { "unit": "ops" } , "time": { "from": "now-24h", "to": "now" } }
     },
@@ -64,7 +64,7 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
       "targets": [
         { "expr": "sum(rate(win_receiver_kafka_write_errors_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Kafka Write Errors" },
-        { "expr": "sum(rate(ssp_processor_dlq_messages_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Processor DLQ Messages" , "time": { "from": "now-24h", "to": "now" } }
+        { "expr": "sum(rate(ssp_win_processor_dlq_messages_total{device_name=~\"$device_name\"}[5m])) by (device_name)", "legendFormat": "{{device_name}} Processor DLQ Messages" , "time": { "from": "now-24h", "to": "now" } }
       ],
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } , "time": { "from": "now-24h", "to": "now" } }
     , "time": { "from": "now-24h", "to": "now" } }

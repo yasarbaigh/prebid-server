@@ -33,7 +33,7 @@ groups:
 
       # 4. Processor Connectivity (DB/DLQ)
       - alert: HighDLQTraffic
-        expr: sum by (device_name) (rate(ssp_processor_dlq_messages_total[5m])) > 1
+        expr: sum by (device_name) (rate(ssp_win_processor_dlq_messages_total[5m])) > 1
         for: 5m
         labels:
           severity: critical
