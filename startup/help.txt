@@ -6,8 +6,10 @@ go mod tidy
 go install .
 
 
-
+protoc --go_out=. --go_opt=module=github.com/prebid/prebid-server/v3 proto/auction_log.proto
 go build -o prebid-server.bin .
+
+
 
 pm2 start ecosystem.config.js
 
