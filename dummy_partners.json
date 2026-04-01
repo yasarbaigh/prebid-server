@@ -395,6 +395,39 @@
             "track_base_dmn": "http://trk.local.com"
         },
         {
+            "name": "o8ql1v64fn",
+            "id": 15,
+            "inventory_name": "CD-Banner-Traffic",
+            "status": "Active",
+            "inventory_code": "o8ql1v64fn",
+            "old_inventory_codes": [],
+            "integration_method": "JS Tag",
+            "timeout": "120",
+            "floor_price": 0,
+            "revenue_share": "10.000",
+            "fixed_cpm": 0,
+            "open_rtb_url": null,
+            "qps_limit": null,
+            "js_tag_script": null,
+            "prebidjs": null,
+            "vast_tag_url": null,
+            "prebid": null,
+            "tenant_identifier": "Cd_App",
+            "ssp_identifier": "CueDart",
+            "revenue_model": "Revenue Share",
+            "ad_formats": [
+                "Display"
+            ],
+            "tenant_id": 1,
+            "ssp_id": 10,
+            "ssp_inventory_id": 15,
+            "ssp_inventory_prometheus_id": "1___10___15",
+            "ssp_inventory_identifier": "Cd_App___CueDart___15",
+            "adm_price_transparency": false,
+            "win_base_dmn": "http://win.local.com",
+            "track_base_dmn": "http://trk.local.com"
+        },
+        {
             "name": "oq6kbu4bst",
             "id": 13,
             "inventory_name": "Rhytmone Argentina",
@@ -471,7 +504,7 @@
             "endpoint_url": "http://ys.dsp3.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "1___7___11",
             "dsp_inventory_identifier": "Cd_App___YS_Traffic_Media___11",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "2.000",
             "max_bidfloor": "200.000",
@@ -540,7 +573,7 @@
                 "com.apple.visionproapp"
             ],
             "adm_price_transparency": false,
-            "status": "Active"
+            "status": "Inactive"
         },
         {
             "tenant_id": 3,
@@ -551,7 +584,7 @@
             "endpoint_url": "http://t3.dsp1.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___3___5",
             "dsp_inventory_identifier": "T3_App___T3_DSP_1___5",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "1.030",
             "max_bidfloor": "200.000",
@@ -605,7 +638,7 @@
             "endpoint_url": "http://js.dsp1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "1___5___9",
             "dsp_inventory_identifier": "Cd_App___JS_Traffic_Media___9",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "2.000",
             "max_bidfloor": "200.000",
@@ -688,7 +721,7 @@
                 "com.apple.iMovie"
             ],
             "adm_price_transparency": false,
-            "status": "Active"
+            "status": "Inactive"
         },
         {
             "tenant_id": 3,
@@ -699,7 +732,7 @@
             "endpoint_url": "http://t3.dsp1.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___3___6",
             "dsp_inventory_identifier": "T3_App___T3_DSP_1___6",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "0.750",
             "max_bidfloor": "200.000",
@@ -761,7 +794,7 @@
             "endpoint_url": "http://sads.dsp2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "1___6___10",
             "dsp_inventory_identifier": "Cd_App___Smart_Ads___10",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "1.000",
             "max_bidfloor": "200.000",
@@ -816,7 +849,7 @@
             "bundle_ids": [],
             "bundle_ids_black_list": [],
             "adm_price_transparency": false,
-            "status": "Active"
+            "status": "Inactive"
         },
         {
             "tenant_id": 3,
@@ -827,7 +860,7 @@
             "endpoint_url": "http://t3.dsp2.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___4___7",
             "dsp_inventory_identifier": "T3_App___T3_DSP_2___7",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "2.000",
             "max_bidfloor": "200.000",
@@ -891,7 +924,7 @@
             "endpoint_url": "http://t3.dsp2.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "3___4___8",
             "dsp_inventory_identifier": "T3_App___T3_DSP_2___8",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "0.650",
             "max_bidfloor": "200.000",
@@ -924,7 +957,7 @@
             "endpoint_url": "http://t2.dsp1.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___1___1",
             "dsp_inventory_identifier": "T2_App___T2_DSP_1___1",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "1.050",
             "max_bidfloor": "200.000",
@@ -976,7 +1009,7 @@
             "endpoint_url": "http://t2.dsp1.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___1___2",
             "dsp_inventory_identifier": "T2_App___T2_DSP_1___2",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "1.450",
             "max_bidfloor": "200.000",
@@ -1015,7 +1048,7 @@
             "endpoint_url": "http://t2.dsp2.ep2.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___2___3",
             "dsp_inventory_identifier": "T2_App___T2_DSP_2___3",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "2.050",
             "max_bidfloor": "200.000",
@@ -1044,6 +1077,44 @@
             "status": "Active"
         },
         {
+            "tenant_id": 1,
+            "tenant_identifier": "Cd_App",
+            "dsp_id": 8,
+            "dsp_identifier": "Direct-DA-Ads",
+            "dsp_inventory_id": 12,
+            "endpoint_url": "http://us.dsp.admile.xyz/Cuedart?ssp_id=225&ep_id=715&api_key=4349d57b72e7a56f48b50c58",
+            "dsp_inventory_prometheus_id": "1___8___12",
+            "dsp_inventory_identifier": "Cd_App___Direct-DA-Ads___12",
+            "margin": 10,
+            "pricing_at": 1,
+            "min_bidfloor": "0.050",
+            "max_bidfloor": "0.500",
+            "old_inventory_codes": [],
+            "ad_formats": [
+                "banner",
+                "video",
+                "native",
+                "audio"
+            ],
+            "source": [
+                "app",
+                "web"
+            ],
+            "iab_categories": [],
+            "country": [
+                "Any"
+            ],
+            "country_black_list": [],
+            "ssps": [],
+            "ssps_black_list": [],
+            "publishers": [],
+            "publishers_black_list": [],
+            "bundle_ids": [],
+            "bundle_ids_black_list": [],
+            "adm_price_transparency": false,
+            "status": "Active"
+        },
+        {
             "tenant_id": 2,
             "tenant_identifier": "T2_App",
             "dsp_id": 2,
@@ -1052,7 +1123,7 @@
             "endpoint_url": "http://t2.dsp2.ep1.com:18081/rtb/bid",
             "dsp_inventory_prometheus_id": "2___2___4",
             "dsp_inventory_identifier": "T2_App___T2_DSP_2___4",
-            "margin": 0,
+            "margin": 10,
             "pricing_at": 1,
             "min_bidfloor": "1.050",
             "max_bidfloor": "200.000",
@@ -1090,7 +1161,7 @@
             "status": "Active"
         }
     ],
-    "ts": "2026-03-21 11:45:00",
+    "ts": "2026-04-01 18:47:05",
     "ad_serving": true,
     "asi": "adexchange.cd.com"
 }
