@@ -44,7 +44,7 @@
             "id": 16,
             "targets": [
                 {
-                    "datasource": "Prometheus",
+                    "datasource": "${datasource}",
                     "expr": "sum(rate(prebid_rtb_auctions_total[$__rate_interval])) by (status)",
                     "legendFormat": "Status: {{status}}",
                     "refId": "A"
@@ -72,7 +72,7 @@
             "id": 2,
             "targets": [
                 {
-                    "datasource": "Prometheus",
+                    "datasource": "${datasource}",
                     "expr": "sum(rate(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\", ssp_inventory_identifier=~\"$ssp_inv\"}[$__rate_interval])) by ($group_by)",
                     "legendFormat": "{{$group_by}}",
                     "refId": "A"
@@ -100,7 +100,7 @@
             "id": 5,
             "targets": [
                 {
-                    "datasource": "Prometheus",
+                    "datasource": "${datasource}",
                     "expr": "sum(rate(prebid_rtb_dsp_requests_total{tenant_identifier=~\"$tenant\", dsp_inventory_identifier=~\"$dsp_inv\"}[$__rate_interval])) by ($group_by)",
                     "legendFormat": "{{$group_by}}",
                     "refId": "A"
@@ -228,6 +228,11 @@
     "templating": {
         "list": [
             {
+                "name": "datasource",
+                "query": "prometheus",
+                "type": "datasource"
+            },
+            {
                 "current": {
                     "selected": true,
                     "text": [
@@ -237,7 +242,7 @@
                         "$__all"
                     ]
                 },
-                "datasource": "Prometheus",
+                "datasource": "${datasource}",
                 "definition": "label_values(prebid_rtb_ssp_requests_total, tenant_identifier)",
                 "hide": 0,
                 "includeAll": true,
@@ -265,7 +270,7 @@
                         "$__all"
                     ]
                 },
-                "datasource": "Prometheus",
+                "datasource": "${datasource}",
                 "definition": "label_values(prebid_rtb_ssp_requests_total{tenant_identifier=~\"$tenant\"}, ssp_inventory_identifier)",
                 "hide": 0,
                 "includeAll": true,
@@ -293,7 +298,7 @@
                         "$__all"
                     ]
                 },
-                "datasource": "Prometheus",
+                "datasource": "${datasource}",
                 "definition": "label_values(prebid_rtb_dsp_requests_total{tenant_identifier=~\"$tenant\"}, dsp_inventory_identifier)",
                 "hide": 0,
                 "includeAll": true,

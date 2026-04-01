@@ -14,9 +14,24 @@ for file in "$DASHBOARD_DIR"/*.json; do
     if [ -f "$file" ]; then
         echo "Processing $file..."
         
-        # Wrap the dashboard JSON in the format expected by the API
-        dashboard_json=$(cat "$file")
-        payload=$(jq -n --argjson db "$dashboard_json" '{dashboard: $db, overwrite: true, folderId: 0}')
+        # 1. READ and SANITIZE the dashboard JSON
+        # Replaces hardcoded DS_PROMETHEUS references with a universal variable
+        dashboard_raw=$(cat "$file" | \
+            sed 's/DS_PROMETHEUS[A-Z0-9_]*/datasource/g' | \
+            sed 's/"datasource": "Prometheus"/"datasource": "${datasource}"/g')
+        
+        # 2. ENFORCE templating variable if missing (inject using jq)
+        final_json=$(echo "$dashboard_raw" | jq '
+            if .templating.list | map(.name == "datasource") | any | not then
+                .templating.list = [{
+                    "name": "datasource",
+                    "query": "prometheus",
+                    "type": "datasource"
+                }] + .templating.list
+            else . end')
+
+        # 3. Wrap for API
+        payload=$(jq -n --argjson db "$final_json" '{dashboard: $db, overwrite: true, folderId: 0}')
         
         # Send to Grafana API
         response=$(curl -s -u "$GRAFANA_USER:$GRAFANA_PASS" \
