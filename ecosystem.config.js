@@ -1,4 +1,21 @@
-const { execSync } = require('child_process'); // <--- ADDED THIS IMPORT
+const fs = require('fs');
+const { execSync } = require('child_process');
+
+// Centralized Environment Loading
+const envPath = '/opt/app_adserving/fixed/ssp_app.env';
+let extraEnv = {};
+if (fs.existsSync(envPath)) {
+  const content = fs.readFileSync(envPath, 'utf8');
+  content.split('\n').forEach(line => {
+    const trimmedLine = line.trim();
+    if (trimmedLine && !trimmedLine.startsWith('#')) {
+      const parts = trimmedLine.split('=');
+      if (parts.length >= 2) {
+        extraEnv[parts[0].trim()] = parts.slice(1).join('=').trim();
+      }
+    }
+  });
+}
 
 const basePort = 24000;
 const portInterval = 30;
@@ -34,6 +51,7 @@ for (let i = 1; i <= numInstances; i++) {
     script: "./prebid-server.bin",
     args: "",
     env: {
+      ...extraEnv,
       PBS_ADMIN_PORT: healthPort,
       PBS_PORTS: rtbPorts.join(","),
       PBS_METRICS_PROMETHEUS_PORT: prometheusPort,

@@ -5,6 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
+EnvironmentFile=/opt/app_adserving/fixed/ssp_app.env
+
 WorkingDirectory=/opt/adserving/prebid-server
 # Instance ID %i is used to calculate ports starting from 24000 with a 30-port interval
 # Instance 1: Admin: 24000, Ports: 24001..24020, Prometheus: 24029
