@@ -226,7 +226,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 						httpCode = "5xx"
 					}
 				}
-				logger.Errorf("DSP %s call failed: %v", d.DSPIdentifier, err)
+				// Silent fail: Metrics already record this status
 			}
 			partners.DSPResponseCounter.WithLabelValues(d.DSPInventoryIdentifier, d.TenantIdentifier, d.DSPIdentifier, status, httpCode).Inc()
 			partners.DSPLatencyHistogram.WithLabelValues(d.DSPInventoryIdentifier, d.TenantIdentifier, d.DSPIdentifier).Observe(latency)
