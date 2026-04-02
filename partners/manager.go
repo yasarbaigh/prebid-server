@@ -100,7 +100,6 @@ type SSPInventory struct {
 	TrackBaseDmn         string      `json:"track_base_dmn"`
 	AdmPriceTransparency bool        `json:"adm_price_transparency"`
 	SChainNode           string      `json:"schain_node"` // Your exchange identity for this SSP
-	Timeout              FlexInt     `json:"timeout"`
 	FloorPrice           FlexFloat64 `json:"floor_price"`
 	RevenueShare         FlexFloat64 `json:"revenue_share"`
 	FixedCPM             FlexFloat64 `json:"fixed_cpm"`
@@ -214,12 +213,6 @@ func (m *Manager) Load(path string) error {
 	}
 
 	// Default Values and Robustness checks
-	for i := range cfg.SSPInventories {
-		if cfg.SSPInventories[i].Timeout <= 0 {
-			cfg.SSPInventories[i].Timeout = FlexInt(DefaultTimeout)
-		}
-	}
-
 	for i := range cfg.DSPInventories {
 		if cfg.DSPInventories[i].Tmax <= 0 {
 			cfg.DSPInventories[i].Tmax = FlexInt(DefaultTMax)
