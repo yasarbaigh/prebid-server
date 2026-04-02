@@ -103,6 +103,7 @@ type SSPInventory struct {
 	FloorPrice           FlexFloat64 `json:"floor_price"`
 	RevenueShare         FlexFloat64 `json:"revenue_share"`
 	FixedCPM             FlexFloat64 `json:"fixed_cpm"`
+	Verbose              bool        `json:"verbose"`
 }
 
 type DSPInventory struct {

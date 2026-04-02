@@ -120,8 +120,8 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	// 4. PRE-CHECK TMAX (Fast check using jsonparser before unmarshaling)
 	bidLogger := logging.GetBidLogger()
-	isSampled := bidLogger != nil && bidLogger.ShouldSampleVerbose()
-	if isSampled {
+	isVerbose := bidLogger != nil && bidLogger.IsVerboseEnabled() && (ssp.Verbose || bidLogger.ShouldSampleVerbose())
+	if isVerbose {
 		bidLogger.LogSSP(ssp.SSPInventoryIdentifier, body, "REQ")
 	}
 
@@ -133,6 +133,9 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	computedTMax := originalTMax - int64(overhead)
 	if computedTMax < 120 {
 		partners.AuctionCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "rejected_tmax").Inc()
+		if isVerbose {
+			bidLogger.LogSSP(ssp.SSPInventoryIdentifier, []byte("REJECTED: TMax too low after overhead"), "RESP")
+		}
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -165,6 +168,9 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	if len(selectedDSPs) == 0 {
 		h.recordSSPResponse(ssp, "no_bid", "204")
+		if isVerbose {
+			bidLogger.LogSSP(ssp.SSPInventoryIdentifier, []byte("RESP Status: 204 No Content (No matching DSPs)"), "RESP")
+		}
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -187,7 +193,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			dspBidReq := endpoints.GetDspBidRequest(&bidReq, *ssp, d, h.GlobalASI)
 			dspBody, _ := json.Marshal(dspBidReq)
 
-			if isSampled {
+			if isVerbose {
 				bidLogger.LogDSP(d.DSPInventoryIdentifier, dspBody, "REQ")
 			}
 
@@ -195,7 +201,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			resp, rawBody, err := h.callDSP(auctionCtx, d, dspBody)
 			latency := time.Since(start).Seconds()
 
-			if isSampled {
+			if isVerbose {
 				bidLogger.LogDSP(d.DSPInventoryIdentifier, rawBody, "RESP")
 			}
 
@@ -406,6 +412,9 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	h.recordSSPResponse(ssp, "ok", "200")
 
 	respBody, _ := json.Marshal(finalResp)
+	if isVerbose {
+		bidLogger.LogSSP(ssp.SSPInventoryIdentifier, respBody, "RESP")
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(respBody)
 

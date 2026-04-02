@@ -196,9 +196,9 @@ func (l *BidLogger) start() {
 			for event := range l.verboseChan {
 				var filename string
 				if event.isSSp {
-					filename = fmt.Sprintf("ssp_%s_samples.log", event.id)
+					filename = fmt.Sprintf("ssp_%s.log", event.id)
 				} else {
-					filename = fmt.Sprintf("dsp_%s_samples.log", event.id)
+					filename = fmt.Sprintf("dsp_%s.log", event.id)
 				}
 				l.appendToVerboseFile(filename, event.data, event.label)
 			}
@@ -362,6 +362,13 @@ func (l *BidLogger) GetExchangeOverhead() int {
 		return 120
 	}
 	return l.exchangeOverhead
+}
+
+func (l *BidLogger) IsVerboseEnabled() bool {
+	if l == nil {
+		return false
+	}
+	return l.verboseLogEnabled
 }
 
 func (l *BidLogger) Close() {
