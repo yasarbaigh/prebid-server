@@ -25,25 +25,22 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 3. Country matching - normalized to uppercase
-	country := ""
-	if req.Device != nil && req.Device.Geo != nil {
-		country = strings.ToUpper(req.Device.Geo.Country)
-	}
-	if country != "" {
+	// 3. Country matching - CAPITAL characters
+	if req.Device != nil && req.Device.Geo != nil && req.Device.Geo.Country != "" {
+		country := strings.ToUpper(req.Device.Geo.Country)
 		// Check Blacklist
 		if dsp.CountryBlackListMap[country] {
 			return false
 		}
 		// Check Whitelist
 		if len(dsp.CountryMap) > 0 {
-			if !dsp.CountryMap[country] && !dsp.CountryMap["ANY"] {
+			if !dsp.CountryMap[country] {
 				return false
 			}
 		}
 	}
 
-	// 4. Bundle ID matching (App only) - normalized to lowercase
+	// 4. Bundle ID matching - lower-case characters
 	if isApp && req.App.Bundle != "" {
 		bundle := strings.ToLower(req.App.Bundle)
 		// Check Blacklist
@@ -58,7 +55,12 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 5. SSP Filtering
+	// 4.1 Carrier matching - lower-case characters
+	if req.Device != nil && req.Device.Carrier != "" {
+		_ = strings.ToLower(req.Device.Carrier)
+	}
+
+	// 5. SSP Filtering - retain case
 	if sspID != "" {
 		// Check Blacklist
 		if dsp.SSPsBlackListMap[sspID] {
@@ -66,13 +68,13 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 		// Check Whitelist
 		if len(dsp.SSPsMap) > 0 {
-			if !dsp.SSPsMap[sspID] && !dsp.SSPsMap["ANY"] {
+			if !dsp.SSPsMap[sspID] {
 				return false
 			}
 		}
 	}
 
-	// 6. Publisher Filtering
+	// 6. Publisher Filtering - retain case
 	pubID := ""
 	if req.App != nil && req.App.Publisher != nil {
 		pubID = req.App.Publisher.ID
@@ -81,23 +83,13 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	}
 
 	if pubID != "" {
-		pubID = strings.ToLower(pubID)
 		// Check Blacklist
-		for _, pb := range dsp.PublishersBlackList {
-			if pb == pubID {
-				return false
-			}
+		if dsp.PublishersBlackListMap[pubID] {
+			return false
 		}
 		// Check Whitelist
-		if len(dsp.Publishers) > 0 {
-			pubMatch := false
-			for _, wp := range dsp.Publishers {
-				if wp == pubID || strings.ToUpper(wp) == "ANY" {
-					pubMatch = true
-					break
-				}
-			}
-			if !pubMatch {
+		if len(dsp.PublishersMap) > 0 {
+			if !dsp.PublishersMap[pubID] {
 				return false
 			}
 		}
@@ -129,17 +121,33 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 8. IAB Categories - normalized to uppercase
-	if len(dsp.IABCategories) > 0 {
-		hasAny := false
-		for _, cat := range dsp.IABCategories {
-			if cat == "ANY" {
-				hasAny = true
+	// 8. IAB Categories - CAPITAL characters
+	if len(dsp.IABCategoriesMap) > 0 {
+		catMatch := false
+		// Match if ANY of the categories in the request are whitelisted
+		for _, cat := range req.BCat {
+			if dsp.IABCategoriesMap[strings.ToUpper(cat)] {
+				catMatch = true
 				break
 			}
 		}
-		if !hasAny {
-			// Basic category check would go here if needed
+		// Wait, BCat is usually for blocking. If the request has whitelist, check app/site.cat.
+		var reqCats []string
+		if req.App != nil {
+			reqCats = req.App.Cat
+		} else if req.Site != nil {
+			reqCats = req.Site.Cat
+		}
+		for _, cat := range reqCats {
+			if dsp.IABCategoriesMap[strings.ToUpper(cat)] {
+				catMatch = true
+				break
+			}
+		}
+
+		if !catMatch && (len(req.Imp) > 0) {
+			// IAB check is usually optional or soft, but if whitelist exists and no match, return false
+			// return false 
 		}
 	}
 

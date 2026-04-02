@@ -142,10 +142,13 @@ type DSPInventory struct {
 	AdFormatsMap         map[string]bool `json:"-"`
 	CountryMap           map[string]bool `json:"-"`
 	CountryBlackListMap  map[string]bool `json:"-"`
+	IABCategoriesMap     map[string]bool `json:"-"`
 	BundleIDsMap         map[string]bool `json:"-"`
 	BundleIDsBlackListMap map[string]bool `json:"-"`
 	SSPsMap              map[string]bool `json:"-"`
 	SSPsBlackListMap     map[string]bool `json:"-"`
+	PublishersMap        map[string]bool `json:"-"`
+	PublishersBlackListMap map[string]bool `json:"-"`
 	SourceMap            map[string]bool `json:"-"`
 }
 
@@ -247,15 +250,18 @@ func (m *Manager) Load(path string) error {
 	cfg.dspMap = make(map[int][]DSPInventory)
 	for i := range cfg.DSPInventories {
 		dsp := &cfg.DSPInventories[i]
-		// Pre-populate maps for O(1) matching
-		dsp.AdFormatsMap = listToMap(dsp.AdFormats, true)
-		dsp.CountryMap = listToMap(dsp.Country, true)
-		dsp.CountryBlackListMap = listToMap(dsp.CountryBlackList, true)
-		dsp.BundleIDsMap = listToMap(dsp.BundleIDs, true)
-		dsp.BundleIDsBlackListMap = listToMap(dsp.BundleIDsBlackList, true)
-		dsp.SSPsMap = listToMap(dsp.SSPs, true)
-		dsp.SSPsBlackListMap = listToMap(dsp.SSPsBlackList, true)
-		dsp.SourceMap = listToMap(dsp.Source, true)
+		// Pre-populate maps for O(1) matching with requested casing
+		dsp.AdFormatsMap = listToMap(dsp.AdFormats, CasingLowercase)
+		dsp.CountryMap = listToMap(dsp.Country, CasingUppercase)
+		dsp.CountryBlackListMap = listToMap(dsp.CountryBlackList, CasingUppercase)
+		dsp.IABCategoriesMap = listToMap(dsp.IABCategories, CasingUppercase)
+		dsp.BundleIDsMap = listToMap(dsp.BundleIDs, CasingLowercase)
+		dsp.BundleIDsBlackListMap = listToMap(dsp.BundleIDsBlackList, CasingLowercase)
+		dsp.SSPsMap = listToMap(dsp.SSPs, CasingExact)
+		dsp.SSPsBlackListMap = listToMap(dsp.SSPsBlackList, CasingExact)
+		dsp.PublishersMap = listToMap(dsp.Publishers, CasingExact)
+		dsp.PublishersBlackListMap = listToMap(dsp.PublishersBlackList, CasingExact)
+		dsp.SourceMap = listToMap(dsp.Source, CasingLowercase)
 
 		// Only index Active DSPs
 		if dsp.Status == "Active" {
@@ -315,12 +321,23 @@ func (m *Manager) GetDSPsByTenant(tenantID int) []DSPInventory {
 	}
 	return cfg.dspMap[tenantID]
 }
-func listToMap(list []string, lowercase bool) map[string]bool {
+type CasingMode int
+
+const (
+	CasingExact CasingMode = iota
+	CasingLowercase
+	CasingUppercase
+)
+
+func listToMap(list []string, mode CasingMode) map[string]bool {
 	m := make(map[string]bool)
 	for _, s := range list {
-		if lowercase {
+		switch mode {
+		case CasingLowercase:
 			m[strings.ToLower(s)] = true
-		} else {
+		case CasingUppercase:
+			m[strings.ToUpper(s)] = true
+		default:
 			m[s] = true
 		}
 	}

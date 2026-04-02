@@ -347,10 +347,14 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		adType, adSize := h.getAdDimensions(bestBid, imp)
 		adTypeStr := "unknown"
 		switch adType {
-		case 1: adTypeStr = "banner"
-		case 2: adTypeStr = "video"
-		case 3: adTypeStr = "native"
-		case 4: adTypeStr = "audio"
+		case 1:
+			adTypeStr = "banner"
+		case 2:
+			adTypeStr = "video"
+		case 3:
+			adTypeStr = "native"
+		case 4:
+			adTypeStr = "audio"
 		}
 
 		tck := endpoints.TrackingConfig{
