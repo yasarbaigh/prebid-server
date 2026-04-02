@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 	"bufio"
+	"math/rand"
 
 	"github.com/magiconair/properties"
 	"github.com/prebid/prebid-server/v3/logger"
@@ -52,6 +53,7 @@ type BidLogger struct {
 	verboseBackups    int
 	verboseChan       chan *verboseEvent
 	verboseLoggers    map[string]*lumberjack.Logger
+	verboseSampleRate float64
 	vMu               sync.Mutex
 	wg                sync.WaitGroup
 }
@@ -150,6 +152,7 @@ func InitBidLogger(propsPath string) error {
 	verboseLogPath := p.GetString("verbose_log.path", "/opt/adserving/verbose")
 	vMaxMB := p.GetInt("verbose_log.max_file_size_mb", 10)
 	vMaxBackups := p.GetInt("verbose_log.max_backups", 5)
+	vSampleRate := p.GetFloat64("verbose_log.sample_rate", 0.0)
 
 	// Ensure verbose directory exists if enabled
 	if verboseLogEnabled {
@@ -169,6 +172,7 @@ func InitBidLogger(propsPath string) error {
 		verboseMaxMB:      vMaxMB,
 		verboseBackups:    vMaxBackups,
 		verboseLoggers:    make(map[string]*lumberjack.Logger),
+		verboseSampleRate: vSampleRate,
 		bufWriter:         bufio.NewWriterSize(lumberjackLogger, 256*1024),
 	}
 
@@ -189,9 +193,9 @@ func (l *BidLogger) start() {
 			for event := range l.verboseChan {
 				var filename string
 				if event.isSSp {
-					filename = fmt.Sprintf("%s_ssp.log", event.id)
+					filename = fmt.Sprintf("ssp_%s_samples.log", event.id)
 				} else {
-					filename = fmt.Sprintf("%s_dsp.log", event.id)
+					filename = fmt.Sprintf("dsp_%s_samples.log", event.id)
 				}
 				l.appendToVerboseFile(filename, event.data, event.label)
 			}
@@ -320,6 +324,33 @@ func (l *BidLogger) LogDSP(dspIdentifier string, body []byte, label string) {
 	case l.verboseChan <- &verboseEvent{id: dspIdentifier, data: body, isSSp: false, label: label}:
 	default:
 		// Drop silently for verbose checking
+	}
+}
+
+func (l *BidLogger) ShouldSampleVerbose() bool {
+	if !l.verboseLogEnabled || l.verboseChan == nil || l.verboseSampleRate <= 0 {
+		return false
+	}
+	return rand.Float64() < l.verboseSampleRate
+}
+
+func (l *BidLogger) LogSSPSampled(sspIdentifier string, body []byte, label string) {
+	if !l.verboseLogEnabled || l.verboseChan == nil || l.verboseSampleRate <= 0 {
+		return
+	}
+
+	if rand.Float64() < l.verboseSampleRate {
+		l.LogSSP(sspIdentifier, body, label)
+	}
+}
+
+func (l *BidLogger) LogDSPSampled(dspIdentifier string, body []byte, label string) {
+	if !l.verboseLogEnabled || l.verboseChan == nil || l.verboseSampleRate <= 0 {
+		return
+	}
+
+	if rand.Float64() < l.verboseSampleRate {
+		l.LogDSP(dspIdentifier, body, label)
 	}
 }
 

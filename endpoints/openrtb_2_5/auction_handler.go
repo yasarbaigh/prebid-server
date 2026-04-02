@@ -119,6 +119,12 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// 4. PRE-CHECK TMAX (Fast check using jsonparser before unmarshaling)
+	bidLogger := logging.GetBidLogger()
+	isSampled := bidLogger != nil && bidLogger.ShouldSampleVerbose()
+	if isSampled {
+		bidLogger.LogSSP(ssp.SSPInventoryIdentifier, body, "REQ")
+	}
+
 	originalTMax, err := jsonparser.GetInt(body, "tmax")
 	if err != nil {
 		originalTMax = 500 // Default if missing
@@ -180,9 +186,17 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			dspBidReq := endpoints.GetDspBidRequest(&bidReq, *ssp, d, h.GlobalASI)
 			dspBody, _ := json.Marshal(dspBidReq)
 
+			if isSampled {
+				bidLogger.LogDSP(d.DSPInventoryIdentifier, dspBody, "REQ")
+			}
+
 			start := time.Now()
 			resp, rawBody, err := h.callDSP(auctionCtx, d, dspBody)
 			latency := time.Since(start).Seconds()
+
+			if isSampled {
+				bidLogger.LogDSP(d.DSPInventoryIdentifier, rawBody, "RESP")
+			}
 
 			// Metrics: Record DSP Response and Latency
 			status := "nobid"
