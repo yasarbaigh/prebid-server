@@ -12,7 +12,15 @@ import (
 	"github.com/prebid/prebid-server/v3/logger"
 )
 
-const DefaultMargin = 15.0
+const (
+	DefaultMargin      = 20.0
+	DefaultMinBidFloor = 0.05
+	DefaultMaxBidFloor = 100.0
+	DefaultTimeout     = 120
+	DefaultTMax        = 120
+	DefaultQPSLimit    = 50
+	DefaultPricingAt   = 1
+)
 
 // FlexFloat64 handles both string and numeric float64 values in JSON
 type FlexFloat64 float64
@@ -29,7 +37,7 @@ func (f *FlexFloat64) UnmarshalJSON(b []byte) error {
 		}
 		var val float64
 		if _, err := fmt.Sscanf(s, "%f", &val); err != nil {
-			*f = 0 // Assign 0 on junk string so validation can catch it later
+			*f = 0
 			return nil
 		}
 		*f = FlexFloat64(val)
@@ -43,60 +51,94 @@ func (f *FlexFloat64) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// FlexInt handles both string and numeric integer values in JSON
+type FlexInt int
+
+func (i *FlexInt) UnmarshalJSON(b []byte) error {
+	if len(b) > 0 && b[0] == '"' {
+		var s string
+		if err := json.Unmarshal(b, &s); err != nil {
+			return err
+		}
+		if s == "" {
+			*i = 0
+			return nil
+		}
+		var val int
+		if _, err := fmt.Sscanf(s, "%d", &val); err != nil {
+			*i = 0
+			return nil
+		}
+		*i = FlexInt(val)
+		return nil
+	}
+	var val int
+	if err := json.Unmarshal(b, &val); err != nil {
+		return err
+	}
+	*i = FlexInt(val)
+	return nil
+}
+
 type SSPInventory struct {
-	Name                 string   `json:"name"`
-	ID                   int      `json:"id"`
-	InventoryName        string   `json:"inventory_name"`
-	Status               string   `json:"status"`
-	InventoryCode        string   `json:"inventory_code"`
-	TenantIdentifier     string   `json:"tenant_identifier"`
-	SSPIdentifier        string   `json:"ssp_identifier"`
-	TenantID             int      `json:"tenant_id"`
-	SSPID                int      `json:"ssp_id"`
-	SSPInventoryID       int      `json:"ssp_inventory_id"`
-	SSPInventoryIdentifier string   `json:"ssp_inventory_identifier"`
-	AdFormats            []string `json:"ad_formats"`
-	WinURL               string   `json:"win_url"`
-	ImpTrackURL          string   `json:"imp_track_url"`
-	ClickTrackURL        string   `json:"click_track_url"`
-	WinBaseDmn           string   `json:"win_base_dmn"`
-	TrackBaseDmn         string   `json:"track_base_dmn"`
-	AdmPriceTransparency bool     `json:"adm_price_transparency"`
-	SChainNode           string   `json:"schain_node"` // Your exchange identity for this SSP
+	Name                 string      `json:"name"`
+	ID                   FlexInt     `json:"id"`
+	InventoryName        string      `json:"inventory_name"`
+	Status               string      `json:"status"`
+	InventoryCode        string      `json:"inventory_code"`
+	TenantIdentifier     string      `json:"tenant_identifier"`
+	SSPIdentifier        string      `json:"ssp_identifier"`
+	TenantID             FlexInt     `json:"tenant_id"`
+	SSPID                FlexInt     `json:"ssp_id"`
+	SSPInventoryID       FlexInt     `json:"ssp_inventory_id"`
+	SSPInventoryIdentifier string     `json:"ssp_inventory_identifier"`
+	AdFormats            []string    `json:"ad_formats"`
+	WinURL               string      `json:"win_url"`
+	ImpTrackURL          string      `json:"imp_track_url"`
+	ClickTrackURL        string      `json:"click_track_url"`
+	WinBaseDmn           string      `json:"win_base_dmn"`
+	TrackBaseDmn         string      `json:"track_base_dmn"`
+	AdmPriceTransparency bool        `json:"adm_price_transparency"`
+	SChainNode           string      `json:"schain_node"` // Your exchange identity for this SSP
+	Timeout              FlexInt     `json:"timeout"`
+	FloorPrice           FlexFloat64 `json:"floor_price"`
+	RevenueShare         FlexFloat64 `json:"revenue_share"`
+	FixedCPM             FlexFloat64 `json:"fixed_cpm"`
 }
 
 type DSPInventory struct {
-	Name                 string   `json:"name"`
-	DSPIdentifier        string   `json:"dsp_identifier"`
-	EndpointName         string   `json:"endpoint_name"`
-	EndpointURL          string   `json:"endpoint_url"`
-	QPS                  int      `json:"qps"`
-	Tmax                 int      `json:"tmax"`
-	ID                   int      `json:"id"`
-	InventoryCode        string   `json:"inventory_code"`
-	Status               string   `json:"status"`
-	MinBidFloor          string   `json:"min_bidfloor"`
-	MaxBidFloor          string   `json:"max_bidfloor"`
-	AdFormats            []string `json:"ad_formats"`
-	Source               []string `json:"source"`
-	Country              []string `json:"country"`
-	CountryBlackList     []string `json:"country_black_list"`
-	IABCategories        []string `json:"iab_categories"`
-	BundleIDs            []string `json:"bundle_ids"`
-	BundleIDsBlackList   []string `json:"bundle_ids_black_list"`
-	SSPs                 []string `json:"ssps"`
-	SSPsBlackList        []string `json:"ssps_black_list"`
-	Publishers           []string `json:"publishers"`
-	PublishersBlackList  []string `json:"publishers_black_list"`
-	TenantIdentifier     string   `json:"tenant_identifier"`
-	TenantID             int      `json:"tenant_id"`
-	DSPID                int      `json:"dsp_id"`
-	DSPInventoryID       int      `json:"dsp_inventory_id"`
+	Name                 string      `json:"name"`
+	DSPIdentifier        string      `json:"dsp_identifier"`
+	EndpointName         string      `json:"endpoint_name"`
+	EndpointURL          string      `json:"endpoint_url"`
+	QPS                  FlexInt     `json:"qps_limit"`
+	Tmax                 FlexInt     `json:"tmax"`
+	ID                   FlexInt     `json:"id"`
+	InventoryCode        string      `json:"inventory_code"`
+	Status               string      `json:"status"`
+	MinBidFloor          FlexFloat64 `json:"min_bidfloor"`
+	MaxBidFloor          FlexFloat64 `json:"max_bidfloor"`
+	AdFormats            []string    `json:"ad_formats"`
+	Source               []string    `json:"source"`
+	Country              []string    `json:"country"`
+	CountryBlackList     []string    `json:"country_black_list"`
+	IABCategories        []string    `json:"iab_categories"`
+	BundleIDs            []string    `json:"bundle_ids"`
+	BundleIDsBlackList   []string    `json:"bundle_ids_black_list"`
+	SSPs                 []string    `json:"ssps"`
+	SSPsBlackList        []string    `json:"ssps_black_list"`
+	Publishers           []string    `json:"publishers"`
+	PublishersBlackList  []string    `json:"publishers_black_list"`
+	TenantIdentifier     string      `json:"tenant_identifier"`
+	TenantID             FlexInt     `json:"tenant_id"`
+	DSPID                FlexInt     `json:"dsp_id"`
+	DSPInventoryID       FlexInt     `json:"dsp_inventory_id"`
 	DSPInventoryIdentifier string       `json:"dsp_inventory_identifier"`
 	AdmPriceTransparency   bool         `json:"adm_price_transparency"`
 	Margin                 FlexFloat64  `json:"margin"`
 	BidAdjustment          float64      `json:"bid_adjustment"` // Multiplier (e.g. 0.9)
-	PricingAt            int             `json:"pricing_at"`
+	PricingAt            FlexInt         `json:"pricing_at"`
+	Timeout              FlexInt         `json:"timeout"`
 	AdFormatsMap         map[string]bool `json:"-"`
 	CountryMap           map[string]bool `json:"-"`
 	CountryBlackListMap  map[string]bool `json:"-"`
@@ -171,14 +213,34 @@ func (m *Manager) Load(path string) error {
 		return fmt.Errorf("partners config TS is stale or missing (TS: %d, Now: %d, Raw: %s)", cfg.TS, now, raw.TS)
 	}
 
-	// Default PricingAt to 1 and validate Margin
-	for i := range cfg.DSPInventories {
-		if cfg.DSPInventories[i].PricingAt == 0 {
-			cfg.DSPInventories[i].PricingAt = 1
+	// Default Values and Robustness checks
+	for i := range cfg.SSPInventories {
+		if cfg.SSPInventories[i].Timeout <= 0 {
+			cfg.SSPInventories[i].Timeout = FlexInt(DefaultTimeout)
 		}
-		// Validate Margin: must be between 0.1 and 100.0. Default to DefaultMargin if invalid/zero/negative.
+	}
+
+	for i := range cfg.DSPInventories {
+		if cfg.DSPInventories[i].Tmax <= 0 {
+			cfg.DSPInventories[i].Tmax = FlexInt(DefaultTMax)
+		}
+		if cfg.DSPInventories[i].Timeout <= 0 {
+			cfg.DSPInventories[i].Timeout = FlexInt(DefaultTimeout)
+		}
+		if cfg.DSPInventories[i].QPS <= 0 {
+			cfg.DSPInventories[i].QPS = FlexInt(DefaultQPSLimit)
+		}
+		if cfg.DSPInventories[i].PricingAt == 0 {
+			cfg.DSPInventories[i].PricingAt = FlexInt(DefaultPricingAt)
+		}
 		if cfg.DSPInventories[i].Margin <= 0 || cfg.DSPInventories[i].Margin > 100.0 {
 			cfg.DSPInventories[i].Margin = FlexFloat64(DefaultMargin)
+		}
+		if cfg.DSPInventories[i].MinBidFloor <= 0 {
+			cfg.DSPInventories[i].MinBidFloor = FlexFloat64(DefaultMinBidFloor)
+		}
+		if cfg.DSPInventories[i].MaxBidFloor <= 0 {
+			cfg.DSPInventories[i].MaxBidFloor = FlexFloat64(DefaultMaxBidFloor)
 		}
 	}
 
@@ -203,7 +265,7 @@ func (m *Manager) Load(path string) error {
 
 		// Only index Active DSPs
 		if dsp.Status == "Active" {
-			cfg.dspMap[dsp.TenantID] = append(cfg.dspMap[dsp.TenantID], *dsp)
+			cfg.dspMap[int(dsp.TenantID)] = append(cfg.dspMap[int(dsp.TenantID)], *dsp)
 		}
 	}
 

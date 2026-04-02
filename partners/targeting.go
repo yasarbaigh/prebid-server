@@ -1,7 +1,6 @@
 package partners
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/prebid/openrtb/v20/openrtb2"
@@ -145,20 +144,18 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 	}
 
 	// 9. Bid Floor matching
-	if dsp.MinBidFloor != "" {
-		minFloor, err := strconv.ParseFloat(dsp.MinBidFloor, 64)
-		if err == nil && minFloor > 0 {
-			allBelow := true
-			for _, imp := range req.Imp {
-				if imp.BidFloor >= minFloor || imp.BidFloor == 0 {
-					allBelow = false
-					break
-				}
+	if dsp.MinBidFloor > 0 {
+		minFloor := float64(dsp.MinBidFloor)
+		allBelow := true
+		for _, imp := range req.Imp {
+			if imp.BidFloor >= minFloor || imp.BidFloor == 0 {
+				allBelow = false
+				break
 			}
-			if allBelow && len(req.Imp) > 0 {
-				// Optional: Filter out if all impressions are below minimum floor
-				// return false
-			}
+		}
+		if allBelow && len(req.Imp) > 0 {
+			// Optional: Filter out if all impressions are below minimum floor
+			// return false
 		}
 	}
 

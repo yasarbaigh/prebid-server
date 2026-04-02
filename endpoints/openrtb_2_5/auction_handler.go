@@ -159,7 +159,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	}
 
 	// 6. Shortlist DSPs
-	candidates := h.PartnersManager.GetDSPsByTenant(ssp.TenantID)
+	candidates := h.PartnersManager.GetDSPsByTenant(int(ssp.TenantID))
 	selectedDSPs := partners.ShortlistDSPs(&bidReq, candidates, ssp.SSPIdentifier, 5, bidReq.TMax)
 
 	if len(selectedDSPs) == 0 {
@@ -242,7 +242,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	winners := make(map[string]*bidResult)
 	targetedDSPs := make(map[int]bidResult)
 	for _, d := range selectedDSPs {
-		targetedDSPs[d.DSPID] = bidResult{dsp: d}
+		targetedDSPs[int(d.DSPID)] = bidResult{dsp: d}
 	}
 
 	// Build exact impression mapping for O(1) validation lookups
@@ -253,11 +253,11 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 
 	for res := range bidChan {
 		resCopy := res
-		t := targetedDSPs[resCopy.dsp.DSPID]
+		t := targetedDSPs[int(resCopy.dsp.DSPID)]
 		t.resp = resCopy.resp
 		t.dspRespBody = resCopy.dspRespBody
 		t.reqBody = resCopy.reqBody
-		targetedDSPs[resCopy.dsp.DSPID] = t
+		targetedDSPs[int(resCopy.dsp.DSPID)] = t
 
 		if !endpoints.ApplyExchangeMargin(resCopy.resp, impMap, bidReq.BCat, resCopy.dsp) {
 			continue
