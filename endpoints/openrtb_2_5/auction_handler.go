@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	ExchangeOverhead = 120
+	DefaultExchangeOverhead = 120
 )
 
 var (
@@ -129,7 +129,8 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	if err != nil {
 		originalTMax = 500 // Default if missing
 	}
-	computedTMax := originalTMax - ExchangeOverhead
+	overhead := logging.GetBidLogger().GetExchangeOverhead()
+	computedTMax := originalTMax - int64(overhead)
 	if computedTMax < 120 {
 		partners.AuctionCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier, "rejected_tmax").Inc()
 		w.WriteHeader(http.StatusNoContent)

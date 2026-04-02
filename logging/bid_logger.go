@@ -56,6 +56,7 @@ type BidLogger struct {
 	verboseSampleRate float64
 	vMu               sync.Mutex
 	wg                sync.WaitGroup
+	exchangeOverhead  int
 }
 
 var (
@@ -153,6 +154,7 @@ func InitBidLogger(propsPath string) error {
 	vMaxMB := p.GetInt("verbose_log.max_file_size_mb", 10)
 	vMaxBackups := p.GetInt("verbose_log.max_backups", 5)
 	vSampleRate := p.GetFloat64("verbose_log.sample_rate", 0.0)
+	overhead := p.GetInt("exchange.overhead_ms", 120)
 
 	// Ensure verbose directory exists if enabled
 	if verboseLogEnabled {
@@ -174,6 +176,7 @@ func InitBidLogger(propsPath string) error {
 		verboseLoggers:    make(map[string]*lumberjack.Logger),
 		verboseSampleRate: vSampleRate,
 		bufWriter:         bufio.NewWriterSize(lumberjackLogger, 256*1024),
+		exchangeOverhead:  overhead,
 	}
 
 	if verboseLogEnabled {
@@ -352,6 +355,13 @@ func (l *BidLogger) LogDSPSampled(dspIdentifier string, body []byte, label strin
 	if rand.Float64() < l.verboseSampleRate {
 		l.LogDSP(dspIdentifier, body, label)
 	}
+}
+
+func (l *BidLogger) GetExchangeOverhead() int {
+	if l == nil {
+		return 120
+	}
+	return l.exchangeOverhead
 }
 
 func (l *BidLogger) Close() {
