@@ -2,9 +2,9 @@ package endpoints
 
 import (
 	"errors"
-	"strings"
 	"github.com/buger/jsonparser"
 	"github.com/prebid/openrtb/v20/openrtb2"
+	"strings"
 )
 
 // FastValidateBidRequest performs ultra-fast validation on raw JSON bytes using jsonparser.

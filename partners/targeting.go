@@ -1,6 +1,7 @@
 package partners
 
 import (
+	"math/rand"
 	"strings"
 
 	"github.com/prebid/openrtb/v20/openrtb2"
@@ -8,7 +9,7 @@ import (
 
 // MatchTargeting checks if a DSPInventory matches a specific BidRequest and calling SSP
 func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, computedTMax int64) bool {
-	// 1. Tmax threshold check
+	// 1. Tmax threshold check (Fastest)
 	if computedTMax < int64(dsp.Tmax) {
 		return false
 	}
@@ -25,7 +26,21 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 3. Country matching - CAPITAL characters
+	// 3. SSP Filtering (High Cardinality / Fast Fail) - retain case
+	if sspID != "" {
+		// Check Blacklist
+		if dsp.SSPsBlackListMap[sspID] {
+			return false
+		}
+		// Check Whitelist
+		if len(dsp.SSPsMap) > 0 {
+			if !dsp.SSPsMap[sspID] {
+				return false
+			}
+		}
+	}
+
+	// 4. Country matching - CAPITAL characters - Fast Map Lookup
 	if req.Device != nil && req.Device.Geo != nil && req.Device.Geo.Country != "" {
 		country := strings.ToUpper(req.Device.Geo.Country)
 		// Check Blacklist
@@ -40,7 +55,42 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 4. Bundle ID matching - lower-case characters
+	// 5. Device Type matching
+	if req.Device != nil && req.Device.DeviceType > 0 {
+		deviceType := int(req.Device.DeviceType)
+		if len(dsp.DeviceTypesMap) > 0 {
+			if !dsp.DeviceTypesMap[deviceType] {
+				return false
+			}
+		}
+	}
+
+	// 6. Bid Floor matching (Min and Max)
+	// We check if the SSP floor is high enough for the DSP (Min) AND if the DSP can afford it (Max)
+	if dsp.MinBidFloor > 0 || dsp.MaxBidFloor > 0 {
+		eligible := false
+		for _, imp := range req.Imp {
+			match := true
+			// If request floor is lower than DSP's minimum requirement, skip
+			if dsp.MinBidFloor > 0 && imp.BidFloor < float64(dsp.MinBidFloor) {
+				match = false
+			}
+			// If request floor is higher than DSP's maximum allowed floor, skip
+			if match && dsp.MaxBidFloor > 0 && imp.BidFloor > float64(dsp.MaxBidFloor) {
+				match = false
+			}
+
+			if match {
+				eligible = true
+				break
+			}
+		}
+		if !eligible {
+			return false
+		}
+	}
+
+	// 7. Bundle ID matching - lower-case characters
 	if isApp && req.App.Bundle != "" {
 		bundle := strings.ToLower(req.App.Bundle)
 		// Check Blacklist
@@ -55,26 +105,22 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 4.1 Carrier matching - lower-case characters
+	// 7.1 Carrier matching - lower-case characters
 	if req.Device != nil && req.Device.Carrier != "" {
-		_ = strings.ToLower(req.Device.Carrier)
-	}
-
-	// 5. SSP Filtering - retain case
-	if sspID != "" {
+		carrier := strings.ToLower(req.Device.Carrier)
 		// Check Blacklist
-		if dsp.SSPsBlackListMap[sspID] {
+		if dsp.CarrierBlackListMap[carrier] {
 			return false
 		}
 		// Check Whitelist
-		if len(dsp.SSPsMap) > 0 {
-			if !dsp.SSPsMap[sspID] {
+		if len(dsp.CarrierMap) > 0 {
+			if !dsp.CarrierMap[carrier] {
 				return false
 			}
 		}
 	}
 
-	// 6. Publisher Filtering - retain case
+	// 8. Publisher Filtering - retain case
 	pubID := ""
 	if req.App != nil && req.App.Publisher != nil {
 		pubID = req.App.Publisher.ID
@@ -95,7 +141,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 7. Ad Formats matching
+	// 9. Ad Formats matching
 	if len(dsp.AdFormatsMap) > 0 {
 		formatMatch := false
 		for _, imp := range req.Imp {
@@ -121,7 +167,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 		}
 	}
 
-	// 8. IAB Categories - CAPITAL characters
+	// 10. IAB Categories - CAPITAL characters
 	if len(dsp.IABCategoriesMap) > 0 {
 		catMatch := false
 		// Match if ANY of the categories in the request are whitelisted
@@ -131,7 +177,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 				break
 			}
 		}
-		// Wait, BCat is usually for blocking. If the request has whitelist, check app/site.cat.
+		// Also check site/app categories
 		var reqCats []string
 		if req.App != nil {
 			reqCats = req.App.Cat
@@ -145,22 +191,7 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 			}
 		}
 
-		if !catMatch && (len(req.Imp) > 0) {
-			// IAB check is usually optional or soft, but if whitelist exists and no match, return false
-			// return false 
-		}
-	}
-
-	// 9. Bid Floor matching
-	if dsp.MaxBidFloor > 0 {
-		eligible := false
-		for _, imp := range req.Imp {
-			if imp.BidFloor <= float64(dsp.MaxBidFloor) {
-				eligible = true
-				break
-			}
-		}
-		if !eligible {
+		if !catMatch && (len(reqCats) > 0 || len(req.BCat) > 0) {
 			return false
 		}
 	}
@@ -169,8 +200,24 @@ func MatchTargeting(req *openrtb2.BidRequest, dsp *DSPInventory, sspID string, c
 }
 
 func ShortlistDSPs(req *openrtb2.BidRequest, candidates []DSPInventory, sspID string, limit int, computedTMax int64) []DSPInventory {
+	n := len(candidates)
+	if n == 0 {
+		return nil
+	}
+
+	// 1. Randomized Fairness using a circular starting point
+	// This ensures that we don't always pick the same first 5 DSPs,
+	// while avoiding the memory allocation overhead of a full Fisher-Yates shuffle.
+	start := 0
+	if n > 1 {
+		// Note: Using global rand is safe here for a simple offset
+		start = rand.Intn(n)
+	}
+
 	var shortlisted []DSPInventory
-	for _, dsp := range candidates {
+	for i := 0; i < n; i++ {
+		idx := (start + i) % n
+		dsp := candidates[idx]
 		if MatchTargeting(req, &dsp, sspID, computedTMax) {
 			shortlisted = append(shortlisted, dsp)
 			if len(shortlisted) >= limit {

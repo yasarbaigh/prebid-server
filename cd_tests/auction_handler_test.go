@@ -26,8 +26,8 @@ func setupTestManager(t *testing.T) (*partners.Manager, string) {
 		},
 		DSPInventories: []partners.DSPInventory{
 			{
-				TenantID: 1,
-				Status:   "Active",
+				TenantID:    1,
+				Status:      "Active",
 				EndpointURL: "http://mock-dsp/bid",
 			},
 		},

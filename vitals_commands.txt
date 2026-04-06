@@ -1,0 +1,33 @@
+# -----------------------------------------------------------------------------
+# PREBID SERVER SYSTEM VITALS & PERFORMANCE COMMANDS LIST
+# -----------------------------------------------------------------------------
+
+[1] SYSTEM LOAD & UPTIME
+uptime
+nproc
+vmstat 1 2
+
+[2] CPU & I/O STATISTICS
+iostat -c
+
+[3] MEMORY USAGE
+free -h
+
+[4] DISK USAGE & HEALTH
+df -h /
+du -sh /opt/service_logs/ssp_module/ssp_bids/
+
+[5] PROCESS STATUS (PM2)
+pm2 status
+pm2 list
+
+[6] NETWORK LISTENING PORTS
+ss -tulpn | grep 240[0-9]{2}
+
+[7] LOG ERRORS SNAPSHOT
+tail -n 20 /opt/service_logs/ssp_module/ssp_bids/pbs_*_err.log | grep -i "error"
+
+# -----------------------------------------------------------------------------
+# QUICK EXECUTION OF ALL VITALS:
+# /opt/adserving/14-feb-2026/1_prebid-server/check_system_vitals.sh
+# -----------------------------------------------------------------------------

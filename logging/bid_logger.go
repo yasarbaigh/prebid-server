@@ -1,14 +1,14 @@
 package logging
 
 import (
+	"bufio"
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
-	"bufio"
-	"math/rand"
 
 	"github.com/magiconair/properties"
 	"github.com/prebid/prebid-server/v3/logger"
@@ -276,13 +276,13 @@ func (l *BidLogger) writeEvent(event *generated.AuctionEvent) {
 	}
 
 	encodedLen := base64.StdEncoding.EncodedLen(len(data))
-	
+
 	// Get a buffer from the line pool
 	buf := linePool.Get().([]byte)
 	if len(buf) < encodedLen+1 {
 		buf = make([]byte, encodedLen+1)
 	}
-	
+
 	base64.StdEncoding.Encode(buf, data)
 	buf[encodedLen] = '\n'
 
@@ -290,7 +290,7 @@ func (l *BidLogger) writeEvent(event *generated.AuctionEvent) {
 	if _, err := l.bufWriter.Write(buf[:encodedLen+1]); err != nil {
 		logger.Errorf("Failed to write base64 data to log: %v", err)
 	}
-	
+
 	// Return the buffer to the line pool
 	linePool.Put(buf)
 }
@@ -375,7 +375,7 @@ func (l *BidLogger) Close() {
 	if l == nil {
 		return
 	}
-	
+
 	// First close channels to signal workers to stop AFTER they drain the buffer
 	close(l.logChan)
 	if l.verboseChan != nil {

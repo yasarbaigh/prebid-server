@@ -11,6 +11,7 @@ import (
 
 // Mapping Enums to match OpenRTB 2.5/2.6 Standards
 type DeviceType uint8
+
 const (
 	DT_Unknown         DeviceType = 0
 	DT_Mobile          DeviceType = 1 // Mobile/Tablet
@@ -23,6 +24,7 @@ const (
 )
 
 type AdType uint8
+
 const (
 	AT_Unknown AdType = 0
 	AT_Banner  AdType = 1
@@ -55,6 +57,7 @@ type PositionalData struct {
 	Seat           string
 	AdID           string
 	DSPCurrency    string
+	PublisherID    string
 }
 
 // Pack converts the struct into a tight Big-Endian binary buffer.
@@ -87,6 +90,7 @@ func (p *PositionalData) Pack() ([]byte, error) {
 	writeLPString(buf, p.ImpID)
 	writeLPString(buf, p.Seat)
 	writeLPString(buf, p.AdID)
+	writeLPString(buf, p.PublisherID)
 
 	return buf.Bytes(), nil
 }
@@ -99,17 +103,35 @@ func Unpack(data []byte) (*PositionalData, error) {
 	// 1. Fixed Width Block
 	var ts, tid, sid, siid, did, diid uint32
 	var dt, at uint8
-	
-	if err := binary.Read(reader, binary.BigEndian, &ts); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &tid); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &sid); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &siid); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &did); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &diid); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &p.Price); err != nil { return nil, err }
+
+	if err := binary.Read(reader, binary.BigEndian, &ts); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(reader, binary.BigEndian, &tid); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(reader, binary.BigEndian, &sid); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(reader, binary.BigEndian, &siid); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(reader, binary.BigEndian, &did); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(reader, binary.BigEndian, &diid); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(reader, binary.BigEndian, &p.Price); err != nil {
+		return nil, err
+	}
 	p.DSPCurrency = readLPString(reader)
-	if err := binary.Read(reader, binary.BigEndian, &dt); err != nil { return nil, err }
-	if err := binary.Read(reader, binary.BigEndian, &at); err != nil { return nil, err }
+	if err := binary.Read(reader, binary.BigEndian, &dt); err != nil {
+		return nil, err
+	}
+	if err := binary.Read(reader, binary.BigEndian, &at); err != nil {
+		return nil, err
+	}
 
 	p.Timestamp = ts
 	p.TenantID = tid
@@ -135,6 +157,11 @@ func Unpack(data []byte) (*PositionalData, error) {
 	p.ImpID = readLPString(reader)
 	p.Seat = readLPString(reader)
 	p.AdID = readLPString(reader)
+
+	// Safe-read for New Fields (Backward Compatible)
+	if reader.Len() > 0 {
+		p.PublisherID = readLPString(reader)
+	}
 
 	return p, nil
 }
@@ -196,23 +223,36 @@ func GetDeviceTypeEnum(dt interface{}) DeviceType {
 
 	val := valStr
 	switch {
-	case strings.Contains(val, "phone"): return DT_Phone
-	case strings.Contains(val, "tablet") && !strings.Contains(val, "mobile"): return DT_Tablet
-	case strings.Contains(val, "mobile"): return DT_Mobile
-	case strings.Contains(val, "personal computer") || strings.Contains(val, "pc"): return DT_PC
-	case strings.Contains(val, "tv") || strings.Contains(val, "ctv"): return DT_CTV
-	case strings.Contains(val, "connected device"): return DT_ConnectedDevice
-	case strings.Contains(val, "set top box") || strings.Contains(val, "stb"): return DT_SetTopBox
-	default: return DT_Unknown
+	case strings.Contains(val, "phone"):
+		return DT_Phone
+	case strings.Contains(val, "tablet") && !strings.Contains(val, "mobile"):
+		return DT_Tablet
+	case strings.Contains(val, "mobile"):
+		return DT_Mobile
+	case strings.Contains(val, "personal computer") || strings.Contains(val, "pc"):
+		return DT_PC
+	case strings.Contains(val, "tv") || strings.Contains(val, "ctv"):
+		return DT_CTV
+	case strings.Contains(val, "connected device"):
+		return DT_ConnectedDevice
+	case strings.Contains(val, "set top box") || strings.Contains(val, "stb"):
+		return DT_SetTopBox
+	default:
+		return DT_Unknown
 	}
 }
 
 func GetAdTypeEnum(at string) AdType {
 	switch strings.ToLower(at) {
-	case "banner": return AT_Banner
-	case "video": return AT_Video
-	case "native": return AT_Native
-	case "audio": return AT_Audio
-	default: return AT_Unknown
+	case "banner":
+		return AT_Banner
+	case "video":
+		return AT_Video
+	case "native":
+		return AT_Native
+	case "audio":
+		return AT_Audio
+	default:
+		return AT_Unknown
 	}
 }

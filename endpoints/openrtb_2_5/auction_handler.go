@@ -111,6 +111,9 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 	partners.SSPRequestCounter.WithLabelValues(ssp.SSPInventoryIdentifier, ssp.TenantIdentifier, ssp.SSPIdentifier).Inc()
 
 	// 3. Read & Parse Body
+	if r.Body != nil {
+		defer r.Body.Close()
+	}
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 2*1024*1024))
 	if err != nil {
 		h.recordSSPResponse(ssp, "error", "400")
@@ -320,7 +323,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 		Cur:   "USD",
 	}
 
-	os, osv, country, carrier, deviceType, domain, bundle, _, _, _, _, _, _, _, _, _, _, _, _ := h.extractContext(&bidReq)
+	os, osv, country, carrier, deviceType, domain, bundle, _, _, _, _, publisherID := h.extractContext(&bidReq)
 
 	for impID, win := range winners {
 		var bestBid *openrtb2.Bid
@@ -374,6 +377,7 @@ func (h *AuctionHandler) Handle(w http.ResponseWriter, r *http.Request, _ httpro
 			AdType:        adTypeStr,
 			AdSize:        adSize,
 			DSPCurrency:   strings.ToUpper(win.resp.Cur),
+			PublisherID:   publisherID,
 		}
 		if len(tck.DSPCurrency) != 3 {
 			tck.DSPCurrency = "USD"
@@ -432,7 +436,7 @@ func (h *AuctionHandler) logWinners(ssp *partners.SSPInventory, bidReq *openrtb2
 		return
 	}
 
-	os, osv, country, carrier, deviceType, domain, bundle, ip, ua, ifa, gdprConsent, region, city, zip, language, make, model, connType, sspCur := h.extractContext(bidReq)
+	os, osv, country, carrier, deviceType, domain, bundle, ip, ua, ifa, gdprConsent, _ := h.extractContext(bidReq)
 
 	for impID, win := range winners {
 		// Find the winning bid for this specific impression in the win result
@@ -474,18 +478,6 @@ func (h *AuctionHandler) logWinners(ssp *partners.SSPInventory, bidReq *openrtb2
 		event.GdprConsent = gdprConsent
 		event.Timestamp = time.Now().UnixMilli()
 		event.Hostname = h.Hostname
-		event.Currency = win.resp.Cur
-		if event.Currency == "" {
-			event.Currency = "USD"
-		}
-		event.Region = region
-		event.City = city
-		event.Zip = zip
-		event.Language = language
-		event.DeviceMake = make
-		event.DeviceModel = model
-		event.ConnectionType = uint32(connType)
-		event.SspCurrency = sspCur
 
 		// Selection & Audit Details
 		event.WinningBidId = bestBid.ID
@@ -507,30 +499,39 @@ func (h *AuctionHandler) logWinners(ssp *partners.SSPInventory, bidReq *openrtb2
 			adType, adSize := h.getAdDimensions(bestBid, imp)
 			event.AdType = adType
 			event.AdSize = adSize
-
-			if imp.Video != nil {
-				if len(imp.Video.PlaybackMethod) > 0 {
-					event.PlaybackMethod = uint32(imp.Video.PlaybackMethod[0])
-				}
-				event.VideoPlacement = uint32(imp.Video.Placement)
-			}
 		}
 
 		// Source Environment
 		if bidReq.App != nil {
+			pubID := ""
+			pubName := ""
+			if bidReq.App.Publisher != nil {
+				pubID = bidReq.App.Publisher.ID
+				pubName = bidReq.App.Publisher.Name
+			}
 			event.Source = &generated.AuctionEvent_App{
 				App: &generated.App{
-					Id:     bidReq.App.ID,
-					Name:   bidReq.App.Name,
-					Bundle: bidReq.App.Bundle,
-					Domain: bidReq.App.Domain,
+					Id:            bidReq.App.ID,
+					Name:          bidReq.App.Name,
+					Bundle:        bidReq.App.Bundle,
+					Domain:        bidReq.App.Domain,
+					PublisherId:   pubID,
+					PublisherName: pubName,
 				},
 			}
 		} else if bidReq.Site != nil {
+			pubID := ""
+			pubName := ""
+			if bidReq.Site.Publisher != nil {
+				pubID = bidReq.Site.Publisher.ID
+				pubName = bidReq.Site.Publisher.Name
+			}
 			event.Source = &generated.AuctionEvent_Web{
 				Web: &generated.Web{
-					Domain: bidReq.Site.Domain,
-					Page:   bidReq.Site.Page,
+					Domain:        bidReq.Site.Domain,
+					Page:          bidReq.Site.Page,
+					PublisherId:   pubID,
+					PublisherName: pubName,
 				},
 			}
 		}
@@ -606,12 +607,7 @@ func getBidPrice(res *bidResult, impID string) float64 {
 	return 0.0
 }
 
-func (h *AuctionHandler) extractContext(bidReq *openrtb2.BidRequest) (os, osv, country, carrier string, deviceType uint32, domain, bundle, ip, ua, ifa, gdprConsent, region, city, zip, language, make, model string, connType int, sspCur string) {
-	if len(bidReq.Cur) > 0 && len(bidReq.Cur[0]) == 3 {
-		sspCur = strings.ToUpper(bidReq.Cur[0])
-	} else {
-		sspCur = "USD"
-	}
+func (h *AuctionHandler) extractContext(bidReq *openrtb2.BidRequest) (os, osv, country, carrier string, deviceType uint32, domain, bundle, ip, ua, ifa, gdprConsent, publisherID string) {
 	if bidReq.Device != nil {
 		os = strings.ToLower(bidReq.Device.OS)
 		osv = strings.ToLower(bidReq.Device.OSV)
@@ -619,29 +615,24 @@ func (h *AuctionHandler) extractContext(bidReq *openrtb2.BidRequest) (os, osv, c
 		ip = bidReq.Device.IP
 		ua = bidReq.Device.UA
 		ifa = bidReq.Device.IFA
-		language = bidReq.Device.Language
-		make = bidReq.Device.Make
-		model = bidReq.Device.Model
-		connType := 0
-		if bidReq.Device.ConnectionType != nil {
-			connType = int(*bidReq.Device.ConnectionType)
-		}
 		if bidReq.Device.DeviceType > 0 {
 			deviceType = uint32(bidReq.Device.DeviceType)
 		}
 		if bidReq.Device.Geo != nil {
 			country = strings.ToUpper(bidReq.Device.Geo.Country)
-			region = strings.ToUpper(bidReq.Device.Geo.Region)
-			city = bidReq.Device.Geo.City
-			zip = bidReq.Device.Geo.ZIP
 		}
-		return os, osv, country, carrier, deviceType, domain, bundle, ip, ua, ifa, gdprConsent, region, city, zip, language, make, model, connType, sspCur
 	}
 	if bidReq.App != nil {
 		domain = strings.ToLower(bidReq.App.Domain)
 		bundle = strings.ToLower(bidReq.App.Bundle)
+		if bidReq.App.Publisher != nil {
+			publisherID = bidReq.App.Publisher.ID
+		}
 	} else if bidReq.Site != nil {
 		domain = strings.ToLower(bidReq.Site.Domain)
+		if bidReq.Site.Publisher != nil {
+			publisherID = bidReq.Site.Publisher.ID
+		}
 	}
 
 	if bidReq.User != nil && len(bidReq.User.Ext) > 0 {

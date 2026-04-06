@@ -87,16 +87,16 @@ func TestIntegration_AuctionHandlerSuccess(t *testing.T) {
 				BidFloor: 1.0,
 			},
 		},
-        Site: &openrtb2.Site{
-            Page: "http://test.com",
-            Publisher: &openrtb2.Publisher{
-                ID: "pub-1",
-            },
-        },
-        Device: &openrtb2.Device{
-            UA: "test-ua",
-            IP: "1.2.3.4",
-        },
+		Site: &openrtb2.Site{
+			Page: "http://test.com",
+			Publisher: &openrtb2.Publisher{
+				ID: "pub-1",
+			},
+		},
+		Device: &openrtb2.Device{
+			UA: "test-ua",
+			IP: "1.2.3.4",
+		},
 	}
 	body, _ := json.Marshal(bidReq)
 
@@ -111,14 +111,14 @@ func TestIntegration_AuctionHandlerSuccess(t *testing.T) {
 
 	var resp openrtb2.BidResponse
 	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
-        if rr.Code == 200 {
-		    t.Fatal(err)
-        }
+		if rr.Code == 200 {
+			t.Fatal(err)
+		}
 	}
 
 	if rr.Code == 200 {
-        if len(resp.SeatBid) == 0 || len(resp.SeatBid[0].Bid) == 0 {
-            t.Fatal("Expected bids in response")
-        }
-    }
+		if len(resp.SeatBid) == 0 || len(resp.SeatBid[0].Bid) == 0 {
+			t.Fatal("Expected bids in response")
+		}
+	}
 }

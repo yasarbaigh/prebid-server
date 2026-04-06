@@ -5,15 +5,15 @@ import (
 )
 
 var (
-	SSPRequestCounter      *prometheus.CounterVec
-	SSPResponseCounter     *prometheus.CounterVec
-	DSPRequestCounter      *prometheus.CounterVec
-	DSPResponseCounter     *prometheus.CounterVec
-	DSPLatencyHistogram    *prometheus.HistogramVec
-	AuctionCounter         *prometheus.CounterVec
-	ExchangeProfitCounter  *prometheus.CounterVec
-	ExchangeRevenueCounter *prometheus.CounterVec
-	ExchangeSpentCounter   *prometheus.CounterVec
+	SSPRequestCounter          *prometheus.CounterVec
+	SSPResponseCounter         *prometheus.CounterVec
+	DSPRequestCounter          *prometheus.CounterVec
+	DSPResponseCounter         *prometheus.CounterVec
+	DSPLatencyHistogram        *prometheus.HistogramVec
+	AuctionCounter             *prometheus.CounterVec
+	ExchangeProfitCounter      *prometheus.CounterVec
+	ExchangeRevenueCounter     *prometheus.CounterVec
+	ExchangeSpentCounter       *prometheus.CounterVec
 	SSPValidationFailedCounter *prometheus.CounterVec
 	DSPValidationFailedCounter *prometheus.CounterVec
 )

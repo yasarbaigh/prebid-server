@@ -38,6 +38,7 @@ type TrackingConfig struct {
 	BundleID      string
 	Carrier       string
 	DSPCurrency   string
+	PublisherID   string
 }
 
 // getPositionalPayload generates a tight binary buffer for high-speed URL reduction.
@@ -56,7 +57,7 @@ func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, 
 		AdSize:         tck.AdSize,
 		OS:             tck.OS,
 		OSV:            tck.OSV,
-		Country:        tck.Country,				
+		Country:        tck.Country,
 		Domain:         tck.SiteAppDomain,
 		BundleID:       tck.BundleID,
 		Carrier:        tck.Carrier,
@@ -65,6 +66,7 @@ func getPositionalPayload(ssp partners.SSPInventory, dsp partners.DSPInventory, 
 		ImpID:          impID,
 		Seat:           tck.Seat,
 		AdID:           adID,
+		PublisherID:    tck.PublisherID,
 	}
 	bytes, _ := p.Pack()
 	return bytes

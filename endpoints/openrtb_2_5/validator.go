@@ -41,7 +41,7 @@ func validate26(bidReq *openrtb2.BidRequest) error {
 	if err := validate25(bidReq); err != nil {
 		return err
 	}
-	
+
 	// Future 2.6 specific checks like Schain, multi-deal objects, etc.
 	// For now, it passes if 2.5 passes.
 	return nil
